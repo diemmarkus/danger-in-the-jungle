@@ -389,6 +389,8 @@ function newLevel(l,withIntro){
   st.projs=[];st.parts=[];st.caught=null;st.allLured=false;st.sceneT=0;
   st.stumps=[{x:4.6,g:0},{x:7.1,g:0},{x:8.1,g:0},{x:3.2,g:0}];
   st.buddy=null;st.seed=(Math.random()*1e9)|0;bgDirty=true;
+  if(!st.palBag||!st.palBag.length)st.palBag=['scarlet','green','hyacinth','sun','rose'].filter(k=>k!==st.palKey).sort(()=>Math.random()-.5);
+  st.palKey=st.palBag.pop();st.pal=PALS[st.palKey];
   if(withIntro){st.mode='intro';st.leafOff=0;capIdx=-1;setUI('intro')}
   else startPlay();
 }
@@ -533,7 +535,7 @@ function update(dt){
     }
   }else if(st.mode==='escape'){
     const dr=DOOR();
-    if(Math.hypot(p.x-dr.x,p.y-dr.y)<.8){st.mode='free';st.sceneT=0;st.banner=null;st.projs=[]}
+    if(Math.hypot(p.x-dr.x,p.y-dr.y)<.8){setUI('scene');st.mode='free';st.sceneT=0;st.banner=null;st.projs=[]}
   }else if(st.mode==='free'){
     const t=st.sceneT;
     if(t-dt<1&&t>=1)st.parts.push({type:'pop',sx:.56,sy:.38,t:0,life:.8,rot:-.2,text:T.click,col:C.white});
@@ -769,15 +771,24 @@ function drawItem(type,x,y,r,rot,alpha=1){
   ctx.restore();
 }
 // side-view blue-and-gold parrot; x,y body centre in px, u = px per unit, f = facing (1 right, -1 left)
+// parrot colours: the player is always blue-and-gold, every rescued friend gets one of the others
+const PALS={
+  blue:{body:['#6CB8FF','#1E62D0'],head:['#79C2FF','#2470DA'],belly:['#FFE58A','#F5A623'],crown:['#9BE36E','#3FAF4A'],wing:['#174FB0','#2266D6','#3A86F0'],tail:['#1C56B8','#2F86F0','#1F66D0'],rim:'#174A9E'},
+  scarlet:{body:['#FF7A62','#D0261C'],head:['#FF8A72','#D8301F'],belly:['#FF8A62','#D83A22'],crown:['#FFE58A','#F5A623'],wing:['#1F66D0','#FFC53D','#E8392C'],tail:['#C7231A','#E8392C','#2F86F0'],rim:'#8E1A12'},
+  green:{body:['#A6EC7E','#3E9A2C'],head:['#B4F08C','#47A633'],belly:['#C9F59A','#6FC24A'],crown:['#FF8A72','#E8392C'],wing:['#2E7D24','#3E9A2C','#2F86F0'],tail:['#2E7D24','#E8392C','#2F86F0'],rim:'#25661C'},
+  hyacinth:{body:['#A88BFF','#5A3BC8'],head:['#B39AFF','#6346D2'],belly:['#9C7FF5','#5A3BC8'],crown:['#B39AFF','#6346D2'],wing:['#47309E','#5A3BC8','#7A5CE8'],tail:['#47309E','#6A4CD8','#5A3BC8'],rim:'#3A2588'},
+  sun:{body:['#FFE27A','#F5A01A'],head:['#FFB060','#F07A12'],belly:['#FFB060','#F07A12'],crown:['#FFE27A','#F5A01A'],wing:['#3FAF4A','#FFC53D','#F5A01A'],tail:['#2E9A4B','#3FAF4A','#F5A01A'],rim:'#B0600A'},
+  rose:{body:['#FFB3D1','#E0508A'],head:['#FFC2DA','#E8609A'],belly:['#FFE3EE','#F59AC2'],crown:['#FFE58A','#F5A623'],wing:['#C23C78','#E0508A','#FF8AB8'],tail:['#C23C78','#E0508A','#9B7BFF'],rim:'#9E2C60'},
+};
 function drawParrot(x,y,u,f,flap,o={}){
-  const lw=Math.max(1,u*.025),now=performance.now()/1000,rim='#174A9E';
+  const P=o.pal||PALS.blue,lw=Math.max(1,u*.025),now=performance.now()/1000,rim=P.rim;
   ctx.save();ctx.translate(x,y);ctx.scale(f,1);ctx.lineJoin='round';ctx.lineCap='round';
   const tilt=o.sit?0:Math.max(-.35,Math.min(.35,(o.vy||0)*.05));ctx.rotate(tilt);
   // soft shadow-glow under the bird so it reads against busy leaves
   ctx.beginPath();ctx.ellipse(0,u*.05,u*.5,u*.32,0,0,7);ctx.fillStyle='rgba(255,255,230,.12)';ctx.fill();
   // tail: three long feathers
   const sway=Math.sin(flap*.5)*.05;
-  for(const[k,c]of[[.12,'#1C56B8'],[0,'#2F86F0'],[-.1,'#1F66D0']]){
+  for(const[k,c]of[[.12,P.tail[0]],[0,P.tail[1]],[-.1,P.tail[2]]]){
     ctx.save();ctx.translate(-u*.18,u*.05);ctx.rotate(.5+k+sway);
     ctx.beginPath();ctx.moveTo(0,-u*.05);ctx.quadraticCurveTo(-u*.35,-u*.06,-u*.68,0);ctx.quadraticCurveTo(-u*.35,u*.07,0,u*.05);ctx.closePath();
     gradFill(-u*.06,u*.06,shade(c,1.2),c,rim,lw);ctx.restore();
@@ -785,14 +796,14 @@ function drawParrot(x,y,u,f,flap,o={}){
   // feet when sitting
   if(o.sit){ctx.strokeStyle='#5A5A66';ctx.lineWidth=lw*2;for(const k of[-.04,.08]){ctx.beginPath();ctx.moveTo(u*k,u*.17);ctx.lineTo(u*k,u*.29);ctx.lineTo(u*(k+.05),u*.3);ctx.stroke()}}
   // body with gold belly
-  ctx.beginPath();ctx.ellipse(0,0,u*.33,u*.23,-.3,0,7);radFill(u*.05,-u*.12,u*.4,'#6CB8FF','#1E62D0');
+  ctx.beginPath();ctx.ellipse(0,0,u*.33,u*.23,-.3,0,7);radFill(u*.05,-u*.12,u*.4,P.body[0],P.body[1]);
   ctx.save();ctx.beginPath();ctx.ellipse(0,0,u*.33,u*.23,-.3,0,7);ctx.clip();
-  ctx.beginPath();ctx.ellipse(u*.12,u*.13,u*.24,u*.15,-.3,0,7);radFill(u*.14,u*.06,u*.26,'#FFE58A','#F5A623');ctx.restore();
+  ctx.beginPath();ctx.ellipse(u*.12,u*.13,u*.24,u*.15,-.3,0,7);radFill(u*.14,u*.06,u*.26,P.belly[0],P.belly[1]);ctx.restore();
   ctx.beginPath();ctx.ellipse(0,0,u*.33,u*.23,-.3,0,7);ctx.lineWidth=lw;ctx.strokeStyle=rim;ctx.stroke();
   // head
-  ctx.beginPath();ctx.arc(u*.27,-u*.2,u*.19,0,7);radFill(u*.3,-u*.3,u*.22,'#79C2FF','#2470DA',rim,lw);
+  ctx.beginPath();ctx.arc(u*.27,-u*.2,u*.19,0,7);radFill(u*.3,-u*.3,u*.22,P.head[0],P.head[1],rim,lw);
   // little green crown feathers
-  ctx.beginPath();ctx.moveTo(u*.17,-u*.33);ctx.quadraticCurveTo(u*.2,-u*.47,u*.3,-u*.39);ctx.quadraticCurveTo(u*.33,-u*.46,u*.38,-u*.36);ctx.lineTo(u*.3,-u*.33);ctx.closePath();gradFill(-u*.47,-u*.33,'#9BE36E','#3FAF4A');
+  ctx.beginPath();ctx.moveTo(u*.17,-u*.33);ctx.quadraticCurveTo(u*.2,-u*.47,u*.3,-u*.39);ctx.quadraticCurveTo(u*.33,-u*.46,u*.38,-u*.36);ctx.lineTo(u*.3,-u*.33);ctx.closePath();gradFill(-u*.47,-u*.33,P.crown[0],P.crown[1]);
   // white face patch with fine stripes
   ctx.beginPath();ctx.ellipse(u*.34,-u*.16,u*.11,u*.1,.2,0,7);ctx.fillStyle='#FFFDF6';ctx.fill();
   ctx.strokeStyle='rgba(40,40,60,.55)';ctx.lineWidth=lw*.6;for(const k of[0,1,2]){ctx.beginPath();ctx.moveTo(u*(.28+k*.035),-u*.1);ctx.quadraticCurveTo(u*(.3+k*.035),-u*.085,u*(.32+k*.035),-u*.095);ctx.stroke()}
@@ -805,7 +816,7 @@ function drawParrot(x,y,u,f,flap,o={}){
     ctx.beginPath();ctx.arc(u*.335,-u*.195,u*.009,0,7);ctx.fill();
   }
   // brow gives some attitude
-  ctx.beginPath();ctx.moveTo(u*.27,-u*.33);ctx.quadraticCurveTo(u*.34,-u*.35,u*.41,-u*.3);ctx.lineWidth=lw*1.6;ctx.strokeStyle='#174A9E';ctx.stroke();
+  ctx.beginPath();ctx.moveTo(u*.27,-u*.33);ctx.quadraticCurveTo(u*.34,-u*.35,u*.41,-u*.3);ctx.lineWidth=lw*1.6;ctx.strokeStyle=rim;ctx.stroke();
   // beak
   ctx.beginPath();ctx.moveTo(u*.42,-u*.25);ctx.quadraticCurveTo(u*.6,-u*.25,u*.56,-u*.06);ctx.quadraticCurveTo(u*.5,-u*.12,u*.43,-u*.1);ctx.closePath();gradFill(-u*.25,-u*.06,'#4A4A56','#16161C');
   ctx.beginPath();ctx.moveTo(u*.45,-u*.22);ctx.quadraticCurveTo(u*.52,-u*.22,u*.54,-u*.15);ctx.lineWidth=lw;ctx.strokeStyle='rgba(255,255,255,.35)';ctx.stroke();
@@ -813,7 +824,7 @@ function drawParrot(x,y,u,f,flap,o={}){
   if(o.key){ctx.beginPath();ctx.moveTo(u*.5,-u*.1);ctx.lineTo(u*.5,u*.12);ctx.lineWidth=lw;ctx.strokeStyle='#6B4A1A';ctx.stroke();drawKey(u*.5,u*.22,u*.5,Math.PI/2)}
   // wing: layered feathers
   ctx.save();ctx.translate(-u*.02,-u*.08);ctx.rotate(o.sit?.25:-.5+Math.sin(flap)*.85);
-  for(const[k,c]of[[0,'#174FB0'],[.06,'#2266D6'],[.12,'#3A86F0']]){ctx.beginPath();ctx.ellipse(-u*.14+k*u*.4,-k*u*.15,u*(.3-k),u*(.12-k*.25),0,0,7);ctx.fillStyle=c;ctx.fill()}
+  for(const[k,c]of[[0,P.wing[0]],[.06,P.wing[1]],[.12,P.wing[2]]]){ctx.beginPath();ctx.ellipse(-u*.14+k*u*.4,-k*u*.15,u*(.3-k),u*(.12-k*.25),0,0,7);ctx.fillStyle=c;ctx.fill()}
   ctx.beginPath();ctx.ellipse(-u*.14,0,u*.3,u*.12,0,0,7);ctx.lineWidth=lw;ctx.strokeStyle=rim;ctx.stroke();
   ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=lw*.8;for(const k of[0,1,2]){ctx.beginPath();ctx.moveTo(-u*(.38-k*.06),u*.02);ctx.lineTo(-u*(.2-k*.06),u*.04);ctx.stroke()}
   ctx.restore();
@@ -928,41 +939,53 @@ function drawBigLeaf(off){
 }
 // inside the tree: the cage with the friend, the key turns, the door swings open
 function drawFree(t){
-  const cx=W/2,cy=H*.48,cs=Math.min(W,H)*.2,lw=Math.max(2,cs*.03);
-  ctx.fillStyle='#3A2516';ctx.fillRect(0,0,W,H);
-  const g=ctx.createRadialGradient(cx,cy,cs*.2,cx,cy,Math.max(W,H)*.6);g.addColorStop(0,'#8A5A33');g.addColorStop(1,'#3A2516');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='rgba(22,18,15,.35)';ctx.lineWidth=lw;for(let k=1;k<6;k++){ctx.beginPath();ctx.ellipse(cx,cy,cs*1.3*k,cs*1.1*k,0,0,7);ctx.stroke()}
-  // chain + cage
-  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,cy-cs*1.25);ctx.lineWidth=lw*1.5;ctx.strokeStyle='#4A3020';ctx.stroke();
-  const open=Math.max(0,Math.min(1,(t-1.5)/.5));
-  // friend inside / flying out
-  const out=Math.max(0,Math.min(1,(t-2)/1.2));
-  const fx=cx+out*W*.6,fy=cy+cs*.35-Math.sin(out*Math.PI)*cs*1.2-out*cs;
-  ctx.beginPath();ctx.ellipse(cx,cy+cs*.62,cs*.8,cs*.16,0,0,7);inkFill('#B07A45',lw);
-  if(out<=0)drawParrot(cx-cs*.05,cy+cs*.3,cs*.95,-1,0,{sit:true});
-  ctx.strokeStyle='#4A3020';ctx.lineWidth=lw;
-  for(let k=-4;k<=4;k++){const xx=cx+k*cs*.17;if(Math.abs(k)<=1)continue;ctx.beginPath();ctx.moveTo(xx,cy+cs*.6);ctx.lineTo(xx,cy-cs*.6);ctx.stroke()}
-  ctx.beginPath();ctx.ellipse(cx,cy-cs*.6,cs*.8,cs*.62,0,Math.PI,0);ctx.lineWidth=lw*1.4;ctx.stroke();
-  for(const a of[-.6,-.3,0,.3,.6]){ctx.beginPath();ctx.moveTo(cx,cy-cs*1.22);ctx.quadraticCurveTo(cx+a*cs*1.2,cy-cs*1.1,cx+a*cs*1.33,cy-cs*.6);ctx.lineWidth=lw;ctx.stroke()}
-  // the door (three bars) swings open toward the viewer
-  const dw=cs*.34*Math.cos(open*Math.PI*.45),dx0=cx+cs*.26;
-  ctx.save();ctx.translate(dx0,0);ctx.lineWidth=lw*1.2;
-  for(const k of[0,.5,1]){ctx.beginPath();ctx.moveTo(-dw*k*2+0,cy+cs*.6);ctx.lineTo(-dw*k*2,cy-cs*.6);ctx.stroke()}
-  ctx.beginPath();ctx.moveTo(0,cy-cs*.6);ctx.lineTo(-dw*2,cy-cs*.6);ctx.moveTo(0,cy+cs*.6);ctx.lineTo(-dw*2,cy+cs*.6);ctx.stroke();ctx.restore();
-  ctx.beginPath();ctx.ellipse(cx,cy+cs*.6,cs*.8,cs*.14,0,0,Math.PI);ctx.lineWidth=lw*1.4;ctx.stroke();
-  // padlock
-  const lx=cx+cs*.1,ly=cy+cs*.05,shake=t>.9&&t<1.5?Math.sin(t*60)*cs*.02:0,drop=open>0?(t-1.5)*(t-1.5)*cs*6:0;
-  if(ly+drop<H){ctx.save();ctx.translate(lx+shake,ly+drop);ctx.rotate(drop?drop/cs*.6:0);
-    ctx.beginPath();ctx.arc(0,-cs*.1,cs*.1,Math.PI,0);ctx.lineWidth=lw*1.6;ctx.strokeStyle='#4A3020';ctx.stroke();ctx.lineWidth=lw*.7;ctx.strokeStyle='#C9D3DA';ctx.stroke();
-    ctx.beginPath();ctx.roundRect?ctx.roundRect(-cs*.15,-cs*.1,cs*.3,cs*.24,cs*.04):ctx.rect(-cs*.15,-cs*.1,cs*.3,cs*.24);inkFill('#FFC21A',lw);
-    ctx.beginPath();ctx.arc(0,0,cs*.03,0,7);ctx.fillStyle='#4A3020';ctx.fill();ctx.restore()}
-  // the player flies in with the key and turns it
-  const a=Math.min(1,t/.9),ease=1-Math.pow(1-a,3);
-  const px=-cs+(lx+cs*.55+cs)*ease,py=ly-cs*.15-Math.sin(ease*Math.PI)*cs*.5;
-  const turn=t>.9&&t<1.5?(t-.9)/.6*Math.PI/2:0;
-  drawParrot(px,py,cs*.95,-1,performance.now()/1000*18,{key:t<1.5});
-  if(t>=.9&&t<1.5){ctx.save();ctx.translate(lx+cs*.13,ly+cs*.02);ctx.scale(1,Math.cos(turn)||.05);drawKey(0,0,cs*.5,0);ctx.restore()}
-  if(out>0&&out<1)drawParrot(fx,fy,cs*.95,1,performance.now()/1000*18,{});
+  const now=performance.now()/1000,cs=Math.min(W*.3,H*.19),cx=W/2,cy=H*.46,lw=Math.max(2,cs*.035);
+  // the hollow
+  ctx.fillStyle='#2E1C10';ctx.fillRect(0,0,W,H);
+  let g=ctx.createRadialGradient(cx,cy-cs*.3,cs*.3,cx,cy,Math.max(W,H)*.65);g.addColorStop(0,'#A9743F');g.addColorStop(.45,'#6B4426');g.addColorStop(1,'#24150B');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(30,15,5,.25)';ctx.lineWidth=lw*1.2;for(let k=1;k<7;k++){ctx.beginPath();ctx.ellipse(cx,cy+cs*.2,cs*1.25*k,cs*1.05*k,0,0,7);ctx.stroke()}
+  g=ctx.createRadialGradient(cx,cy-cs*1.6,0,cx,cy-cs*1.6,cs*2.6);g.addColorStop(0,'rgba(255,235,170,.55)');g.addColorStop(1,'rgba(255,235,170,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const L=cx-cs*.85,R=cx+cs*.85,top=cy-cs*.55,bot=cy+cs*.75,dl=cx-cs*.28,dr=cx+cs*.28;
+  const open=Math.max(0,Math.min(1,(t-1.5)/.5)),out=Math.max(0,Math.min(1,(t-1.95)/1.2));
+  const bar=(x1,y1,x2,y2,w)=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineWidth=w||lw;ctx.lineCap='round';ctx.strokeStyle='#5E3A12';ctx.stroke();ctx.lineWidth=(w||lw)*.45;ctx.strokeStyle='#E8B85A';ctx.stroke()};
+  // chain and ring
+  bar(cx,0,cx,top-cs*.62,lw*1.2);ctx.beginPath();ctx.arc(cx,top-cs*.62,cs*.07,0,7);ctx.lineWidth=lw;ctx.strokeStyle='#C99A3A';ctx.stroke();
+  // back of the cage: dome and back bars (behind the friend)
+  ctx.beginPath();ctx.ellipse(cx,bot,cs*.85,cs*.17,0,0,7);gradFill(bot-cs*.17,bot+cs*.17,'#C98E58','#7A4A2A');
+  ctx.save();ctx.globalAlpha=.55;for(let k=-3;k<=3;k++){const x=cx+k*cs*.24;bar(x,bot-cs*.05,x,top+cs*.02,lw*.8)}ctx.restore();
+  // perch and the friend
+  bar(cx-cs*.55,cy+cs*.32,cx+cs*.55,cy+cs*.32,lw*1.3);
+  const fu=cs*.62;
+  if(out<=0)drawParrot(cx-cs*.05,cy+cs*.12,fu,-1,0,{sit:true,pal:st.pal,seed:1.3});
+  // front bars, leaving a gap for the door
+  for(let k=-3;k<=3;k++){const x=cx+k*cs*.27;if(x>dl+2&&x<dr-2)continue;bar(x,bot,x,top+cs*.05)}
+  ctx.beginPath();ctx.ellipse(cx,top+cs*.05,cs*.85,cs*.72,0,Math.PI,0);ctx.lineWidth=lw*1.5;ctx.strokeStyle='#5E3A12';ctx.stroke();ctx.lineWidth=lw*.6;ctx.strokeStyle='#E8B85A';ctx.stroke();
+  for(const a of[-.55,0,.55]){ctx.beginPath();ctx.moveTo(cx,top-cs*.67);ctx.quadraticCurveTo(cx+a*cs*.9,top-cs*.55,cx+a*cs*1.45,top+cs*.05);ctx.lineWidth=lw;ctx.strokeStyle='#5E3A12';ctx.stroke();ctx.lineWidth=lw*.45;ctx.strokeStyle='#E8B85A';ctx.stroke()}
+  bar(L,top+cs*.05,R,top+cs*.05,lw*1.4);bar(L,bot-cs*.02,R,bot-cs*.02,lw*1.4);
+  // the door: a little panel of bars hinged on its left side, swinging open toward us
+  const dw=(dr-dl)*Math.cos(open*Math.PI*.48),dTop=top+cs*.22;
+  ctx.save();
+  const sk=open*cs*.12;   // perspective: the swinging edge grows as it comes closer
+  ctx.beginPath();ctx.moveTo(dl,dTop);ctx.lineTo(dl+dw,dTop-sk);ctx.lineTo(dl+dw,bot+sk);ctx.lineTo(dl,bot);ctx.closePath();
+  ctx.fillStyle='rgba(255,220,140,.08)';ctx.fill();
+  for(const k of[0,.33,.66,1]){const x=dl+dw*k,e=sk*k;bar(x,dTop-e,x,bot+e,lw*(k===0||k===1?1.2:.9))}
+  bar(dl,dTop,dl+dw,dTop-sk,lw*1.2);bar(dl,bot,dl+dw,bot+sk,lw*1.2);
+  ctx.restore();
+  // padlock on the door's free edge; drops when it opens
+  const lx=dr-cs*.02,ly=cy+cs*.18,drop=open>0?Math.pow(t-1.5,2)*cs*7:0,shake=t>.95&&t<1.5?Math.sin(t*70)*cs*.02:0;
+  if(ly+drop<H+cs){ctx.save();ctx.translate(lx+shake,ly+drop);ctx.rotate(drop?drop/cs*.5:0);
+    ctx.beginPath();ctx.arc(0,-cs*.1,cs*.085,Math.PI,0);ctx.lineWidth=lw*1.4;ctx.strokeStyle='#8A949B';ctx.stroke();
+    ctx.beginPath();ctx.roundRect?ctx.roundRect(-cs*.13,-cs*.11,cs*.26,cs*.22,cs*.05):ctx.rect(-cs*.13,-cs*.11,cs*.26,cs*.22);gradFill(-cs*.11,cs*.11,'#FFE07A','#D99A00','#8A5A00',lw*.7);
+    ctx.beginPath();ctx.arc(0,-cs*.01,cs*.025,0,7);ctx.rect(-cs*.008,-cs*.01,cs*.016,cs*.06);ctx.fillStyle='#4A3020';ctx.fill();ctx.restore()}
+  // the player flies in from the left, holds the key to the lock, then follows the friend out
+  const pu=cs*.62,a=Math.min(1,t/.9),ease=1-Math.pow(1-a,3);
+  let px=-pu+(lx+cs*.62+pu)*ease,py=ly-cs*.18-Math.sin(ease*Math.PI)*cs*.6,pf=-1;
+  if(t>2.2){const k=Math.min(1,(t-2.2)/1.1);px+=k*W*.7;py-=k*cs*1.6;pf=1}
+  if(t>=.9&&t<1.5){const turn=(t-.9)/.6*Math.PI/2;ctx.save();ctx.translate(lx+cs*.2,ly-cs*.01);ctx.scale(1,Math.max(.08,Math.cos(turn)));drawKey(0,0,cs*.42,0);ctx.restore()}
+  // the friend flies out through the open door
+  if(out>0){const fx=dl+(dr-dl)*.5+out*(W*.75),fy=cy+cs*.12-Math.sin(out*Math.PI*.8)*cs*1.3-out*cs*.6;drawParrot(fx,fy,fu,1,now*18,{pal:st.pal,seed:1.3})}
+  drawParrot(px,py,pu,pf,now*18,{key:t<.9});
+  if(out>0)for(let k=0;k<3;k++){const hx=dr+out*W*.5-k*cs*.4,hy=cy-cs*.3-out*cs*.9+Math.sin(now*4+k)*cs*.1;ctx.save();ctx.globalAlpha=Math.max(0,1-out)*.9;ctx.beginPath();const r=cs*.06;ctx.moveTo(hx,hy+r);ctx.bezierCurveTo(hx-r*2,hy-r*.4,hx-r*.6,hy-r*1.6,hx,hy-r*.5);ctx.bezierCurveTo(hx+r*.6,hy-r*1.6,hx+r*2,hy-r*.4,hx,hy+r);ctx.fillStyle='#F04E3E';ctx.fill();ctx.restore()}
 }
 function draw(){
   if(!st)return;
@@ -977,7 +1000,7 @@ function draw(){
   for(const w of st.workers)drawWorker(w,false);
   for(const q of st.projs)if(!q.landed)drawItem(q.type,X(q.x),Y(q.y),S*q.r,q.rot,q.dud?.6:1);
   const p=st.parrot;
-  if(st.buddy)drawParrot(X(st.buddy.x),Y(st.buddy.y),S,st.buddy.f||1,st.buddy.ph*18,{seed:1.7});
+  if(st.buddy)drawParrot(X(st.buddy.x),Y(st.buddy.y),S,st.buddy.f||1,st.buddy.ph*18,{seed:1.7,pal:st.pal});
   drawParrot(X(p.x),Y(p.y),S,p.f,p.flap,{key:p.key,sit:p.sit,vy:p.vy});
   if(st.mode==='intro'||st.mode==='menu'){
     if(st.mode==='menu'||st.sceneT<3.8){ctx.beginPath();ctx.ellipse(X(p.x+.5*p.f),Y(p.y-.12),S*.1,S*.06,.4,0,7);gradFill(Y(p.y-.18),Y(p.y-.06),'#FFC86B','#F08A1A')}
