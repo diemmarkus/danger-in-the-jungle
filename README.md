@@ -12,6 +12,6 @@ A comic-style jungle game for the phone. You're a blue parrot having breakfast w
 - **Difficulty:** Easy, Medium, Hard. Reached levels and the best time for a full run are kept per difficulty.
 - Languages: EN, DE, FR, ES, IT, PT.
 
-Single self-contained `index.html` — no build step. Same look as [Irrgarten](https://github.com/diemmarkus/maze) and [Don't Spill](https://github.com/diemmarkus/dont-spill).
+Single self-contained `index.html` — no build step. Painted, modern 2D-animation look: layered jungle with light rays, soft shading, expressive characters.
 
 Play: enable GitHub Pages (Settings → Pages → deploy from `main`) and open it on your phone.
