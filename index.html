@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#FFD93B">
+<title>Danger in the Jungle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Kalam:wght@400;700&display=swap">
+<style>
+/* Layout: one-screen comic panel — inked HUD strip on top, the jungle clearing in the middle, the arrow pad at the bottom. */
+:root{
+  --paper:#FFD93B;      /* comic yellow */
+  --ink:#16120F;        /* outlines */
+  --jungle:#4FAE5A;     /* jungle backdrop */
+  --deep:#2B7A43;       /* far trees */
+  --leaf:#8FDB6A;       /* highlights */
+  --hedge:#2E9A4B;      /* canopy */
+  --bark:#8A5A33;
+  --dirt:#B07A45;
+  --pop:#E8322E;        /* danger */
+  --blue:#2F7FE0;       /* the parrot */
+  --vest:#FF8A1F;       /* workers */
+  --soda:#7FE3F0;
+  --white:#FFFDF6;
+  --display:"Bangers","Impact","Arial Black",sans-serif;
+  --hand:"Kalam","Comic Sans MS","Chalkboard SE",cursive;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{height:100%;overflow:hidden;margin:0}
+html{background:var(--paper)}
+body{background:var(--paper);color:var(--ink);font-family:var(--hand);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+.app{height:100%;display:flex;flex-direction:column;gap:8px;padding-block:10px 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
+.hud{display:flex;align-items:center;gap:12px;font-family:var(--display);letter-spacing:.04em}
+.chip{background:var(--white);border:3px solid var(--ink);border-radius:6px;padding:2px 10px;font-size:20px;box-shadow:3px 3px 0 var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.restart{flex:none;width:40px;height:34px;display:grid;place-items:center;background:var(--leaf);color:var(--ink);border:3px solid var(--ink);border-radius:6px;box-shadow:3px 3px 0 var(--ink);padding:0;cursor:pointer}
+.restart svg{width:22px;height:22px;display:block}
+.restart:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.restart:focus-visible{outline:3px dashed var(--pop);outline-offset:3px}
+.meter{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.meter span{font-size:13px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:16px;background:var(--white);border:3px solid var(--ink);border-radius:6px;box-shadow:3px 3px 0 var(--ink);overflow:hidden}
+.fill{height:100%;width:0;background:var(--vest);background-image:radial-gradient(rgba(0,0,0,.2) 1.5px,transparent 2px);background-size:6px 6px;transition:width .2s}
+.fill.ready{background-color:var(--paper);animation:blink .3s steps(2) infinite}
+@keyframes blink{50%{background-color:var(--leaf)}}
+.stage{position:relative;flex:1;min-height:0;margin-left:calc(-1*max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1*max(16px,env(safe-area-inset-right,0px)));touch-action:none;border-block:3px solid var(--ink)}
+canvas{display:block;width:100%;height:100%}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{box-sizing:border-box;width:min(350px,100%);background:var(--white);border:4px solid var(--ink);border-radius:10px;box-shadow:7px 7px 0 var(--ink);padding:18px 20px;text-align:center;transform:rotate(-1.5deg);max-height:100%;overflow-y:auto}
+.card h1{font-family:var(--display);font-size:52px;line-height:.9;margin:0 0 6px;letter-spacing:.03em;color:var(--blue);-webkit-text-stroke:2px var(--ink);text-shadow:4px 4px 0 var(--ink);text-wrap:balance}
+#cardOv.bad h1{color:var(--pop)}
+#cardOv.good h1{color:var(--hedge)}
+.card p{margin:6px 0;font-size:16px;line-height:1.35}
+.card ul{list-style:none;padding:0;margin:8px 0;text-align:left;font-size:14px;line-height:1.25;display:grid;gap:3px}
+.card li::before{content:"★ ";color:var(--pop)}
+.btn{font-family:var(--display);font-size:28px;letter-spacing:.06em;background:var(--leaf);color:var(--ink);border:4px solid var(--ink);border-radius:10px;padding:8px 26px;box-shadow:5px 5px 0 var(--ink);cursor:pointer;margin-top:8px}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.btn:focus-visible{outline:3px dashed var(--pop);outline-offset:4px}
+.big{font-family:var(--display);font-size:22px;letter-spacing:.04em}
+.hint{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;background:var(--white);border:3px solid var(--ink);border-radius:6px;box-shadow:3px 3px 0 var(--ink);padding:2px 10px;font-family:var(--display);letter-spacing:.05em;font-size:14px;white-space:nowrap;pointer-events:none}
+.diffs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
+.diffs button{font-family:var(--display);font-size:17px;letter-spacing:.02em;background:var(--white);color:var(--ink);border:3px solid var(--ink);border-radius:8px;padding:5px 2px;box-shadow:3px 3px 0 var(--ink);cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.diffs button[aria-pressed="true"]{background:var(--paper);transform:translate(-1px,-1px) rotate(-2deg);box-shadow:4px 4px 0 var(--ink)}
+.diffs button:focus-visible{outline:3px dashed var(--pop);outline-offset:2px}
+.lvls{margin:6px 0 2px}
+.lvls>span{display:block;font-family:var(--display);letter-spacing:.05em;font-size:14px;margin-bottom:4px}
+.lvlrow{display:flex;justify-content:center;gap:6px}
+.lvlrow button{font-family:var(--display);font-size:17px;width:40px;height:32px;padding:0;background:var(--white);color:var(--ink);border:2px solid var(--ink);border-radius:6px;box-shadow:2px 2px 0 var(--ink);cursor:pointer}
+.lvlrow button[aria-pressed="true"]{background:var(--pop);color:var(--white)}
+.lvlrow button:focus-visible{outline:3px dashed var(--pop);outline-offset:2px}
+.langs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:14px}
+.langs button{font-family:var(--display);font-size:15px;letter-spacing:.06em;background:var(--white);color:var(--ink);border:2px solid var(--ink);border-radius:6px;padding:2px 8px;box-shadow:2px 2px 0 var(--ink);cursor:pointer}
+.langs button[aria-pressed="true"]{background:var(--paper)}
+.langs button:focus-visible{outline:3px dashed var(--pop);outline-offset:2px}
+/* arrow pad: left/right under the left thumb, up/down under the right thumb */
+.pad{flex:none;display:flex;justify-content:space-between;align-items:center;padding:2px 4px calc(10px + env(safe-area-inset-bottom,0px));touch-action:none}
+.pg{display:flex;gap:12px}
+.pg.v{flex-direction:column;gap:8px}
+.pad button{width:68px;height:52px;display:grid;place-items:center;background:var(--white);color:var(--ink);border:4px solid var(--ink);border-radius:12px;box-shadow:4px 4px 0 var(--ink);padding:0;cursor:pointer;touch-action:none}
+.pg.v button{height:46px}
+.pad button svg{width:30px;height:30px;display:block}
+.pad button.on{background:var(--paper);transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.pad button:focus-visible{outline:3px dashed var(--pop);outline-offset:2px}
+</style>
+<style>:root{padding:env(safe-area-inset-top,0px) 0 0;box-sizing:border-box;height:100%}body{font-size:14px}</style>
+</head>
+<body>
+<div class="app">
+  <div class="hud">
+    <div class="chip" id="lvl">LVL 1/3</div>
+    <div class="meter"><span id="lureLbl">LURED 0/6</span><div class="bar"><div class="fill" id="fill"></div></div></div>
+    <button type="button" class="restart" id="restartBtn" aria-label="Restart" title="Restart" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><path d="M20.5 3.5v5.5H15z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+    <div class="hint" id="hint" hidden data-i18n="skip">TAP TO SKIP</div>
+    <div class="overlay" id="startOv">
+      <div class="card">
+        <h1 data-i18n="title">DANGER IN THE JUNGLE!</h1>
+        <p data-i18n="story">You're a blue parrot.</p>
+        <ul id="rules"></ul>
+        <div class="diffs" role="group" aria-label="Difficulty"></div>
+        <div class="lvls" hidden><span data-i18n="from">START AT LEVEL</span><div class="lvlrow" role="group"></div></div>
+        <button class="btn" id="startBtn" data-i18n="start">FLY!</button>
+        <div class="langs" id="langs" role="group" aria-label="Language"></div>
+      </div>
+    </div>
+    <div class="overlay" id="cardOv" hidden>
+      <div class="card">
+        <h1 id="cTitle">CAUGHT!</h1>
+        <p id="cText"></p>
+        <p class="big" id="cBig" hidden></p>
+        <p id="cBest" hidden></p>
+        <div class="diffs" id="cDiffs" role="group" aria-label="Difficulty" hidden></div>
+        <button class="btn" id="cBtn">AGAIN</button>
+      </div>
+    </div>
+  </div>
+  <div class="pad" id="pad">
+    <div class="pg">
+      <button type="button" data-d="l" aria-label="Left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4 6 12l10 8z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+      <button type="button" data-d="r" aria-label="Right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l10 8-10 8z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="pg v">
+      <button type="button" data-d="u" aria-label="Up"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 12 6l8 11z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+      <button type="button" data-d="d" aria-label="Down"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7l8 11 8-11z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const cv=$('c'),ctx=cv.getContext('2d');
+const css=getComputedStyle(document.documentElement);
+const V=n=>css.getPropertyValue(n).trim();
+const C={paper:V('--paper'),ink:V('--ink'),jungle:V('--jungle'),deep:V('--deep'),leaf:V('--leaf'),hedge:V('--hedge'),bark:V('--bark'),dirt:V('--dirt'),pop:V('--pop'),blue:V('--blue'),vest:V('--vest'),soda:V('--soda'),white:V('--white')};
+
+// World units: the clearing is 10 units wide, x to the right, y downward from the top of the stage.
+const WORLD=10,LINE=5,BOSS_X=9,LEVELS=3;
+const PR=.3;                 // parrot hit radius
+const PV=4.8;                // parrot flying speed (units/s)
+const G=6;                   // gravity on thrown things (units/s²)
+const ITEMS=['rope','net','kescher','basket','rope','net'];
+const ITEM_R={rope:.34,net:.26,kescher:.36,basket:.36};
+// per level: worker walking speed, throw cooldown range, wind-up time, throw speed, max things in the air at once
+const LV=[
+  {walk:1.15,cd:[3.6,6],wind:.6,speed:5,max:2},
+  {walk:1.35,cd:[2.7,4.6],wind:.5,speed:6.3,max:3},
+  {walk:1.6,cd:[2,3.4],wind:.42,speed:7.6,max:4},
+];
+// difficulty: slower throws, longer cooldowns and wind-ups, slower walkers, less aiming ahead
+const DIFFS=[{k:'easy',cd:1.45,wind:1.25,speed:.8,walk:.85,lead:0},{k:'medium',cd:1.2,wind:1.1,speed:.9,walk:.93,lead:.25},{k:'hard',cd:1,wind:1,speed:1,walk:1,lead:.5}];
+
+// ---------- i18n ----------
+const NB=' ';
+const I18N={
+  en:{name:'EN',title:'DANGER IN THE JUNGLE!',story:'You’re a blue parrot having breakfast when you hear rumbling, whistling and sawing. You push a leaf aside: workers are cutting down your jungle! Not in your home.',
+    rules:['Press the arrows to fly.','The boss’s crew throws ropes, nets, landing nets and baskets at you. Dodge them!','Lure all 6 workers to the left of the log.','Then snatch the key from the boss’s neck, fly through the door and free your friend.','Get caught and you have to do the level again.'],
+    start:'FLY!',skip:'TAP TO SKIP',from:'START AT LEVEL',diff:['EASY','MEDIUM','HARD'],restart:'Restart',
+    lvl:n=>'LVL '+n+'/3',lured:n=>'LURED '+n+'/6',keyReady:'ALL LURED: GRAB THE KEY!',escape:'FLY THROUGH THE DOOR!',
+    level:n=>'LEVEL '+n+'!',lureSub:'LURE ALL 6 TO THE LEFT!',notYet:'NOT YET!',snatch:'SNATCH!',door:'TO THE DOOR!',click:'CLICK!',free:'FREE!',saved:'SAVED!',
+    intro:['RUMBLE!','TWEEET!','RRRATSCH!'],introBan:'NOT IN MY JUNGLE!',caughtPop:'GOTCHA!',huh:'HUH?',
+    caughtT:'CAUGHT!',caughtP:'The crew got you. Do the level again!',again:'AGAIN',
+    doneT:n=>'LEVEL '+n+' DONE!',doneP:'Your friend is free, the workers are gone and the jungle grows back. But there are more of them…',next:'NEXT',
+    winT:'JUNGLE SAVED!',winP:'All three friends are free and the lumberjacks are gone for good.',stats:(t,c)=>t+' · CAUGHT '+c+'×',best:t=>'Best time: '+t},
+  de:{name:'DE',title:'DANGER IN THE JUNGLE!',story:'Du bist ein blauer Papagei und frühstückst gerade, da hörst du Rollen, Pfeifen und Sägen. Du schiebst ein Blatt zur Seite: Arbeiter holzen deinen Wald ab! Nicht in deiner Heimat.',
+    rules:['Drück auf die Pfeile, um zu fliegen.','Die Komplizen vom Chef werfen Seile, Netze, Kescher und Körbe nach dir. Weich aus!','Lock alle 6 Arbeiter auf die linke Seite vom Baumstamm.','Dann schnapp dir den Schlüssel vom Hals des Chefs, flieg durch die Tür und befreie deinen Artgenossen.','Wirst du eingefangen, musst du das Level wiederholen.'],
+    start:'LOSFLIEGEN!',skip:'TIPPEN ZUM ÜBERSPRINGEN',from:'STARTEN BEI LEVEL',diff:['LEICHT','MITTEL','SCHWER'],restart:'Neu starten',
+    lvl:n=>'LVL '+n+'/3',lured:n=>'GELOCKT '+n+'/6',keyReady:'ALLE GELOCKT: HOL DEN SCHLÜSSEL!',escape:'FLIEG DURCH DIE TÜR!',
+    level:n=>'LEVEL '+n+'!',lureSub:'LOCK ALLE 6 NACH LINKS!',notYet:'NOCH NICHT!',snatch:'SCHNAPP!',door:'ZUR TÜR!',click:'KLICK!',free:'FREI!',saved:'GERETTET!',
+    intro:['BRUMM!','PFIIIFF!','RRRATSCH!'],introBan:'NICHT IN MEINEM DSCHUNGEL!',caughtPop:'ERWISCHT!',huh:'HÄ?',
+    caughtT:'GEFANGEN!',caughtP:'Die Komplizen haben dich erwischt. Nochmal von vorn!',again:'NOCHMAL',
+    doneT:n=>'LEVEL '+n+' GESCHAFFT!',doneP:'Dein Artgenosse ist frei, die Arbeiter ziehen ab und der Wald wächst nach. Aber da kommen noch mehr…',next:'WEITER',
+    winT:'DSCHUNGEL GERETTET!',winP:'Alle drei Artgenossen sind frei und die Holzfäller sind für immer weg.',stats:(t,c)=>t+' · GEFANGEN '+c+'×',best:t=>'Bestzeit: '+t},
+  fr:{name:'FR',title:'DANGER IN THE JUNGLE!',story:'Tu es un perroquet bleu en plein petit-déjeuner quand tu entends des grondements, des sifflets et des scies. Tu écartes une feuille'+NB+': des ouvriers abattent ta jungle'+NB+'!',
+    rules:['Appuie sur les flèches pour voler.','L’équipe du chef te lance des cordes, des filets, des épuisettes et des paniers. Esquive'+NB+'!','Attire les 6 ouvriers à gauche du tronc.','Puis arrache la clé au cou du chef, vole jusqu’à la porte et libère ton ami.','Si tu te fais attraper, tu recommences le niveau.'],
+    start:'VOLE'+NB+'!',skip:'TOUCHE POUR PASSER',from:'COMMENCER AU NIVEAU',diff:['FACILE','MOYEN','DIFFICILE'],restart:'Recommencer',
+    lvl:n=>'NIV. '+n+'/3',lured:n=>'ATTIRÉS '+n+'/6',keyReady:'TOUS ATTIRÉS'+NB+': PRENDS LA CLÉ'+NB+'!',escape:'VOLE JUSQU’À LA PORTE'+NB+'!',
+    level:n=>'NIVEAU '+n+NB+'!',lureSub:'ATTIRE LES 6 À GAUCHE'+NB+'!',notYet:'PAS ENCORE'+NB+'!',snatch:'HOP'+NB+'!',door:'À LA PORTE'+NB+'!',click:'CLIC'+NB+'!',free:'LIBRE'+NB+'!',saved:'SAUVÉ'+NB+'!',
+    intro:['VROUM'+NB+'!','FIIIOU'+NB+'!','RRRATCH'+NB+'!'],introBan:'PAS DANS MA JUNGLE'+NB+'!',caughtPop:'ATTRAPÉ'+NB+'!',huh:'HEIN'+NB+'?',
+    caughtT:'ATTRAPÉ'+NB+'!',caughtP:'L’équipe t’a eu. Recommence le niveau'+NB+'!',again:'ENCORE',
+    doneT:n=>'NIVEAU '+n+' RÉUSSI'+NB+'!',doneP:'Ton ami est libre, les ouvriers partent et la forêt repousse. Mais il en arrive d’autres…',next:'SUIVANT',
+    winT:'JUNGLE SAUVÉE'+NB+'!',winP:'Tes trois amis sont libres et les bûcherons sont partis pour de bon.',stats:(t,c)=>t+' · ATTRAPÉ '+c+'×',best:t=>'Meilleur temps'+NB+': '+t},
+  es:{name:'ES',title:'DANGER IN THE JUNGLE!',story:'Eres un loro azul desayunando cuando oyes rugidos, silbidos y sierras. Apartas una hoja: ¡unos obreros están talando tu selva!',
+    rules:['Pulsa las flechas para volar.','La cuadrilla del jefe te lanza cuerdas, redes, salabres y cestas. ¡Esquívalos!','Atrae a los 6 obreros a la izquierda del tronco.','Luego quítale la llave del cuello al jefe, vuela hasta la puerta y libera a tu amigo.','Si te atrapan, repites el nivel.'],
+    start:'¡VUELA!',skip:'TOCA PARA SALTAR',from:'EMPEZAR EN EL NIVEL',diff:['FÁCIL','MEDIO','DIFÍCIL'],restart:'Reiniciar',
+    lvl:n=>'NIV. '+n+'/3',lured:n=>'ATRAÍDOS '+n+'/6',keyReady:'¡TODOS ATRAÍDOS: COGE LA LLAVE!',escape:'¡VUELA A LA PUERTA!',
+    level:n=>'¡NIVEL '+n+'!',lureSub:'¡ATRAE A LOS 6 A LA IZQUIERDA!',notYet:'¡TODAVÍA NO!',snatch:'¡ZAS!',door:'¡A LA PUERTA!',click:'¡CLIC!',free:'¡LIBRE!',saved:'¡SALVADO!',
+    intro:['¡BRRUM!','¡FIIIU!','¡RRRAS!'],introBan:'¡EN MI SELVA NO!',caughtPop:'¡PILLADO!',huh:'¿EH?',
+    caughtT:'¡ATRAPADO!',caughtP:'La cuadrilla te pilló. ¡Repite el nivel!',again:'OTRA VEZ',
+    doneT:n=>'¡NIVEL '+n+' SUPERADO!',doneP:'Tu amigo es libre, los obreros se van y la selva vuelve a crecer. Pero vienen más…',next:'SIGUIENTE',
+    winT:'¡SELVA SALVADA!',winP:'Tus tres amigos son libres y los leñadores se han ido para siempre.',stats:(t,c)=>t+' · ATRAPADO '+c+'×',best:t=>'Mejor tiempo: '+t},
+  it:{name:'IT',title:'DANGER IN THE JUNGLE!',story:'Sei un pappagallo blu e stai facendo colazione quando senti rombi, fischi e seghe. Sposti una foglia: degli operai stanno abbattendo la tua giungla!',
+    rules:['Premi le frecce per volare.','La squadra del capo ti lancia corde, reti, retini e cesti. Schivali!','Attira tutti e 6 gli operai a sinistra del tronco.','Poi strappa la chiave dal collo del capo, vola fino alla porta e libera il tuo amico.','Se ti catturano, rifai il livello.'],
+    start:'VOLA!',skip:'TOCCA PER SALTARE',from:'INIZIA DAL LIVELLO',diff:['FACILE','MEDIO','DIFFICILE'],restart:'Ricomincia',
+    lvl:n=>'LIV. '+n+'/3',lured:n=>'ATTIRATI '+n+'/6',keyReady:'TUTTI ATTIRATI: PRENDI LA CHIAVE!',escape:'VOLA ALLA PORTA!',
+    level:n=>'LIVELLO '+n+'!',lureSub:'ATTIRA TUTTI E 6 A SINISTRA!',notYet:'NON ANCORA!',snatch:'PRESA!',door:'ALLA PORTA!',click:'CLIC!',free:'LIBERO!',saved:'SALVO!',
+    intro:['BRUUM!','FIIIU!','RRRATCH!'],introBan:'NON NELLA MIA GIUNGLA!',caughtPop:'PRESO!',huh:'EH?',
+    caughtT:'CATTURATO!',caughtP:'La squadra ti ha preso. Rifai il livello!',again:'ANCORA',
+    doneT:n=>'LIVELLO '+n+' FATTO!',doneP:'Il tuo amico è libero, gli operai se ne vanno e la foresta ricresce. Ma ne arrivano altri…',next:'AVANTI',
+    winT:'GIUNGLA SALVA!',winP:'Tutti e tre gli amici sono liberi e i taglialegna se ne sono andati per sempre.',stats:(t,c)=>t+' · CATTURATO '+c+'×',best:t=>'Tempo migliore: '+t},
+  pt:{name:'PT',title:'DANGER IN THE JUNGLE!',story:'Você é um papagaio azul tomando café da manhã quando ouve roncos, apitos e serras. Você afasta uma folha: operários estão derrubando a sua selva!',
+    rules:['Aperte as setas para voar.','A turma do chefe joga cordas, redes, puçás e cestos em você. Desvie!','Atraia os 6 operários para a esquerda do tronco.','Depois pegue a chave do pescoço do chefe, voe até a porta e liberte seu amigo.','Se for pego, você repete o nível.'],
+    start:'VOA!',skip:'TOQUE PARA PULAR',from:'COMEÇAR NO NÍVEL',diff:['FÁCIL','MÉDIO','DIFÍCIL'],restart:'Reiniciar',
+    lvl:n=>'NÍV. '+n+'/3',lured:n=>'ATRAÍDOS '+n+'/6',keyReady:'TODOS ATRAÍDOS: PEGUE A CHAVE!',escape:'VOE PELA PORTA!',
+    level:n=>'NÍVEL '+n+'!',lureSub:'ATRAIA OS 6 PARA A ESQUERDA!',notYet:'AINDA NÃO!',snatch:'PEGUEI!',door:'PARA A PORTA!',click:'CLIQUE!',free:'LIVRE!',saved:'SALVO!',
+    intro:['VRUUM!','FIIIU!','RRRATCH!'],introBan:'NA MINHA SELVA NÃO!',caughtPop:'PEGO!',huh:'HÃ?',
+    caughtT:'PEGO!',caughtP:'A turma te pegou. Repita o nível!',again:'DE NOVO',
+    doneT:n=>'NÍVEL '+n+' CONCLUÍDO!',doneP:'Seu amigo está livre, os operários vão embora e a floresta volta a crescer. Mas vêm mais…',next:'PRÓXIMO',
+    winT:'SELVA SALVA!',winP:'Os três amigos estão livres e os lenhadores foram embora de vez.',stats:(t,c)=>t+' · PEGO '+c+'×',best:t=>'Melhor tempo: '+t},
+};
+function pickLang(){
+  const want=[];
+  try{const q=new URLSearchParams(location.search).get('lang');if(q)want.push(q)}catch(_){}
+  try{const s=localStorage.getItem('jungle.lang');if(s)want.push(s)}catch(_){}
+  want.push(...(navigator.languages||[navigator.language||'']));
+  for(const w of want){const k=String(w).toLowerCase().slice(0,2);if(I18N[k])return k}
+  return 'en';
+}
+let lang=pickLang(),T=I18N[lang],card=null;
+function applyLang(k,save){
+  lang=k;T=I18N[k];document.documentElement.lang=k;
+  if(save)try{localStorage.setItem('jungle.lang',k)}catch(_){}
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=T[el.dataset.i18n]});
+  $('restartBtn').setAttribute('aria-label',T.restart);$('restartBtn').title=T.restart;
+  $('rules').replaceChildren(...T.rules.map(r=>{const li=document.createElement('li');li.textContent=r;return li}));
+  $('langs').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===k));
+  paintDiffs();
+  if(card)showCard(card.kind);
+  hudCache='';fitTitles();
+}
+function fitTitles(){
+  document.querySelectorAll('.card h1').forEach(h=>{
+    h.style.fontSize='';const ov=h.closest('.overlay');const hid=ov.hidden;ov.hidden=false;
+    let fs=parseFloat(getComputedStyle(h).fontSize);
+    while(h.scrollWidth>h.clientWidth+1&&fs>24){fs-=2;h.style.fontSize=fs+'px'}
+    ov.hidden=hid;
+  });
+}
+addEventListener('resize',()=>fitTitles());
+document.fonts&&document.fonts.ready.then(()=>fitTitles());
+for(const k of Object.keys(I18N)){
+  const b=document.createElement('button');b.type='button';b.dataset.lang=k;b.textContent=I18N[k].name;b.lang=k;
+  b.addEventListener('click',()=>applyLang(k,true));$('langs').append(b);
+}
+
+// ---------- difficulty & progress ----------
+let diff=1;
+try{const d=+localStorage.getItem('jungle.diff');if(d>=0&&d<3)diff=d}catch(_){}
+function paintDiffs(){
+  document.querySelectorAll('.diffs').forEach(g=>{
+    if(!g.children.length)DIFFS.forEach((_,i)=>{const b=document.createElement('button');b.type='button';b.dataset.i=i;
+      b.addEventListener('click',()=>{diff=i;try{localStorage.setItem('jungle.diff',i)}catch(_){}startLvl=null;paintDiffs();if(card&&card.kind==='win')showCard('win')});g.append(b)});
+    [...g.children].forEach((b,i)=>{b.textContent=T.diff[i];b.setAttribute('aria-pressed',i===diff)});
+  });
+  paintLevels();
+}
+const memReach=[1,1,1];
+const reachKey=()=>'jungle.reached.'+DIFFS[diff].k;
+function reached(){try{return Math.min(LEVELS,Math.max(1,+localStorage.getItem(reachKey())||1,memReach[diff]))}catch(_){return memReach[diff]}}
+function setReached(l){l=Math.min(LEVELS,l);memReach[diff]=Math.max(memReach[diff],l);try{if(l>(+localStorage.getItem(reachKey())||1))localStorage.setItem(reachKey(),l)}catch(_){}}
+let startLvl=null;
+function paintLevels(){
+  const top=reached();if(startLvl==null||startLvl>top)startLvl=top;
+  document.querySelectorAll('.lvls').forEach(box=>{
+    box.hidden=top<2;const row=box.querySelector('.lvlrow');
+    if(row.children.length!==top)row.replaceChildren(...Array.from({length:top},(_,i)=>{const b=document.createElement('button');b.type='button';b.textContent=i+1;
+      b.addEventListener('click',()=>{startLvl=i+1;paintLevels()});return b}));
+    [...row.children].forEach((b,i)=>b.setAttribute('aria-pressed',i+1===startLvl));
+  });
+}
+const bestKey=d=>'jungle.best.'+DIFFS[d].k;
+const fmt=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+
+// ---------- canvas setup ----------
+let W=0,H=0,dpr=1,S=40,ox=0,WH=10,GY=9;
+const bcv=document.createElement('canvas'),bctx=bcv.getContext('2d');let bgDirty=true;
+function mkPattern(c0,bg,dot,size,rad){
+  const o=document.createElement('canvas');o.width=o.height=Math.round(size*dpr);const c=o.getContext('2d');c.scale(dpr,dpr);
+  c.fillStyle=bg;c.fillRect(0,0,size,size);c.fillStyle=dot;
+  for(const[x,y]of[[size/4,size/4],[size*3/4,size*3/4]]){c.beginPath();c.arc(x,y,rad,0,7);c.fill()}
+  const p=c0.createPattern(o,'repeat');p.setTransform&&p.setTransform(new DOMMatrix().scale(1/dpr));return p;
+}
+function resize(){
+  const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);
+  W=r.width;H=r.height;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+  S=Math.max(16,Math.min(W/WORLD,H/6.2));ox=(W-WORLD*S)/2;WH=H/S;GY=WH-.7;
+  bgDirty=true;
+}
+addEventListener('resize',resize);
+const X=x=>ox+x*S,Y=y=>y*S;
+const TOP=()=>Math.max(.55,GY-6.6);   // how high the parrot can fly
+const DOOR=()=>({x:.85,y:Math.max(1.3,GY-6.1)});
+const BRANCH=()=>({x1:1.3,x2:3.6,y:Math.max(2.2,GY-4.4)});
+
+// ---------- state ----------
+let st=null,last=performance.now(),paused=false;
+const held={l:0,r:0,u:0,d:0},keys={};
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function fresh(level,fromStart){return{mode:'menu',level,runT:0,catches:0,fromStart,parts:[],projs:[],workers:[],banner:null,sceneT:0,diff}}
+function newLevel(l,withIntro){
+  st.level=l;setReached(l);
+  const br=BRANCH();
+  st.parrot={x:2.5,y:br.y-.42,vx:0,vy:0,f:1,flap:0,key:false,sit:!!withIntro};
+  const offs=[-1.5,-.9,-.3,.3,.9,1.5].sort(()=>Math.random()-.5);
+  st.workers=ITEMS.map((it,i)=>({x:5.45+i*.42+rnd(-.08,.08),item:it,off:offs[i],cd:1.5+rnd(1.6,4)*DIFFS[st.diff].cd,wind:0,reload:0,f:-1,ph:Math.random()*7,stun:0,saw:withIntro&&i%2===0}));
+  st.workers.sort((a,b)=>a.x-b.x);
+  st.boss={x:BOSS_X,key:true,cd:0,ph:0,leave:0};
+  st.projs=[];st.parts=[];st.caught=null;st.allLured=false;st.sceneT=0;
+  st.stumps=[{x:4.6,g:0},{x:7.1,g:0},{x:8.1,g:0},{x:3.2,g:0}];
+  st.buddy=null;st.seed=(Math.random()*1e9)|0;bgDirty=true;
+  if(withIntro){st.mode='intro';st.leafOff=0;$('hint').hidden=false}
+  else startPlay();
+}
+function startPlay(){
+  st.mode='play';st.sceneT=0;st.parrot.sit=false;$('hint').hidden=true;
+  for(const w of st.workers)w.saw=false;
+  st.banner={text:T.level(st.level),sub:T.lureSub,t:2,max:2};
+}
+
+// ---------- input ----------
+document.querySelectorAll('.pad button').forEach(b=>{
+  const d=b.dataset.d;
+  const on=e=>{e.preventDefault();held[d]=1;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}};
+  const off=()=>{held[d]=0;b.classList.remove('on')};
+  b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);
+  b.addEventListener('contextmenu',e=>e.preventDefault());
+});
+const KMAP={ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r',ArrowUp:'u',w:'u',ArrowDown:'d',s:'d'};
+addEventListener('keydown',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(KMAP[k]){keys[KMAP[k]]=1;e.preventDefault()}
+  if(st&&st.mode==='intro'&&(k===' '||k==='Enter'))startPlay()});
+addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(KMAP[k])keys[KMAP[k]]=0});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=0;for(const k in held)held[k]=0;document.querySelectorAll('.pad button').forEach(b=>b.classList.remove('on'))});
+document.addEventListener('visibilitychange',()=>{paused=document.hidden;last=performance.now()});
+$('stage').addEventListener('pointerdown',()=>{if(st&&st.mode==='intro'&&st.sceneT>.4)startPlay()});
+function dir(){
+  let x=(held.r||keys.r?1:0)-(held.l||keys.l?1:0),y=(held.d||keys.d?1:0)-(held.u||keys.u?1:0);
+  const L=Math.hypot(x,y);if(L>1){x/=L;y/=L}return{x,y};
+}
+
+// ---------- update ----------
+function popText(x,y,text,col){st.parts.push({type:'pop',x,y,t:0,life:.8,rot:(Math.random()-.5)*.5,text,col})}
+function burst(x,y,n,type,spd){
+  for(let i=0;i<n;i++){const a=Math.random()*7,v=(.5+Math.random())*spd;
+    st.parts.push({type,x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,rot:Math.random()*7,vr:(Math.random()-.5)*10,t:0,life:.7+Math.random()*.5})}
+}
+const handPos=w=>({x:w.x-w.f*.1,y:GY-1.55});
+function throwFrom(w){
+  const L=LV[st.level-1],D=DIFFS[st.diff],p=st.parrot,o=handPos(w);
+  const sp=L.speed*D.speed;
+  let tx=p.x,ty=p.y;const d0=Math.hypot(tx-o.x,ty-o.y),T0=Math.max(.5,d0/sp);
+  tx+=p.vx*T0*D.lead;ty+=p.vy*T0*D.lead*.5;
+  tx=Math.max(.3,Math.min(9.7,tx));ty=Math.max(.4,Math.min(GY-.4,ty));
+  const dx=tx-o.x,dy=ty-o.y,Tf=Math.max(.5,Math.hypot(dx,dy)/sp);
+  st.projs.push({type:w.item,x:o.x,y:o.y,vx:dx/Tf,vy:(dy-.5*G*Tf*Tf)/Tf,rot:0,spin:(w.item==='net'?2:w.item==='basket'?3:7)*(dx<0?-1:1),age:0,landed:0,dud:false});
+}
+function catchParrot(type){
+  if(st.mode!=='play')return;
+  st.mode='caught';st.caught=type;st.sceneT=0;st.catches++;st.banner=null;
+  popText(st.parrot.x,st.parrot.y,T.caughtPop,C.white);burst(st.parrot.x,st.parrot.y,10,'feather',2.5);
+}
+function lured(){let n=0;for(const w of st.workers)if(w.x<LINE)n++;return n}
+function update(dt){
+  if(!st)return;
+  for(const p of st.parts){p.t+=dt;if(p.type!=='pop'&&p.type!=='gain'){p.vy+=(p.type==='heart'?-1:3)*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=p.vr*dt}}
+  st.parts=st.parts.filter(p=>p.t<p.life);
+  if(st.banner){st.banner.t-=dt;if(st.banner.t<=0)st.banner=null}
+  const p=st.parrot;if(!p)return;
+  st.sceneT+=dt;p.flap+=dt*(p.sit?0:18);
+  for(const w of st.workers){w.ph+=dt;if(w.stun>0)w.stun+=dt}
+  if(st.mode==='intro'){
+    const t=st.sceneT,pts=[[.6,6.2,GY-2.2],[1.4,8.2,GY-2.8],[2.2,5.2,GY-2.6]];
+    pts.forEach(([at,x,y],i)=>{if(t-dt<at&&t>=at)popText(x,y,T.intro[i],C.white)});
+    if(t-dt<2.8&&t>=2.8)popText(p.x+.4,p.y-.7,'?',C.white);
+    st.leafOff=Math.max(0,Math.min(1,(t-3.1)/.6));
+    if(t-dt<3.8&&t>=3.8){popText(p.x+.4,p.y-.7,'!',C.white);p.sit=false;p.vy=-2}
+    if(t>3.8){p.flap+=dt*18;p.y+=(BRANCH().y-.9-p.y)*Math.min(1,dt*3)}
+    if(t-dt<4&&t>=4)st.banner={text:T.introBan,t:1.6,max:1.6};
+    if(t>5.6)startPlay();
+    return;
+  }
+  if(st.mode==='play'||st.mode==='escape'){
+    st.runT+=dt;
+    const d=dir(),k=Math.min(1,dt*10);
+    p.vx+=(d.x*PV-p.vx)*k;p.vy+=(d.y*PV-p.vy)*k;
+    if(st.boss.cd>0){st.boss.cd-=dt}
+    p.x+=p.vx*dt;p.y+=p.vy*dt;
+    p.x=Math.max(.45,Math.min(9.6,p.x));p.y=Math.max(TOP(),Math.min(GY-.45,p.y));
+    if(Math.abs(p.vx)>.4)p.f=p.vx>0?1:-1;
+  }
+  // thrown things fly in arcs; once they hit the ground they lie there for a moment
+  for(const q of st.projs){
+    q.age+=dt;
+    if(q.landed){q.landed+=dt;continue}
+    q.vy+=G*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.rot+=q.spin*dt;
+    if(q.type==='net')q.r=Math.min(.62,ITEM_R.net+q.age*.55);else q.r=ITEM_R[q.type];
+    if(q.y>=GY-.12&&q.vy>0){q.y=GY-.12;q.landed=.001;q.rot=q.type==='basket'?0:q.rot}
+    if(!q.dud&&!q.landed&&st.mode==='play'&&Math.hypot(q.x-p.x,q.y-p.y)<PR+q.r*.85){catchParrot(q.type);q.gone=true}
+  }
+  st.projs=st.projs.filter(q=>!q.gone&&q.landed<1&&q.x>-1&&q.x<11);
+  if(st.mode==='play'){
+    const L=LV[st.level-1],D=DIFFS[st.diff];
+    let busy=st.projs.filter(q=>!q.landed&&!q.dud).length+st.workers.filter(w=>w.wind>0).length;
+    for(const w of st.workers){
+      if(w.reload>0)w.reload-=dt;
+      w.f=p.x<w.x?-1:1;
+      if(w.wind>0){
+        w.wind-=dt;
+        if(w.wind<=0){throwFrom(w);w.reload=.9;w.cd=rnd(...L.cd)*D.cd}
+        continue;   // they stand still while throwing
+      }
+      const tx=Math.max(.6,Math.min(7.6,p.x+w.off)),dx=tx-w.x,sp=L.walk*D.walk;
+      w.walking=Math.abs(dx)>.05;w.x+=Math.sign(dx)*Math.min(Math.abs(dx),sp*dt);
+      w.cd-=dt;
+      if(w.cd<=0&&w.reload<=0){
+        if(busy<L.max&&Math.abs(p.x-w.x)<7.5){w.wind=L.wind*D.wind;busy++}else w.cd=.25+Math.random()*.4;
+      }
+      // fly too close to a worker and he grabs you
+      if(Math.abs(p.x-w.x)<.42&&p.y>GY-1.5){catchParrot('hands');return}
+    }
+    const n=lured(),all=n===st.workers.length;
+    if(all&&!st.allLured)popText(BOSS_X-.2,GY-2.4,'!',C.white);
+    st.allLured=all;
+    // the boss: touch him only when all six are lured, otherwise he shoos you away
+    const b=st.boss;b.ph+=dt;
+    if(Math.abs(p.x-b.x)<.62&&p.y>GY-2.05&&b.cd<=0){
+      if(all){
+        b.key=false;p.key=true;st.mode='escape';st.sceneT=0;
+        popText(b.x,GY-1.6,T.snatch,C.white);burst(b.x,GY-1.4,8,'spark',3);
+        st.banner={text:T.door,t:1.6,max:1.6};
+        for(const q of st.projs)q.dud=true;
+        for(const w of st.workers){w.wind=0;w.stun=.001}
+        b.stun=.001;
+      }else{
+        b.cd=.9;p.vx=-7;p.vy=-2;p.x-=.25;popText(b.x-.3,GY-2.2,T.notYet,C.white);
+      }
+    }
+  }else if(st.mode==='escape'){
+    const dr=DOOR();
+    if(Math.hypot(p.x-dr.x,p.y-dr.y)<.55){st.mode='free';st.sceneT=0;st.banner=null;st.projs=[]}
+  }else if(st.mode==='free'){
+    const t=st.sceneT;
+    if(t-dt<1&&t>=1)st.parts.push({type:'pop',sx:.56,sy:.38,t:0,life:.8,rot:-.2,text:T.click,col:C.white});
+    if(t-dt<2.1&&t>=2.1)st.parts.push({type:'pop',sx:.5,sy:.2,t:0,life:1,rot:.1,text:T.free,col:C.white});
+    if(t>3.4){st.mode='outro';st.sceneT=0;const dr=DOOR();p.x=dr.x+.3;p.y=dr.y;p.key=false;st.buddy={x:dr.x+.2,y:dr.y+.2,ph:1};
+      st.banner={text:T.saved,t:2.2,max:2.2}}
+  }else if(st.mode==='outro'){
+    const t=st.sceneT;
+    for(const w of st.workers){if(t>.3){w.x+=3.6*dt;w.f=1;w.walking=true;w.stun=0}}
+    if(t>.6){st.boss.x+=3*dt;st.boss.leave=1}
+    for(const s of st.stumps)s.g=Math.max(0,Math.min(1,(t-.5-s.x*.06)/1.4));
+    // the two parrots loop over the clearing
+    const a=t*2.2;
+    const tx=5+Math.cos(a)*2.6,ty=GY-4.3+Math.sin(a)*1.1;
+    p.vx=(tx-p.x)*3;p.vy=(ty-p.y)*3;p.x+=p.vx*dt;p.y+=p.vy*dt;p.f=p.vx>0?1:-1;
+    const bd=st.buddy;bd.ph+=dt;const bx=5+Math.cos(a-.7)*2.6,by=GY-4.3+Math.sin(a-.7)*1.1+.2;
+    bd.f=bx>bd.x?1:-1;bd.x+=(bx-bd.x)*Math.min(1,dt*3);bd.y+=(by-bd.y)*Math.min(1,dt*3);
+    if(Math.random()<dt*5)st.parts.push({type:'heart',x:p.x,y:p.y-.3,vx:rnd(-.4,.4),vy:-.6,rot:0,vr:0,t:0,life:1.1});
+    if(t>3.6&&!card)levelDone();
+  }else if(st.mode==='caught'){
+    // the parrot drops to the ground, tangled up
+    if(p.y<GY-.38){p.vy+=G*1.2*dt;p.y=Math.min(GY-.38,p.y+p.vy*dt);p.x+=p.vx*dt*.3}
+    if(st.sceneT>1.2&&!card)showCard('caught');
+  }
+}
+
+// ---------- draw helpers ----------
+function star(x,y,R,r,n){ctx.beginPath();for(let i=0;i<n*2;i++){const a=i/(n*2)*Math.PI*2-Math.PI/2,rr=i%2?r:R;ctx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}ctx.closePath()}
+function inkText(txt,x,y,size,fill,rot=0){
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.font=`${size}px ${V('--display')}`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.lineJoin='round';ctx.lineWidth=size*.16;ctx.strokeStyle=C.ink;ctx.fillStyle=C.ink;ctx.fillText(txt,size*.06,size*.06);ctx.strokeText(txt,0,0);ctx.fillStyle=fill;ctx.fillText(txt,0,0);ctx.restore();
+}
+const LW=()=>Math.max(1.5,S*.045);
+function inkFill(fill,lw){ctx.fillStyle=fill;ctx.fill();ctx.lineWidth=lw||LW();ctx.strokeStyle=C.ink;ctx.lineJoin='round';ctx.stroke()}
+function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// The static jungle (backdrop, canopy, vines, ground, the big tree on the left) is drawn once into an offscreen canvas.
+function renderBg(){
+  bcv.width=cv.width;bcv.height=cv.height;const b=bctx;b.setTransform(dpr,0,0,dpr,0,0);
+  const R=mulberry(st?st.seed:7),lw=Math.max(1.5,S*.045),gy=Y(GY);
+  b.fillStyle=mkPattern(b,C.jungle,'rgba(10,60,25,.16)',12,2);b.fillRect(0,0,W,H);
+  // far trunks
+  for(let x=-ox/S-1;x<WORLD+ox/S+1;x+=.9+R()*1.2){
+    const w=(.25+R()*.35)*S;b.fillStyle=R()<.5?C.deep:'#36894C';b.fillRect(X(x)-w/2,0,w,gy);
+    b.fillStyle='rgba(255,255,255,.08)';b.fillRect(X(x)-w/2+w*.15,0,w*.18,gy);
+  }
+  // big leaves in the back
+  const bigLeaf=(x,y,r,a,col)=>{b.save();b.translate(x,y);b.rotate(a);b.beginPath();b.moveTo(0,0);b.quadraticCurveTo(r*.5,-r*.42,r,0);b.quadraticCurveTo(r*.5,r*.42,0,0);
+    b.fillStyle=col;b.fill();b.lineWidth=lw;b.strokeStyle=C.ink;b.stroke();b.beginPath();b.moveTo(r*.05,0);b.lineTo(r*.92,0);b.lineWidth=lw*.6;b.stroke();b.restore()};
+  for(let i=0;i<14;i++)bigLeaf(X(-ox/S+R()*(WORLD+2*ox/S)),gy-R()*S*2.2,S*(.9+R()*.7),-Math.PI/2+(R()-.5)*2.4,R()<.5?'#3E9E4E':'#55B85E');
+  // ground
+  b.fillStyle=mkPattern(b,C.dirt,'rgba(90,50,20,.3)',10,1.8);b.fillRect(0,gy,W,H-gy);
+  b.beginPath();b.moveTo(0,gy);b.lineTo(W,gy);b.lineWidth=lw*1.4;b.strokeStyle=C.ink;b.stroke();
+  for(let x=0;x<W;x+=S*.18+R()*S*.2){const h=S*(.12+R()*.22),a=(R()-.5)*.8;
+    b.beginPath();b.moveTo(x,gy+2);b.quadraticCurveTo(x+Math.sin(a)*h*.5,gy-h*.6,x+Math.sin(a)*h,gy-h);b.lineCap='round';b.lineWidth=lw*2.2;b.strokeStyle=C.ink;b.stroke();b.lineWidth=lw*.9;b.strokeStyle=C.leaf;b.stroke()}
+  // big tree on the left with the door in it
+  const tx=X(-.4),tw=X(1.75)-tx;
+  b.beginPath();b.moveTo(tx,-5);b.lineTo(tx+tw,-5);b.quadraticCurveTo(tx+tw*.92,gy*.6,tx+tw*1.15,gy+2);b.lineTo(tx-S*.5,gy+2);b.closePath();
+  b.fillStyle=C.bark;b.fill();b.lineWidth=lw*1.2;b.strokeStyle=C.ink;b.stroke();
+  b.strokeStyle='rgba(22,18,15,.45)';b.lineWidth=lw*.8;b.lineCap='round';
+  for(let i=0;i<9;i++){const y=R()*gy,x=tx+tw*(.15+R()*.7);b.beginPath();b.moveTo(x,y);b.quadraticCurveTo(x+S*.1,y+S*.3,x,y+S*.6);b.stroke()}
+  // canopy across the top
+  const blobs=[];for(let x=-ox/S-1;x<WORLD+ox/S+1;x+=.5+R()*.4)blobs.push([X(x),S*(-.1+R()*.5),S*(.55+R()*.4),R()<.7]);
+  b.fillStyle=C.ink;b.beginPath();for(const[x,y,r]of blobs){b.moveTo(x+r+lw,y);b.arc(x,y,r+lw,0,7)}b.fill();
+  b.fillStyle=C.hedge;b.beginPath();for(const[x,y,r]of blobs){b.moveTo(x+r,y);b.arc(x,y,r,0,7)}b.fill();
+  b.fillStyle=C.leaf;b.beginPath();for(const[x,y,r,hl]of blobs){if(!hl)continue;b.moveTo(x-r*.25+r*.4,y-r*.1);b.arc(x-r*.25,y-r*.1,r*.4,0,7)}b.fill();
+  // vines
+  for(let i=0;i<7;i++){
+    const x=X(1.6+R()*8),len=S*(1.2+R()*Math.max(.5,GY*.35)),sw=S*.2*(R()<.5?-1:1);
+    b.beginPath();b.moveTo(x,S*.2);b.bezierCurveTo(x+sw,len*.35,x-sw,len*.7,x+sw*.3,len);b.lineCap='round';b.lineWidth=lw*2.6;b.strokeStyle=C.ink;b.stroke();b.lineWidth=lw*1.1;b.strokeStyle='#5FA83A';b.stroke();
+    for(let k=1;k<6;k++){const t=k/6,yy=S*.2+(len-S*.2)*t,xx=x+sw*Math.sin(t*3.1)*.6;bigLeaf(xx,yy,S*.28,(k%2?.4:Math.PI-.4),C.leaf)}
+  }
+  bgDirty=false;
+}
+function drawBranch(){
+  const br=BRANCH(),lw=LW();
+  ctx.beginPath();ctx.moveTo(X(br.x1),Y(br.y)-S*.12);ctx.quadraticCurveTo(X((br.x1+br.x2)/2),Y(br.y)-S*.05,X(br.x2),Y(br.y)+S*.08);
+  ctx.lineTo(X(br.x2),Y(br.y)+S*.16);ctx.quadraticCurveTo(X((br.x1+br.x2)/2),Y(br.y)+S*.12,X(br.x1),Y(br.y)+S*.16);ctx.closePath();inkFill(C.bark,lw);
+  for(const[x,a]of[[2.9,-.8],[3.35,.6],[2.1,-1.1]]){ctx.save();ctx.translate(X(x),Y(br.y));ctx.rotate(a);ctx.beginPath();ctx.ellipse(S*.22,0,S*.24,S*.09,0,0,7);inkFill(C.leaf,lw*.8);ctx.restore()}
+}
+function drawDoor(){
+  const d=DOOR(),x=X(d.x),y=Y(d.y),w=S*.72,h=S*1.0,lw=LW(),now=performance.now()/1000;
+  const open=st.mode==='escape';
+  if(open){const pr=S*(.75+.08*Math.sin(now*6));ctx.beginPath();ctx.arc(x,y,pr,0,7);ctx.fillStyle='rgba(255,217,59,.45)';ctx.fill()}
+  ctx.beginPath();ctx.moveTo(x-w/2,y+h/2);ctx.lineTo(x-w/2,y-h*.15);ctx.arc(x,y-h*.15,w/2,Math.PI,0);ctx.lineTo(x+w/2,y+h/2);ctx.closePath();
+  inkFill('#6B3F1E',lw*1.1);
+  ctx.save();ctx.clip();ctx.strokeStyle='rgba(22,18,15,.5)';ctx.lineWidth=lw*.7;for(const k of[-.17,.17]){ctx.beginPath();ctx.moveTo(x+k*w,y-h);ctx.lineTo(x+k*w,y+h);ctx.stroke()}ctx.restore();
+  // keyhole
+  ctx.beginPath();ctx.arc(x+w*.25,y+h*.08,S*.06,0,7);ctx.moveTo(x+w*.25,y+h*.08);ctx.lineTo(x+w*.2,y+h*.24);ctx.lineTo(x+w*.3,y+h*.24);ctx.closePath();ctx.fillStyle=C.ink;ctx.fill();
+  if(open){const bob=Math.sin(now*6)*S*.08;
+    ctx.beginPath();ctx.moveTo(x+S*.95+bob,y);ctx.lineTo(x+S*.6+bob,y-S*.22);ctx.lineTo(x+S*.6+bob,y+S*.22);ctx.closePath();inkFill(C.paper,lw)}
+}
+function drawLog(){
+  const x=X(LINE),gy=Y(GY),lw=LW(),r=S*.18;
+  ctx.save();ctx.setLineDash([S*.12,S*.12]);ctx.beginPath();ctx.moveTo(x,gy-S*.3);ctx.lineTo(x,S*1.1);ctx.lineWidth=Math.max(2,S*.05);ctx.strokeStyle='rgba(255,253,246,.45)';ctx.stroke();ctx.restore();
+  ctx.beginPath();ctx.roundRect?ctx.roundRect(x-S*.55,gy-r*2,S*1.1,r*2,r):ctx.rect(x-S*.55,gy-r*2,S*1.1,r*2);inkFill(C.bark,lw);
+  ctx.beginPath();ctx.ellipse(x+S*.55,gy-r,r*.6,r,0,0,7);inkFill('#D9A86A',lw);
+  ctx.beginPath();ctx.ellipse(x+S*.55,gy-r,r*.25,r*.45,0,0,7);ctx.lineWidth=lw*.6;ctx.stroke();
+  // little arrow on the log pointing to the lure side
+  ctx.beginPath();ctx.moveTo(x-S*.35,gy-r);ctx.lineTo(x-S*.12,gy-r*1.6);ctx.lineTo(x-S*.12,gy-r*.4);ctx.closePath();ctx.fillStyle=C.paper;ctx.fill();ctx.lineWidth=lw*.6;ctx.stroke();
+}
+function drawStump(s){
+  const x=X(s.x),gy=Y(GY),lw=LW(),w=S*.42;
+  if(s.g>0){
+    const g=s.g,h=S*(.4+g*3),cr=S*g*1.1;
+    ctx.beginPath();ctx.moveTo(x-w*.35,gy);ctx.quadraticCurveTo(x-w*.2,gy-h*.5,x-w*.12,gy-h);ctx.lineTo(x+w*.12,gy-h);ctx.quadraticCurveTo(x+w*.2,gy-h*.5,x+w*.35,gy);ctx.closePath();inkFill(C.bark,lw);
+    for(let i=0;i<6;i++){const a=-Math.PI/2+(i-2.5)*.55;ctx.save();ctx.translate(x,gy-h);ctx.rotate(a);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(cr*.5,-cr*.3,cr,cr*.15);ctx.quadraticCurveTo(cr*.5,cr*.15,0,0);inkFill(i%2?C.hedge:C.leaf,lw);ctx.restore()}
+    return;
+  }
+  ctx.beginPath();ctx.moveTo(x-w/2,gy);ctx.lineTo(x-w/2,gy-S*.38);ctx.lineTo(x+w/2,gy-S*.42);ctx.lineTo(x+w/2,gy);ctx.closePath();inkFill(C.bark,lw);
+  ctx.beginPath();ctx.ellipse(x,gy-S*.4,w/2,S*.1,-.05,0,7);inkFill('#E8C08A',lw);
+  ctx.beginPath();ctx.ellipse(x,gy-S*.4,w*.22,S*.045,-.05,0,7);ctx.lineWidth=lw*.6;ctx.stroke();
+}
+// a thrown thing (or one held in the hand), centred at px,py with radius r in px
+function drawItem(type,x,y,r,rot,alpha=1){
+  const lw=Math.max(1.3,r*.13);
+  ctx.save();ctx.globalAlpha=alpha;ctx.translate(x,y);ctx.rotate(rot);ctx.lineJoin='round';ctx.lineCap='round';
+  if(type==='rope'){
+    ctx.beginPath();ctx.ellipse(0,0,r,r*.8,0,0,7);ctx.lineWidth=lw*3.4;ctx.strokeStyle=C.ink;ctx.stroke();ctx.lineWidth=lw*1.8;ctx.strokeStyle='#D7A35C';ctx.stroke();
+    ctx.setLineDash([lw*1.2,lw*1.6]);ctx.lineWidth=lw*.7;ctx.strokeStyle='#8A5A33';ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(r*.9,r*.3);ctx.quadraticCurveTo(r*1.5,r*.6,r*1.7,r*1.3);ctx.lineWidth=lw*3;ctx.strokeStyle=C.ink;ctx.stroke();ctx.lineWidth=lw*1.5;ctx.strokeStyle='#D7A35C';ctx.stroke();
+    ctx.beginPath();ctx.arc(r*.9,r*.3,lw*1.6,0,7);ctx.fillStyle='#D7A35C';ctx.fill();ctx.lineWidth=lw;ctx.strokeStyle=C.ink;ctx.stroke();
+  }else if(type==='net'){
+    const s=r*1.25;
+    ctx.beginPath();ctx.moveTo(-s,-s);ctx.quadraticCurveTo(0,-s*.75,s,-s);ctx.quadraticCurveTo(s*.75,0,s,s);ctx.quadraticCurveTo(0,s*.75,-s,s);ctx.quadraticCurveTo(-s*.75,0,-s,-s);
+    ctx.fillStyle='rgba(255,253,246,.18)';ctx.fill();
+    ctx.save();ctx.clip();ctx.strokeStyle='#F4E3B8';ctx.lineWidth=lw;
+    for(let k=-4;k<=4;k++){const o=k*s/4;ctx.beginPath();ctx.moveTo(o-s*2,-s*2);ctx.lineTo(o+s*2,s*2);ctx.stroke();ctx.beginPath();ctx.moveTo(o+s*2,-s*2);ctx.lineTo(o-s*2,s*2);ctx.stroke()}
+    ctx.restore();ctx.lineWidth=lw*1.6;ctx.strokeStyle=C.ink;ctx.stroke();
+    for(const[a,b]of[[-1,-1],[1,-1],[1,1],[-1,1]]){ctx.beginPath();ctx.arc(a*s,b*s,lw*2.2,0,7);ctx.fillStyle='#7A7F86';ctx.fill();ctx.lineWidth=lw;ctx.stroke()}
+  }else if(type==='kescher'){
+    ctx.beginPath();ctx.moveTo(-r*.2,r*.7);ctx.lineTo(-r*.55,r*2.1);ctx.lineWidth=lw*3.2;ctx.strokeStyle=C.ink;ctx.stroke();ctx.lineWidth=lw*1.7;ctx.strokeStyle='#B07A45';ctx.stroke();
+    ctx.beginPath();ctx.moveTo(-r*.85,-r*.1);ctx.quadraticCurveTo(-r*.6,r*1.5,r*.2,r*1.15);ctx.quadraticCurveTo(r*.95,r*.6,r*.85,-r*.1);ctx.closePath();
+    ctx.fillStyle='rgba(255,253,246,.35)';ctx.fill();ctx.save();ctx.clip();ctx.strokeStyle='#F4E3B8';ctx.lineWidth=lw*.8;
+    for(let k=-4;k<=4;k++){ctx.beginPath();ctx.moveTo(k*r*.3-r,-r);ctx.lineTo(k*r*.3+r,r*2);ctx.stroke();ctx.beginPath();ctx.moveTo(k*r*.3+r,-r);ctx.lineTo(k*r*.3-r,r*2);ctx.stroke()}ctx.restore();
+    ctx.lineWidth=lw*1.2;ctx.strokeStyle=C.ink;ctx.stroke();
+    ctx.beginPath();ctx.ellipse(0,-r*.1,r*.86,r*.3,0,0,7);ctx.lineWidth=lw*3.2;ctx.strokeStyle=C.ink;ctx.stroke();ctx.lineWidth=lw*1.6;ctx.strokeStyle='#C9D3DA';ctx.stroke();
+  }else if(type==='basket'){
+    ctx.beginPath();ctx.moveTo(-r,-r*.7);ctx.lineTo(r,-r*.7);ctx.lineTo(r*.72,r*.75);ctx.lineTo(-r*.72,r*.75);ctx.closePath();
+    ctx.fillStyle='#C98B45';ctx.fill();ctx.save();ctx.clip();ctx.strokeStyle='#8A5A33';ctx.lineWidth=lw*.9;
+    for(let k=-3;k<=3;k++){ctx.beginPath();ctx.moveTo(k*r*.3,-r);ctx.lineTo(k*r*.24,r);ctx.stroke()}
+    for(let k=0;k<4;k++){const yy=-r*.45+k*r*.35;ctx.beginPath();ctx.moveTo(-r,yy);ctx.lineTo(r,yy);ctx.stroke()}ctx.restore();
+    ctx.lineWidth=lw*1.4;ctx.strokeStyle=C.ink;ctx.stroke();
+    ctx.beginPath();ctx.ellipse(0,-r*.7,r*1.05,r*.2,0,0,7);ctx.fillStyle='#E0A65E';ctx.fill();ctx.lineWidth=lw*1.3;ctx.stroke();
+  }else if(type==='hands'){
+    for(const sd of[-1,1]){ctx.beginPath();ctx.ellipse(sd*r*.55,0,r*.42,r*.32,sd*.4,0,7);ctx.fillStyle='#F2C49B';ctx.fill();ctx.lineWidth=lw*1.2;ctx.strokeStyle=C.ink;ctx.stroke()}
+  }
+  ctx.restore();
+}
+// side-view blue parrot; x,y body centre in px, u = px per unit, f = facing (1 right, -1 left)
+function drawParrot(x,y,u,f,flap,o={}){
+  const lw=Math.max(1.4,u*.04);
+  ctx.save();ctx.translate(x,y);ctx.scale(f,1);ctx.lineJoin='round';ctx.lineCap='round';
+  const tilt=o.sit?0:Math.max(-.35,Math.min(.35,(o.vy||0)*.05));ctx.rotate(tilt);
+  // tail
+  ctx.beginPath();ctx.moveTo(-u*.18,u*.02);ctx.lineTo(-u*.78,u*.34);ctx.lineTo(-u*.74,u*.46);ctx.lineTo(-u*.14,u*.16);ctx.closePath();inkFill('#1F5FBF',lw);
+  ctx.beginPath();ctx.moveTo(-u*.2,u*.08);ctx.lineTo(-u*.66,u*.42);ctx.lineWidth=lw*.7;ctx.strokeStyle='#5FA0F0';ctx.stroke();
+  // feet when sitting
+  if(o.sit){ctx.strokeStyle=C.ink;ctx.lineWidth=lw*1.4;for(const k of[-.04,.08]){ctx.beginPath();ctx.moveTo(u*k,u*.18);ctx.lineTo(u*k,u*.3);ctx.stroke()}}
+  // body
+  ctx.beginPath();ctx.ellipse(0,0,u*.32,u*.22,-.3,0,7);inkFill(C.blue,lw);
+  ctx.save();ctx.beginPath();ctx.ellipse(0,0,u*.32,u*.22,-.3,0,7);ctx.clip();
+  ctx.beginPath();ctx.ellipse(u*.1,u*.12,u*.22,u*.14,-.3,0,7);ctx.fillStyle=C.paper;ctx.fill();ctx.restore();
+  ctx.beginPath();ctx.ellipse(0,0,u*.32,u*.22,-.3,0,7);ctx.lineWidth=lw;ctx.strokeStyle=C.ink;ctx.stroke();
+  // head
+  ctx.beginPath();ctx.arc(u*.26,-u*.2,u*.17,0,7);inkFill(C.blue,lw);
+  ctx.beginPath();ctx.ellipse(u*.32,-u*.17,u*.09,u*.08,0,0,7);ctx.fillStyle=C.white;ctx.fill();
+  ctx.strokeStyle=C.ink;ctx.lineWidth=lw*.5;for(const k of[0,1,2]){ctx.beginPath();ctx.moveTo(u*(.27+k*.03),-u*.13);ctx.lineTo(u*(.3+k*.03),-u*.11);ctx.stroke()}
+  ctx.beginPath();ctx.arc(u*.31,-u*.22,u*.04,0,7);ctx.fillStyle=C.ink;ctx.fill();
+  ctx.beginPath();ctx.arc(u*.322,-u*.233,u*.013,0,7);ctx.fillStyle=C.white;ctx.fill();
+  // beak
+  ctx.beginPath();ctx.moveTo(u*.39,-u*.26);ctx.quadraticCurveTo(u*.55,-u*.25,u*.52,-u*.08);ctx.quadraticCurveTo(u*.47,-u*.12,u*.4,-u*.1);ctx.closePath();inkFill('#2B2B2B',lw);
+  ctx.beginPath();ctx.moveTo(u*.42,-u*.23);ctx.quadraticCurveTo(u*.49,-u*.22,u*.5,-u*.15);ctx.lineWidth=lw*.6;ctx.strokeStyle='#777';ctx.stroke();
+  // key hanging from the beak
+  if(o.key){ctx.beginPath();ctx.moveTo(u*.47,-u*.1);ctx.lineTo(u*.47,u*.12);ctx.lineWidth=lw*.8;ctx.strokeStyle=C.ink;ctx.stroke();drawKey(u*.47,u*.22,u*.5,Math.PI/2)}
+  // wing
+  ctx.save();ctx.translate(-u*.02,-u*.08);ctx.rotate(o.sit?.25:-.5+Math.sin(flap)*.85);
+  ctx.beginPath();ctx.ellipse(-u*.14,0,u*.28,u*.11,0,0,7);inkFill('#1F5FBF',lw);
+  ctx.beginPath();ctx.moveTo(-u*.3,-u*.02);ctx.lineTo(-u*.05,u*.02);ctx.moveTo(-u*.32,u*.05);ctx.lineTo(-u*.1,u*.07);ctx.lineWidth=lw*.6;ctx.strokeStyle='#5FA0F0';ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
+function drawKey(x,y,u,rot){
+  const lw=Math.max(1.2,u*.06);
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+  ctx.beginPath();ctx.arc(-u*.16,0,u*.11,0,7);ctx.arc(-u*.16,0,u*.045,0,7,true);ctx.fillStyle='#FFC21A';ctx.fill('evenodd');ctx.lineWidth=lw;ctx.strokeStyle=C.ink;ctx.stroke();
+  ctx.beginPath();ctx.rect(-u*.06,-u*.03,u*.3,u*.06);ctx.rect(u*.14,u*.03,u*.04,u*.07);ctx.rect(u*.2,u*.03,u*.04,u*.05);ctx.fillStyle='#FFC21A';ctx.fill();ctx.stroke();
+  ctx.restore();
+}
+// a worker (or the boss) standing on the ground at px x
+function drawWorker(w,boss){
+  const x=X(w.x),gy=Y(GY),u=S*(boss?1.4:1.1),lw=LW(),now=performance.now()/1000,f=w.f||-1;
+  const walk=w.walking?Math.sin(w.ph*10):0;
+  ctx.save();ctx.translate(x,gy);ctx.lineJoin='round';ctx.lineCap='round';
+  // shadow
+  ctx.beginPath();ctx.ellipse(0,0,u*.38,u*.07,0,0,7);ctx.fillStyle='rgba(22,18,15,.25)';ctx.fill();
+  // legs
+  for(const sd of[-1,1]){ctx.beginPath();ctx.moveTo(sd*u*.1,-u*.45);ctx.lineTo(sd*u*.1+walk*sd*u*.08,0);ctx.lineWidth=u*.13;ctx.strokeStyle=C.ink;ctx.stroke();ctx.lineWidth=u*.13-lw*1.6;ctx.strokeStyle='#2D4C8C';ctx.stroke()}
+  for(const sd of[-1,1]){ctx.beginPath();ctx.ellipse(sd*u*.1+walk*sd*u*.08+f*u*.04,-u*.02,u*.1,u*.05,0,0,7);inkFill('#5A3A22',lw*.8)}
+  // body
+  const bw=boss?u*.34:u*.27,top=boss?-u*1.02:-u*.98;
+  ctx.beginPath();ctx.moveTo(-bw,-u*.42);ctx.lineTo(-bw*.95,top+u*.08);ctx.quadraticCurveTo(0,top-u*.04,bw*.95,top+u*.08);ctx.lineTo(bw,-u*.42);ctx.closePath();
+  if(boss){
+    ctx.fillStyle='#C8302C';ctx.fill();ctx.save();ctx.clip();ctx.fillStyle='rgba(22,18,15,.45)';
+    for(let k=-4;k<=4;k++){ctx.fillRect(k*u*.12-u*.025,top,u*.05,u);ctx.fillRect(-bw,top+u*.08+k*u*.12+u*.5,bw*2,u*.04)}ctx.restore();
+    ctx.lineWidth=lw;ctx.strokeStyle=C.ink;ctx.stroke();
+  }else{
+    inkFill(C.vest,lw);
+    ctx.save();ctx.clip();ctx.fillStyle='#F8F2B0';ctx.fillRect(-bw,-u*.68,bw*2,u*.06);ctx.fillRect(-bw*.55,top,u*.05,u*.6);ctx.fillRect(bw*.55-u*.05,top,u*.05,u*.6);ctx.restore();
+  }
+  // head
+  const hy=top-u*.17;
+  ctx.beginPath();ctx.arc(0,hy,u*.19,0,7);inkFill('#F2C49B',lw);
+  ctx.beginPath();ctx.arc(f*u*.07,hy-u*.02,u*.025,0,7);ctx.arc(f*u*.15,hy-u*.02,u*.025,0,7);ctx.fillStyle=C.ink;ctx.fill();
+  if(boss){ctx.beginPath();ctx.moveTo(f*u*.02,hy+u*.07);ctx.quadraticCurveTo(f*u*.12,hy+u*.02,f*u*.2,hy+u*.08);ctx.quadraticCurveTo(f*u*.12,hy+u*.11,f*u*.02,hy+u*.07);inkFill('#5A3A22',lw*.7)}
+  else{ctx.beginPath();ctx.moveTo(f*u*.05,hy+u*.09);ctx.quadraticCurveTo(f*u*.11,hy+(w.wind>0?u*.06:u*.12),f*u*.16,hy+u*.08);ctx.lineWidth=lw*.8;ctx.strokeStyle=C.ink;ctx.stroke()}
+  // hard hat
+  ctx.beginPath();ctx.arc(0,hy-u*.04,u*.2,Math.PI,0);ctx.closePath();inkFill(boss?C.white:C.paper,lw);
+  ctx.beginPath();ctx.moveTo(-u*.23,hy-u*.03);ctx.lineTo(u*.23+f*u*.06,hy-u*.03);ctx.lineWidth=lw*2;ctx.strokeStyle=C.ink;ctx.stroke();
+  // boss: the key on a cord round his neck
+  if(boss&&w.key){ctx.beginPath();ctx.moveTo(-u*.12,top+u*.02);ctx.lineTo(0,top+u*.26);ctx.lineTo(u*.12,top+u*.02);ctx.lineWidth=lw*.8;ctx.strokeStyle=C.ink;ctx.stroke();
+    const gl=st.allLured?.5+.5*Math.sin(now*10):0;
+    if(gl){star(0,top+u*.33,u*.22,u*.1,8);ctx.fillStyle=`rgba(255,253,246,${gl})`;ctx.fill()}
+    drawKey(0,top+u*.36,u*.55,Math.PI/2)}
+  // arms
+  const sh={x:f*u*.18,y:top+u*.12};
+  let hx,hy2;
+  if(w.wind>0){hx=-f*u*.05;hy2=top-u*.55}             // wound up over the head
+  else if(w.reload>.6){hx=f*u*.55;hy2=top+u*.05}      // just threw
+  else if(w.saw){hx=f*u*.45;hy2=-u*.55+Math.sin(now*14)*u*.06}
+  else{hx=f*u*.3;hy2=-u*.5+walk*u*.03}
+  if(boss){hx=f*u*.32;hy2=-u*.48+Math.sin(w.ph*2)*u*.02}
+  const other={x:-f*u*.2,y:top+u*.14};
+  ctx.beginPath();ctx.moveTo(other.x,other.y);ctx.lineTo(-f*u*.3,-u*.5-walk*u*.03);ctx.lineWidth=u*.11;ctx.strokeStyle=C.ink;ctx.stroke();ctx.lineWidth=u*.11-lw*1.6;ctx.strokeStyle=boss?'#C8302C':C.vest;ctx.stroke();
+  if(!boss&&w.reload<=.2&&!w.stun&&st.mode!=='outro'&&!w.saw)drawItem(w.item,hx,hy2-u*.12,u*.2,w.wind>0?now*12:.3*f);
+  if(w.saw){ctx.save();ctx.translate(hx,hy2);ctx.beginPath();ctx.moveTo(0,-u*.05);ctx.lineTo(f*u*.6,-u*.02);ctx.lineTo(f*u*.6,u*.08);ctx.lineTo(0,u*.1);ctx.closePath();inkFill('#C9D3DA',lw*.8);
+    ctx.beginPath();for(let k=0;k<6;k++){ctx.lineTo(f*u*.1*k,u*.1);ctx.lineTo(f*u*(.1*k+.05),u*.15)}ctx.lineWidth=lw*.6;ctx.stroke();ctx.restore()}
+  ctx.beginPath();ctx.moveTo(sh.x,sh.y);ctx.lineTo(hx,hy2);ctx.lineWidth=u*.11;ctx.strokeStyle=C.ink;ctx.stroke();ctx.lineWidth=u*.11-lw*1.6;ctx.strokeStyle=boss?'#C8302C':C.vest;ctx.stroke();
+  ctx.beginPath();ctx.arc(hx,hy2,u*.06,0,7);inkFill('#F2C49B',lw*.7);
+  // stunned: spinning stars
+  if(w.stun>0){for(let k=0;k<3;k++){const a=now*5+k*2.1;star(Math.cos(a)*u*.28,hy-u*.32+Math.sin(a)*u*.07,u*.07,u*.03,5);inkFill(C.paper,lw*.6)}}
+  // lured: a little tick over the head
+  if(!boss&&st.mode==='play'&&w.x<LINE){const ty=hy-u*.48;ctx.beginPath();ctx.arc(0,ty,u*.11,0,7);inkFill(C.leaf,lw*.7);
+    ctx.beginPath();ctx.moveTo(-u*.05,ty);ctx.lineTo(-u*.01,ty+u*.04);ctx.lineTo(u*.06,ty-u*.04);ctx.lineWidth=lw;ctx.strokeStyle=C.ink;ctx.stroke()}
+  if(!boss&&w.wind>0){inkText('!',f*u*.28,hy-u*.45,u*.34,C.pop,.1)}
+  ctx.restore();
+}
+function drawBigLeaf(off){
+  if(off>=1)return;const lw=LW()*1.3,x=X(3.1+off*8),y=Y(GY-2.5),r=S*7.6;
+  ctx.save();ctx.translate(x,y);ctx.rotate(-.08);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(r*.15,-r*.75,r*.95,-r*.7,r*1.05,0);ctx.bezierCurveTo(r*.95,r*.75,r*.15,r*.75,0,0);inkFill('#3FA34D',lw);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r*1.02,0);ctx.lineWidth=lw*1.3;ctx.stroke();
+  for(let k=1;k<9;k++){const t=k/9;ctx.beginPath();ctx.moveTo(r*t,0);ctx.quadraticCurveTo(r*(t+.05),-r*.2,r*(t+.12),-r*.42*Math.sin(t*Math.PI)-r*.08);ctx.moveTo(r*t,0);ctx.quadraticCurveTo(r*(t+.05),r*.2,r*(t+.12),r*.42*Math.sin(t*Math.PI)+r*.08);ctx.lineWidth=lw*.6;ctx.stroke()}
+  ctx.beginPath();ctx.ellipse(r*.4,-r*.3,r*.2,r*.07,-.4,0,7);ctx.fillStyle='rgba(143,219,106,.6)';ctx.fill();
+  ctx.restore();
+}
+// inside the tree: the cage with the friend, the key turns, the door swings open
+function drawFree(t){
+  const cx=W/2,cy=H*.48,cs=Math.min(W,H)*.2,lw=Math.max(2,cs*.03);
+  ctx.fillStyle='#3A2516';ctx.fillRect(0,0,W,H);
+  const g=ctx.createRadialGradient(cx,cy,cs*.2,cx,cy,Math.max(W,H)*.6);g.addColorStop(0,'#8A5A33');g.addColorStop(1,'#3A2516');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(22,18,15,.35)';ctx.lineWidth=lw;for(let k=1;k<6;k++){ctx.beginPath();ctx.ellipse(cx,cy,cs*1.3*k,cs*1.1*k,0,0,7);ctx.stroke()}
+  // chain + cage
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,cy-cs*1.25);ctx.lineWidth=lw*1.5;ctx.strokeStyle=C.ink;ctx.stroke();
+  const open=Math.max(0,Math.min(1,(t-1.5)/.5));
+  // friend inside / flying out
+  const out=Math.max(0,Math.min(1,(t-2)/1.2));
+  const fx=cx+out*W*.6,fy=cy+cs*.35-Math.sin(out*Math.PI)*cs*1.2-out*cs;
+  ctx.beginPath();ctx.ellipse(cx,cy+cs*.62,cs*.8,cs*.16,0,0,7);inkFill('#B07A45',lw);
+  if(out<=0)drawParrot(cx-cs*.05,cy+cs*.3,cs*.95,-1,0,{sit:true});
+  ctx.strokeStyle=C.ink;ctx.lineWidth=lw;
+  for(let k=-4;k<=4;k++){const xx=cx+k*cs*.17;if(Math.abs(k)<=1)continue;ctx.beginPath();ctx.moveTo(xx,cy+cs*.6);ctx.lineTo(xx,cy-cs*.6);ctx.stroke()}
+  ctx.beginPath();ctx.ellipse(cx,cy-cs*.6,cs*.8,cs*.62,0,Math.PI,0);ctx.lineWidth=lw*1.4;ctx.stroke();
+  for(const a of[-.6,-.3,0,.3,.6]){ctx.beginPath();ctx.moveTo(cx,cy-cs*1.22);ctx.quadraticCurveTo(cx+a*cs*1.2,cy-cs*1.1,cx+a*cs*1.33,cy-cs*.6);ctx.lineWidth=lw;ctx.stroke()}
+  // the door (three bars) swings open toward the viewer
+  const dw=cs*.34*Math.cos(open*Math.PI*.45),dx0=cx+cs*.26;
+  ctx.save();ctx.translate(dx0,0);ctx.lineWidth=lw*1.2;
+  for(const k of[0,.5,1]){ctx.beginPath();ctx.moveTo(-dw*k*2+0,cy+cs*.6);ctx.lineTo(-dw*k*2,cy-cs*.6);ctx.stroke()}
+  ctx.beginPath();ctx.moveTo(0,cy-cs*.6);ctx.lineTo(-dw*2,cy-cs*.6);ctx.moveTo(0,cy+cs*.6);ctx.lineTo(-dw*2,cy+cs*.6);ctx.stroke();ctx.restore();
+  ctx.beginPath();ctx.ellipse(cx,cy+cs*.6,cs*.8,cs*.14,0,0,Math.PI);ctx.lineWidth=lw*1.4;ctx.stroke();
+  // padlock
+  const lx=cx+cs*.1,ly=cy+cs*.05,shake=t>.9&&t<1.5?Math.sin(t*60)*cs*.02:0,drop=open>0?(t-1.5)*(t-1.5)*cs*6:0;
+  if(ly+drop<H){ctx.save();ctx.translate(lx+shake,ly+drop);ctx.rotate(drop?drop/cs*.6:0);
+    ctx.beginPath();ctx.arc(0,-cs*.1,cs*.1,Math.PI,0);ctx.lineWidth=lw*1.6;ctx.strokeStyle=C.ink;ctx.stroke();ctx.lineWidth=lw*.7;ctx.strokeStyle='#C9D3DA';ctx.stroke();
+    ctx.beginPath();ctx.roundRect?ctx.roundRect(-cs*.15,-cs*.1,cs*.3,cs*.24,cs*.04):ctx.rect(-cs*.15,-cs*.1,cs*.3,cs*.24);inkFill('#FFC21A',lw);
+    ctx.beginPath();ctx.arc(0,0,cs*.03,0,7);ctx.fillStyle=C.ink;ctx.fill();ctx.restore()}
+  // the player flies in with the key and turns it
+  const a=Math.min(1,t/.9),ease=1-Math.pow(1-a,3);
+  const px=-cs+(lx+cs*.55+cs)*ease,py=ly-cs*.15-Math.sin(ease*Math.PI)*cs*.5;
+  const turn=t>.9&&t<1.5?(t-.9)/.6*Math.PI/2:0;
+  drawParrot(px,py,cs*.95,-1,performance.now()/1000*18,{key:t<1.5});
+  if(t>=.9&&t<1.5){ctx.save();ctx.translate(lx+cs*.13,ly+cs*.02);ctx.scale(1,Math.cos(turn)||.05);drawKey(0,0,cs*.5,0);ctx.restore()}
+  if(out>0&&out<1)drawParrot(fx,fy,cs*.95,1,performance.now()/1000*18,{});
+}
+function draw(){
+  if(!st){return}
+  if(st.mode==='free'){drawFree(st.sceneT);drawParts(true);return}
+  if(bgDirty)renderBg();
+  ctx.drawImage(bcv,0,0,W,H);
+  drawBranch();drawDoor();
+  for(const s of st.stumps)drawStump(s);
+  if(st.mode!=='intro'&&st.mode!=='outro')drawLog();
+  for(const q of st.projs)if(q.landed)drawItem(q.type,X(q.x),Y(q.y),S*(q.r||ITEM_R[q.type]),q.rot,1-q.landed);
+  drawWorker(st.boss,true);
+  for(const w of st.workers)drawWorker(w,false);
+  for(const q of st.projs)if(!q.landed)drawItem(q.type,X(q.x),Y(q.y),S*q.r,q.rot,q.dud?.6:1);
+  const p=st.parrot;
+  if(st.buddy)drawParrot(X(st.buddy.x),Y(st.buddy.y),S,st.buddy.f||1,st.buddy.ph*18,{});
+  drawParrot(X(p.x),Y(p.y),S,p.f,p.flap,{key:p.key,sit:p.sit,vy:p.vy});
+  if(st.mode==='intro'){
+    // breakfast: a slice of mango in the beak
+    if(st.sceneT<2.8){ctx.beginPath();ctx.ellipse(X(p.x+.5*p.f),Y(p.y-.12),S*.1,S*.06,.4,0,7);inkFill('#FFA62B',LW()*.7)}
+    drawBigLeaf(st.leafOff);
+  }
+  if(st.mode==='caught'&&st.caught)drawItem(st.caught,X(p.x),Y(p.y),S*.42,.2);
+  drawParts(false);
+  if(st.banner){
+    const bn=st.banner,k=Math.min(1,(bn.max-bn.t)*6),sz=Math.min(50,W*.1);
+    inkText(bn.text,W/2,H*.3,sz*k+1,C.paper,-.06);
+    if(bn.sub)inkText(bn.sub,W/2+8,H*.3+sz*.85,sz*.48*k+1,C.white,.04);
+  }
+}
+function drawParts(screen){
+  for(const p of st.parts){
+    const k=p.t/p.life;
+    if(screen&&p.sx==null)continue;
+    if(p.type==='feather'){ctx.save();ctx.translate(X(p.x),Y(p.y));ctx.rotate(p.rot);ctx.globalAlpha=1-Math.max(0,k-.6)/.4;ctx.beginPath();ctx.ellipse(0,0,S*.12,S*.04,0,0,7);inkFill(C.blue,1.5);ctx.restore();continue}
+    if(p.type==='spark'){ctx.save();ctx.globalAlpha=1-k;star(X(p.x),Y(p.y),S*.12,S*.05,5);inkFill(C.paper,1.5);ctx.restore();continue}
+    if(p.type==='heart'){const x=X(p.x),y=Y(p.y),r=S*.12;ctx.save();ctx.globalAlpha=1-k;ctx.beginPath();ctx.moveTo(x,y+r);ctx.bezierCurveTo(x-r*2,y-r*.4,x-r*.6,y-r*1.6,x,y-r*.5);ctx.bezierCurveTo(x+r*.6,y-r*1.6,x+r*2,y-r*.4,x,y+r);inkFill(C.pop,1.5);ctx.restore();continue}
+    if(p.type!=='pop')continue;
+    let px=p.sx!=null?p.sx*W:X(p.x),py=p.sx!=null?p.sy*H:Y(p.y);
+    const sc=Math.min(1,k*5)*(1-k*.3),R=Math.max(24,S*.85)*sc,yy=py-S*.3-k*S*.4;
+    px=Math.max(R*1.3,Math.min(W-R*1.3,px));
+    ctx.save();ctx.globalAlpha=1-Math.max(0,k-.7)/.3;
+    star(px,yy,R,R*.62,10);ctx.fillStyle=C.white;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=C.ink;ctx.stroke();
+    const fs=Math.min(R*.5+1,R*2.4/Math.max(2,p.text.length*.55));
+    inkText(p.text,px,yy,fs,C.pop,p.rot);ctx.restore();
+  }
+}
+
+// ---------- HUD ----------
+const lvlEl=$('lvl'),lblEl=$('lureLbl'),fillEl=$('fill');let hudCache='';
+function hud(){
+  if(!st)return;
+  const n=st.workers.length?lured():0,esc=st.mode==='escape'||st.mode==='free'||st.mode==='outro';
+  const s=st.level+'|'+n+'|'+st.mode+'|'+lang;if(s===hudCache)return;hudCache=s;
+  lvlEl.textContent=T.lvl(st.level);
+  lblEl.textContent=st.mode==='free'||st.mode==='outro'?T.saved:esc?T.escape:n===6&&st.mode==='play'?T.keyReady:T.lured(n);
+  fillEl.style.width=(esc?100:n/6*100).toFixed(1)+'%';fillEl.classList.toggle('ready',n===6&&st.mode==='play'||st.mode==='escape');
+}
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(!paused)update(dt);draw();hud();requestAnimationFrame(loop);
+}
+
+// ---------- flow ----------
+function hideCards(){card=null;$('cardOv').hidden=true;$('startOv').hidden=true}
+function begin(level){
+  try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(_){}
+  st=fresh(level,level===1);hideCards();$('restartBtn').hidden=false;
+  newLevel(level,level===1);
+}
+function levelDone(){
+  if(st.level<LEVELS){setReached(st.level+1);showCard('done')}
+  else{
+    let best=null;
+    if(st.fromStart){try{const b=+localStorage.getItem(bestKey(st.diff))||0;best=b&&b<st.runT?b:st.runT;localStorage.setItem(bestKey(st.diff),best)}catch(_){best=st.runT}}
+    else{try{best=+localStorage.getItem(bestKey(st.diff))||null}catch(_){}}
+    st.best=best;showCard('win');
+  }
+}
+function showCard(kind){
+  card={kind};const ov=$('cardOv');ov.className='overlay '+(kind==='caught'?'bad':'good');
+  const set=(id,txt)=>{const el=$(id);el.hidden=txt==null;if(txt!=null)el.textContent=txt};
+  if(kind==='caught'){set('cTitle',T.caughtT);set('cText',T.caughtP);set('cBig',null);set('cBest',null);$('cDiffs').hidden=true;set('cBtn',T.again)}
+  if(kind==='done'){set('cTitle',T.doneT(st.level));set('cText',T.doneP);set('cBig',null);set('cBest',null);$('cDiffs').hidden=true;set('cBtn',T.next)}
+  if(kind==='win'){set('cTitle',T.winT);set('cText',T.winP);set('cBig',T.diff[st.diff]+' · '+T.stats(fmt(st.runT),st.catches));set('cBest',st.best?T.best(fmt(st.best)):null);$('cDiffs').hidden=false;set('cBtn',T.again)}
+  ov.hidden=false;fitTitles();setTimeout(()=>$('cBtn').focus(),50);
+}
+$('cBtn').addEventListener('click',()=>{
+  const k=card&&card.kind;
+  if(k==='caught'){hideCards();newLevel(st.level,false)}
+  else if(k==='done'){hideCards();newLevel(st.level+1,false)}
+  else begin(1);
+});
+$('startBtn').addEventListener('click',()=>begin(startLvl||1));
+$('restartBtn').addEventListener('click',e=>{e.currentTarget.blur();if(!st)return;hideCards();newLevel(st.level,false)});
+
+// idle backdrop behind the start card
+st=fresh(1,false);
+applyLang(lang,false);
+resize();newLevel(1,true);st.mode='menu';$('hint').hidden=true;
+requestAnimationFrame(loop);
+// test hook
+window.__jungle={get st(){return st},keys,held,begin,startPlay};
+})();
+</script>
+</body>
+</html>
