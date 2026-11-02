@@ -146,9 +146,9 @@ const ITEMS=['rope','net','kescher','basket','rope','net'];
 const ITEM_R={rope:.34,net:.26,kescher:.36,basket:.36};
 // per level: worker walking speed, throw cooldown range, wind-up time, throw speed, max things in the air at once
 const LV=[
-  {walk:1.15,cd:[3.6,6],wind:.6,speed:5,max:2},
-  {walk:1.35,cd:[2.7,4.6],wind:.5,speed:6.3,max:3},
-  {walk:1.6,cd:[2,3.4],wind:.42,speed:7.6,max:4},
+  {walk:1,cd:[4.5,7.5],wind:.8,speed:4.2,max:1},
+  {walk:1.15,cd:[3.6,6],wind:.7,speed:5.2,max:2},
+  {walk:1.35,cd:[2.8,4.8],wind:.6,speed:6.2,max:3},
 ];
 // difficulty: slower throws, longer cooldowns and wind-ups, slower walkers, less aiming ahead
 const DIFFS=[{k:'easy',cd:1.45,wind:1.25,speed:.8,walk:.85,lead:0},{k:'medium',cd:1.2,wind:1.1,speed:.9,walk:.93,lead:.25},{k:'hard',cd:1,wind:1,speed:1,walk:1,lead:.5}];
@@ -305,7 +305,7 @@ function newLevel(l,withIntro){
   const br=BRANCH();
   st.parrot={x:2.5,y:br.y-.42,vx:0,vy:0,f:1,flap:0,key:false,sit:!!withIntro};
   const offs=[-1.5,-.9,-.3,.3,.9,1.5].sort(()=>Math.random()-.5);
-  st.workers=ITEMS.map((it,i)=>({x:5.45+i*.42+rnd(-.08,.08),item:it,off:offs[i],cd:1.5+rnd(1.6,4)*DIFFS[st.diff].cd,wind:0,reload:0,f:-1,ph:Math.random()*7,stun:0,saw:withIntro&&i%2===0}));
+  st.workers=ITEMS.map((it,i)=>({x:5.45+i*.42+rnd(-.08,.08),item:it,off:offs[i],cd:2.5+rnd(1.6,4)*DIFFS[st.diff].cd,wind:0,reload:0,f:-1,ph:Math.random()*7,stun:0,saw:withIntro&&i%2===0}));
   st.workers.sort((a,b)=>a.x-b.x);
   st.boss={x:BOSS_X,key:true,cd:0,ph:0,leave:0};
   st.projs=[];st.parts=[];st.caught=null;st.allLured=false;st.sceneT=0;
@@ -397,7 +397,7 @@ function update(dt){
     q.vy+=G*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.rot+=q.spin*dt;
     if(q.type==='net')q.r=Math.min(.62,ITEM_R.net+q.age*.55);else q.r=ITEM_R[q.type];
     if(q.y>=GY-.12&&q.vy>0){q.y=GY-.12;q.landed=.001;q.rot=q.type==='basket'?0:q.rot}
-    if(!q.dud&&!q.landed&&st.mode==='play'&&Math.hypot(q.x-p.x,q.y-p.y)<PR+q.r*.85){catchParrot(q.type);q.gone=true}
+    if(!q.dud&&!q.landed&&st.mode==='play'&&Math.hypot(q.x-p.x,q.y-p.y)<PR*.85+q.r*.7){catchParrot(q.type);q.gone=true}
   }
   st.projs=st.projs.filter(q=>!q.gone&&q.landed<1&&q.x>-1&&q.x<11);
   if(st.mode==='play'){
@@ -418,7 +418,7 @@ function update(dt){
         if(busy<L.max&&Math.abs(p.x-w.x)<7.5){w.wind=L.wind*D.wind;busy++}else w.cd=.25+Math.random()*.4;
       }
       // fly too close to a worker and he grabs you
-      if(Math.abs(p.x-w.x)<.42&&p.y>GY-1.5){catchParrot('hands');return}
+      if(Math.abs(p.x-w.x)<.35&&p.y>GY-1.35){catchParrot('hands');return}
     }
     const n=lured(),all=n===st.workers.length;
     if(all&&!st.allLured)popText(BOSS_X-.2,GY-2.4,'!',C.white);
