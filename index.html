@@ -75,12 +75,12 @@ canvas{display:block;width:100%;height:100%}
 .langs button{font-size:13px;padding:3px 10px}
 .diffs button:focus-visible,.lvlrow button:focus-visible,.langs button:focus-visible{outline:3px solid #FFC53D;outline-offset:2px}
 /* arrow pad: left/right under the left thumb, up/down under the right thumb */
-.pad{flex:none;display:flex;justify-content:space-between;align-items:center;padding:2px 6px calc(10px + env(safe-area-inset-bottom,0px));touch-action:none}
-.pg{display:flex;gap:12px}
-.pg.v{flex-direction:column;gap:8px}
-.pad button{width:68px;height:54px;display:grid;place-items:center;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.12));color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:20px;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.4);padding:0;cursor:pointer;touch-action:none;backdrop-filter:blur(6px);transition:transform .08s,background .08s}
-.pg.v button{height:46px}
-.pad button svg{width:26px;height:26px;display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.pad{flex:none;display:flex;align-items:stretch;padding:0 0 env(safe-area-inset-bottom,0px);margin-inline:calc(-1*max(14px,env(safe-area-inset-left,0px)));touch-action:none}
+.pg{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:6px 12px 12px;touch-action:none;cursor:pointer}
+.pg.v{flex-direction:column;align-items:flex-end;justify-content:center;gap:10px}
+.pad button{pointer-events:none;flex:none;width:78px;height:66px;display:grid;place-items:center;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.12));color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:20px;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.4);padding:0;cursor:pointer;touch-action:none;backdrop-filter:blur(6px);transition:transform .08s,background .08s}
+.pg.v button{height:56px}
+.pad button svg{width:32px;height:32px;display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
 .pad button.on{background:linear-gradient(180deg,#FFE58A,#FFC53D);color:#5A3B00;transform:scale(.93)}
 .pad button:focus-visible{outline:3px solid #FFC53D;outline-offset:2px}
 </style>
@@ -322,18 +322,31 @@ function startPlay(){
 }
 
 // ---------- input ----------
-document.querySelectorAll('.pad button').forEach(b=>{
-  const d=b.dataset.d;
-  const on=e=>{e.preventDefault();held[d]=1;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}};
-  const off=()=>{held[d]=0;b.classList.remove('on')};
-  b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);
-  b.addEventListener('contextmenu',e=>e.preventDefault());
+// Each half of the pad is one big touch zone: a finger anywhere in it presses the nearest arrow,
+// and sliding the finger over switches arrows without lifting.
+const padTouch=new Map();
+function paintPad(){
+  for(const k in held)held[k]=0;
+  for(const d of padTouch.values())held[d]=1;
+  document.querySelectorAll('.pad button').forEach(b=>b.classList.toggle('on',!!held[b.dataset.d]));
+}
+function nearest(zone,e){
+  let best=null,bd=1e9;
+  for(const b of zone.querySelectorAll('button')){const r=b.getBoundingClientRect(),d=Math.hypot(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2));if(d<bd){bd=d;best=b.dataset.d}}
+  return best;
+}
+document.querySelectorAll('.pg').forEach(zone=>{
+  zone.addEventListener('pointerdown',e=>{e.preventDefault();try{zone.setPointerCapture(e.pointerId)}catch(_){}padTouch.set(e.pointerId,nearest(zone,e));paintPad()});
+  zone.addEventListener('pointermove',e=>{if(!padTouch.has(e.pointerId))return;const d=nearest(zone,e);if(d!==padTouch.get(e.pointerId)){padTouch.set(e.pointerId,d);paintPad()}});
+  const off=e=>{if(padTouch.delete(e.pointerId))paintPad()};
+  zone.addEventListener('pointerup',off);zone.addEventListener('pointercancel',off);zone.addEventListener('lostpointercapture',off);
+  zone.addEventListener('contextmenu',e=>e.preventDefault());
 });
 const KMAP={ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r',ArrowUp:'u',w:'u',ArrowDown:'d',s:'d'};
 addEventListener('keydown',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(KMAP[k]){keys[KMAP[k]]=1;e.preventDefault()}
   if(st&&st.mode==='intro'&&(k===' '||k==='Enter'))startPlay()});
 addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(KMAP[k])keys[KMAP[k]]=0});
-addEventListener('blur',()=>{for(const k in keys)keys[k]=0;for(const k in held)held[k]=0;document.querySelectorAll('.pad button').forEach(b=>b.classList.remove('on'))});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=0;padTouch.clear();paintPad()});
 document.addEventListener('visibilitychange',()=>{paused=document.hidden;last=performance.now()});
 $('stage').addEventListener('pointerdown',()=>{if(st&&st.mode==='intro'&&st.sceneT>.4)startPlay()});
 function dir(){

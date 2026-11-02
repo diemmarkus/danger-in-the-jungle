@@ -2,7 +2,7 @@
 
 A comic-style jungle game for the phone. You're a blue parrot having breakfast when you hear rumbling, whistling and sawing — workers are cutting down your jungle. Get the key from the boss and free your friend.
 
-- **Arrows** at the bottom of the screen fly the parrot (left/right under the left thumb, up/down under the right). On a keyboard: arrow keys or WASD.
+- **Arrows** at the bottom of the screen fly the parrot (left/right under the left thumb, up/down under the right). Each half of the bar is one big touch zone: touching anywhere in it presses the nearest arrow, and you can slide between arrows without lifting your finger. On a keyboard: arrow keys or WASD.
 - The boss's six workers follow you along the ground and throw **ropes, nets, landing nets and baskets** at you. A raised arm and a red **!** means a throw is coming. Don't fly too close to them either — they grab you.
 - **Lure all 6 workers** to the left of the log (each lured worker gets a green tick, the bar at the top fills up).
 - Then fly to the **boss** and snatch the key from his neck. If not all six are lured, he shoos you away.
