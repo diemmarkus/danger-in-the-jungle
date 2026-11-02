@@ -6,128 +6,174 @@
 <meta name="theme-color" content="#0F3324">
 <title>Danger in the Jungle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
 <style>
-/* Layout: one screen — HUD pills on top, the painted jungle clearing in the middle, the arrow pad at the bottom. */
+/* Layout: the jungle canvas fills the whole screen. Everything else floats on top of it:
+   glass arrow pads on the ground, a pause button, and scene overlays (title, intro, pause, results). */
 :root{
-  --paper:#FFD45A;      /* warm gold */
-  --ink:#2A1C14;
-  --jungle:#4FAE5A;
-  --deep:#2B7A43;
-  --leaf:#8FDB6A;
-  --hedge:#3E9A55;
-  --bark:#7A4A2A;
-  --dirt:#A8703F;
-  --pop:#F04E3E;
-  --blue:#2F86F0;
-  --vest:#FF8A1F;
-  --soda:#7FE3F0;
-  --white:#FFFDF6;
-  --night:#0F3324;
+  --paper:#FFD45A;--ink:#2A1C14;--jungle:#4FAE5A;--deep:#2B7A43;--leaf:#8FDB6A;--hedge:#3E9A55;--bark:#7A4A2A;--dirt:#A8703F;
+  --pop:#F04E3E;--blue:#2F86F0;--vest:#FF8A1F;--soda:#7FE3F0;--white:#FFFDF6;--night:#0F3324;--gold:#FFC53D;
   --display:"Fredoka","Baloo 2","Arial Rounded MT Bold",system-ui,sans-serif;
   --hand:"Nunito","Segoe UI",system-ui,sans-serif;
-  color-scheme:light;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);
+  color-scheme:dark;
 }
 [hidden]{display:none!important}
-html,body{height:100%;overflow:hidden;margin:0}
-html{background:var(--night)}
-body{background:radial-gradient(120% 60% at 70% 0%,#1F5A3A 0%,var(--night) 70%);color:var(--white);font-family:var(--hand);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
-.app{height:100%;display:flex;flex-direction:column;gap:8px;padding-block:10px 0;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));box-sizing:border-box}
-.hud{display:flex;align-items:center;gap:12px;font-family:var(--display);font-weight:600}
-.chip{background:rgba(255,253,246,.94);color:#1F4D33;border-radius:999px;padding:4px 14px;font-size:18px;box-shadow:0 4px 14px rgba(0,0,0,.3);white-space:nowrap}
-.restart{flex:none;width:40px;height:36px;display:grid;place-items:center;background:rgba(255,253,246,.94);color:#1F4D33;border:none;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.3);padding:0;cursor:pointer}
-.restart svg{width:20px;height:20px;display:block}
-.restart:active{transform:scale(.92)}
-.restart:focus-visible{outline:3px solid var(--paper);outline-offset:3px}
-.meter{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.meter span{font-size:13px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.03em;text-shadow:0 1px 3px rgba(0,0,0,.5)}
-.bar{height:12px;background:rgba(255,255,255,.18);border-radius:999px;box-shadow:inset 0 2px 4px rgba(0,0,0,.35);overflow:hidden}
-.fill{height:100%;width:0;border-radius:999px;background:linear-gradient(180deg,#FFC170,#FF7A1F);box-shadow:inset 0 2px 0 rgba(255,255,255,.45);transition:width .25s ease}
-.fill.ready{background:linear-gradient(180deg,#FFF0A0,#FFC53D);animation:glow .7s ease-in-out infinite alternate}
-@keyframes glow{to{filter:brightness(1.25);box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 0 12px #FFE27A}}
-.stage{position:relative;flex:1;min-height:0;margin-left:calc(-1*max(14px,env(safe-area-inset-left,0px)));margin-right:calc(-1*max(14px,env(safe-area-inset-right,0px)));touch-action:none;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
-canvas{display:block;width:100%;height:100%}
-.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 45%,rgba(15,51,36,.15),rgba(15,51,36,.55))}
-.card{box-sizing:border-box;width:min(350px,100%);background:linear-gradient(180deg,#FFFDF6 0%,#F1F6E6 100%);color:#24382B;border-radius:26px;box-shadow:0 22px 50px rgba(0,0,0,.45),inset 0 -4px 0 rgba(0,0,0,.05);padding:22px 22px 20px;text-align:center;max-height:100%;overflow-y:auto;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
-@keyframes pop{from{transform:scale(.85);opacity:0}}
-.card h1{font-family:var(--display);font-weight:700;font-size:46px;line-height:.95;margin:0 0 8px;background:linear-gradient(180deg,#6CC4FF 0%,#1F6FE0 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(10,50,110,.25));text-wrap:balance}
-#cardOv.bad h1{background-image:linear-gradient(180deg,#FFA36B,#E8392C);filter:drop-shadow(0 3px 0 rgba(120,20,10,.25))}
-#cardOv.good h1{background-image:linear-gradient(180deg,#9BE36E,#2E9A4B);filter:drop-shadow(0 3px 0 rgba(20,80,30,.25))}
-.card p{margin:6px 0;font-size:15px;line-height:1.4}
-.card ul{list-style:none;padding:0;margin:10px 0;text-align:left;font-size:14px;line-height:1.3;display:grid;gap:5px}
-.card li{padding-left:20px;position:relative}
-.card li::before{content:"";position:absolute;left:2px;top:.45em;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFE79A,#F5A623)}
-.btn{font-family:var(--display);font-weight:600;font-size:26px;letter-spacing:.03em;background:linear-gradient(180deg,#9BE873,#3FAF4A);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.18);border:none;border-radius:999px;padding:10px 34px;box-shadow:0 6px 0 #2A7F35,0 12px 22px rgba(0,0,0,.25);cursor:pointer;margin-top:10px}
-.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #2A7F35,0 6px 12px rgba(0,0,0,.25)}
-.btn:focus-visible{outline:3px solid #FFC53D;outline-offset:4px}
-.big{font-family:var(--display);font-weight:600;font-size:20px}
-.hint{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;background:rgba(15,51,36,.6);color:#fff;border-radius:999px;padding:4px 14px;font-family:var(--display);font-weight:500;font-size:13px;letter-spacing:.04em;white-space:nowrap;pointer-events:none;backdrop-filter:blur(4px)}
-.diffs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px}
-.diffs button,.lvlrow button,.langs button{font-family:var(--display);font-weight:600;background:#fff;color:#2F4A37;border:2px solid #D7E4D0;border-radius:999px;cursor:pointer;transition:transform .1s}
-.diffs button{font-size:15px;padding:6px 2px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.diffs button[aria-pressed="true"],.langs button[aria-pressed="true"]{background:linear-gradient(180deg,#FFE58A,#FFC53D);border-color:#E9A91C;color:#5A3B00;box-shadow:0 3px 8px rgba(233,169,28,.4)}
-.lvls{margin:8px 0 2px}
-.lvls>span{display:block;font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.04em;margin-bottom:6px;color:#5D7564}
-.lvlrow{display:flex;justify-content:center;gap:8px}
-.lvlrow button{font-size:16px;width:42px;height:34px;padding:0}
-.lvlrow button[aria-pressed="true"]{background:linear-gradient(180deg,#FF8A6B,#E8392C);border-color:#C42C20;color:#fff}
-.langs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:14px}
-.langs button{font-size:13px;padding:3px 10px}
-.diffs button:focus-visible,.lvlrow button:focus-visible,.langs button:focus-visible{outline:3px solid #FFC53D;outline-offset:2px}
-/* arrow pad: left/right under the left thumb, up/down under the right thumb */
-.pad{flex:none;display:flex;align-items:stretch;padding:0 0 env(safe-area-inset-bottom,0px);margin-inline:calc(-1*max(14px,env(safe-area-inset-left,0px)));touch-action:none}
-.pg{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:6px 12px 12px;touch-action:none;cursor:pointer}
+html,body{height:100%;overflow:hidden;margin:0;background:var(--night)}
+body{color:var(--white);font-family:var(--hand);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;overscroll-behavior:none}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+#stage{position:fixed;inset:0;touch-action:none}
+canvas{display:block;width:100%;height:100%;transition:filter .6s ease}
+canvas.dim{filter:saturate(.35) brightness(.7)}
+#safe{position:absolute;visibility:hidden;padding:var(--st) var(--sr) var(--sb) var(--sl)}
+
+/* glass: the one surface style used for every control */
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.1));border:1.5px solid rgba(255,255,255,.42);box-shadow:0 8px 22px rgba(0,25,10,.35),inset 0 1px 0 rgba(255,255,255,.45);backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2)}
+.round{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer}
+.round svg{width:22px;height:22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.round:active{transform:scale(.92)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.act:focus-visible{outline:none}.act:focus-visible .round{outline:3px solid var(--gold);outline-offset:3px}
+
+/* in-game: pause button top right */
+#pauseBtn{position:absolute;top:calc(var(--st) + 12px);right:calc(var(--sr) + 12px)}
+
+/* arrow pads sit on the ground; each half of the bottom strip is one big touch zone */
+#ctrl{position:absolute;left:0;right:0;bottom:0;height:calc(150px + var(--sb));display:flex;touch-action:none;transition:opacity .35s ease,transform .35s ease}
+#ctrl.off{opacity:0;transform:translateY(30px);pointer-events:none}
+.pg{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:14px;padding:10px calc(14px + var(--sr)) calc(14px + var(--sb)) calc(14px + var(--sl));touch-action:none;cursor:pointer}
+.pg.h{justify-content:flex-start}
 .pg.v{flex-direction:column;align-items:flex-end;justify-content:center;gap:10px}
-.pad button{pointer-events:none;flex:none;width:78px;height:66px;display:grid;place-items:center;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.12));color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:20px;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.4);padding:0;cursor:pointer;touch-action:none;backdrop-filter:blur(6px);transition:transform .08s,background .08s}
-.pg.v button{height:56px}
-.pad button svg{width:32px;height:32px;display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
-.pad button.on{background:linear-gradient(180deg,#FFE58A,#FFC53D);color:#5A3B00;transform:scale(.93)}
-.pad button:focus-visible{outline:3px solid #FFC53D;outline-offset:2px}
+.pg button{pointer-events:none;flex:none;width:76px;height:64px;border-radius:24px;display:grid;place-items:center;padding:0;transition:transform .08s,background .08s}
+.pg.v button{height:54px}
+.pg button svg{width:30px;height:30px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.pg button.on{background:linear-gradient(180deg,#FFE58A,#FFC53D);color:#5A3B00;border-color:#FFE9A8;transform:scale(.93)}
+
+/* title screen: the sign is painted on the canvas; the controls sit at the bottom */
+#menu{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--st) + 12px) calc(var(--sr) + 14px) calc(var(--sb) + 18px) calc(var(--sl) + 14px);pointer-events:none}
+#menu>*{pointer-events:auto}
+.mtop{display:flex;justify-content:space-between;align-items:center}
+.pill{border-radius:999px;padding:9px 16px;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.04em;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.pill svg{width:18px;height:18px}
+.mbottom{display:flex;flex-direction:column;align-items:center;gap:14px}
+.seg{display:flex;padding:4px;border-radius:999px;gap:2px}
+.seg button{border:none;background:none;border-radius:999px;padding:8px 14px;font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.03em;cursor:pointer;color:rgba(255,255,255,.85);display:flex;align-items:center;gap:6px}
+.seg button i{display:inline-flex;gap:2px}
+.seg button i b{width:6px;height:10px;border-radius:6px 0 6px 0;background:currentColor;opacity:.9}
+.seg button[aria-pressed="true"]{background:linear-gradient(180deg,#FFE58A,#FFC53D);color:#5A3B00;box-shadow:0 3px 10px rgba(255,197,61,.45)}
+.medals{display:flex;gap:16px}
+.medal{width:62px;height:62px;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:24px;position:relative;padding:0}
+.medal[aria-pressed="true"]{background:radial-gradient(circle at 35% 30%,#FFF1B0,#FFC53D 60%,#E09A10);color:#5A3B00;border-color:#FFF2C0;box-shadow:0 0 0 4px rgba(255,197,61,.35),0 8px 22px rgba(0,25,10,.35)}
+.medal:disabled{cursor:default;opacity:.55}
+.medal svg{width:22px;height:22px}
+.medal small{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-family:var(--display);font-size:11px;font-weight:600;letter-spacing:.06em;white-space:nowrap;opacity:.85}
+.play{margin-top:14px;border:none;border-radius:999px;padding:14px 46px 14px 38px;font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.04em;cursor:pointer;color:#fff;background:linear-gradient(180deg,#9BE873,#36A646);box-shadow:0 7px 0 #24782F,0 14px 30px rgba(0,30,10,.45),inset 0 2px 0 rgba(255,255,255,.4);text-shadow:0 2px 0 rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;animation:breathe 2.4s ease-in-out infinite}
+.play svg{width:26px;height:26px}
+.play:active{transform:translateY(5px);box-shadow:0 2px 0 #24782F,0 6px 14px rgba(0,30,10,.4);animation:none}
+@keyframes breathe{50%{transform:scale(1.04)}}
+.lbl{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.12em;opacity:.8;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+/* sheets: how-to, pause, results — a blurred scrim and glass panel, no paper cards */
+.scrim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:calc(var(--st) + 20px) 20px calc(var(--sb) + 20px);background:radial-gradient(circle at 50% 40%,rgba(15,51,36,.25),rgba(8,30,20,.75));animation:fade .3s ease}
+@keyframes fade{from{opacity:0}}
+.sheet{width:min(360px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;border-radius:30px;padding:26px 22px 22px;text-align:center;animation:rise .45s cubic-bezier(.2,1.3,.4,1)}
+@keyframes rise{from{transform:translateY(40px) scale(.94);opacity:0}}
+.sheet h2{font-family:var(--display);font-weight:700;font-size:42px;line-height:1;margin:0 0 10px;letter-spacing:.01em;background:linear-gradient(180deg,#FFF6C8,#FFC53D);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(120,70,0,.45)) drop-shadow(0 8px 16px rgba(0,0,0,.35));text-wrap:balance}
+.sheet.bad h2{background-image:linear-gradient(180deg,#FFC2A8,#F04E3E);filter:drop-shadow(0 3px 0 rgba(110,20,10,.5)) drop-shadow(0 8px 16px rgba(0,0,0,.35))}
+.sheet p{margin:6px 0;font-size:15px;line-height:1.45;color:rgba(255,255,255,.92)}
+.stats{display:flex;justify-content:center;gap:10px;margin:14px 0 4px;flex-wrap:wrap}
+.stat{border-radius:16px;padding:8px 14px;font-family:var(--display);font-weight:600;font-size:17px;display:flex;align-items:center;gap:8px}
+.stat svg{width:18px;height:18px}
+.cages{display:flex;justify-content:center;gap:12px;margin:12px 0}
+.cages span{width:40px;height:40px;border-radius:50%;display:grid;place-items:center}
+.cages span svg{width:24px;height:24px}
+.cages span.free{background:radial-gradient(circle at 35% 30%,#8FD0FF,#2F86F0);border-color:#BFE3FF}
+.actions{display:flex;justify-content:center;gap:16px;margin-top:18px}
+.act{display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.06em;cursor:pointer;background:none;border:none;padding:0}
+.act .round{width:58px;height:58px}
+.act .round svg{width:26px;height:26px}
+.act.main .round{width:72px;height:72px;background:linear-gradient(180deg,#9BE873,#36A646);border-color:#C9F5A8;box-shadow:0 6px 0 #24782F,0 12px 26px rgba(0,30,10,.45)}
+.act.main .round svg{width:32px;height:32px}
+.rules{list-style:none;padding:0;margin:14px 0 4px;text-align:left;display:grid;gap:12px}
+.rules li{display:flex;gap:12px;align-items:flex-start;font-size:14.5px;line-height:1.4}
+.rules li b{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:15px;background:linear-gradient(180deg,#FFE58A,#FFC53D);color:#5A3B00}
+
+/* intro: letterbox bars, subtitles, skip */
+#cine{position:absolute;inset:0;pointer-events:none}
+#cine::before,#cine::after{content:"";position:absolute;left:0;right:0;height:12%;background:#050f0a;animation:bar .6s ease both}
+#cine::before{top:0}
+#cine::after{bottom:0}
+@keyframes bar{from{transform:scaleY(0)}}
+#cine::before{transform-origin:top}#cine::after{transform-origin:bottom}
+#caption{position:absolute;left:24px;right:24px;bottom:calc(12% + 18px);text-align:center;font-weight:700;font-size:18px;line-height:1.35;text-shadow:0 2px 6px rgba(0,0,0,.8),0 0 2px rgba(0,0,0,.9);transition:opacity .35s ease;z-index:1}
+#skipBtn{position:absolute;top:calc(var(--st) + 12px);right:calc(var(--sr) + 12px);pointer-events:auto;z-index:1}
+
+#fade{position:absolute;inset:0;background:#0A2418;opacity:0;pointer-events:none;transition:opacity .3s ease}
+#fade.on{opacity:1}
+@media (orientation:landscape) and (max-height:540px){
+  #ctrl{height:calc(110px + var(--sb))}
+  .pg button{width:68px;height:56px}.pg.v button{height:48px}.pg.v{gap:6px}
+  .mbottom{position:absolute;right:calc(var(--sr) + 14px);top:50%;transform:translateY(-50%);width:50%;gap:10px}
+  .play{margin-top:8px}
+}
+@media (prefers-reduced-motion:reduce){.play{animation:none}}
 </style>
-<style>:root{padding:env(safe-area-inset-top,0px) 0 0;box-sizing:border-box;height:100%}body{font-size:14px}</style>
 </head>
 <body>
-<div class="app">
-  <div class="hud">
-    <div class="chip" id="lvl">LVL 1/3</div>
-    <div class="meter"><span id="lureLbl">LURED 0/6</span><div class="bar"><div class="fill" id="fill"></div></div></div>
-    <button type="button" class="restart" id="restartBtn" aria-label="Restart" title="Restart" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><path d="M20.5 3.5v5.5H15z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-  </div>
-  <div class="stage" id="stage">
-    <canvas id="c"></canvas>
-    <div class="hint" id="hint" hidden data-i18n="skip">TAP TO SKIP</div>
-    <div class="overlay" id="startOv">
-      <div class="card">
-        <h1 data-i18n="title">DANGER IN THE JUNGLE!</h1>
-        <p data-i18n="story">You're a blue parrot.</p>
-        <ul id="rules"></ul>
-        <div class="diffs" role="group" aria-label="Difficulty"></div>
-        <div class="lvls" hidden><span data-i18n="from">START AT LEVEL</span><div class="lvlrow" role="group"></div></div>
-        <button class="btn" id="startBtn" data-i18n="start">FLY!</button>
-        <div class="langs" id="langs" role="group" aria-label="Language"></div>
-      </div>
-    </div>
-    <div class="overlay" id="cardOv" hidden>
-      <div class="card">
-        <h1 id="cTitle">CAUGHT!</h1>
-        <p id="cText"></p>
-        <p class="big" id="cBig" hidden></p>
-        <p id="cBest" hidden></p>
-        <div class="diffs" id="cDiffs" role="group" aria-label="Difficulty" hidden></div>
-        <button class="btn" id="cBtn">AGAIN</button>
-      </div>
-    </div>
-  </div>
-  <div class="pad" id="pad">
-    <div class="pg">
-      <button type="button" data-d="l" aria-label="Left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4 6 12l10 8z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
-      <button type="button" data-d="r" aria-label="Right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l10 8-10 8z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div id="safe"></div>
+
+  <div id="ctrl" class="off">
+    <div class="pg h">
+      <button type="button" class="glass" data-d="l" tabindex="-1" aria-label="Left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.5 7 12l8.5 7.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="glass" data-d="r" tabindex="-1" aria-label="Right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 4.5 17 12l-8.5 7.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
     <div class="pg v">
-      <button type="button" data-d="u" aria-label="Up"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 12 6l8 11z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
-      <button type="button" data-d="d" aria-label="Down"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7l8 11 8-11z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="glass" data-d="u" tabindex="-1" aria-label="Up"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 15.5 12 7l7.5 8.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="glass" data-d="d" tabindex="-1" aria-label="Down"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8.5 12 17l7.5-8.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
   </div>
+
+  <button type="button" id="pauseBtn" class="glass round" hidden aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor"/></svg></button>
+
+  <div id="menu">
+    <div class="mtop">
+      <button type="button" id="langBtn" class="glass pill"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="langName">EN</span></button>
+      <button type="button" id="howBtn" class="glass round" aria-label="How to play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9a3 3 0 1 1 4.2 2.8c-.8.4-1.2 1-1.2 1.9V15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18.6" r="1.6" fill="currentColor"/></svg></button>
+    </div>
+    <div class="mbottom">
+      <div class="seg glass" id="diffs" role="group" aria-label="Difficulty"></div>
+      <span class="lbl" id="lvlLbl">Level</span>
+      <div class="medals" id="medals" role="group" aria-label="Level"></div>
+      <button type="button" class="play" id="playBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span id="playLbl">PLAY</span></button>
+    </div>
+  </div>
+
+  <div id="cine" hidden>
+    <p id="caption"></p>
+    <button type="button" id="skipBtn" class="glass pill"><span id="skipLbl">Skip</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5l7 7-7 7M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+
+  <div class="scrim" id="howOv" hidden>
+    <div class="sheet glass">
+      <h2 id="howTitle">How to play</h2>
+      <ol class="rules" id="rules"></ol>
+      <div class="actions"><button type="button" class="act main" id="howClose"><span class="glass round"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span id="okLbl">OK</span></button></div>
+    </div>
+  </div>
+
+  <div class="scrim" id="sheetOv" hidden>
+    <div class="sheet glass" id="sheet">
+      <h2 id="sTitle"></h2>
+      <p id="sText"></p>
+      <div class="cages" id="sCages"></div>
+      <div class="stats" id="sStats"></div>
+      <div class="actions" id="sActs"></div>
+    </div>
+  </div>
+
+  <div id="fade"></div>
 </div>
 
 <script>
@@ -212,6 +258,41 @@ const I18N={
     doneT:n=>'NÍVEL '+n+' CONCLUÍDO!',doneP:'Seu amigo está livre, os operários vão embora e a floresta volta a crescer. Mas vêm mais…',next:'PRÓXIMO',
     winT:'SELVA SALVA!',winP:'Os três amigos estão livres e os lenhadores foram embora de vez.',stats:(t,c)=>t+' · PEGO '+c+'×',best:t=>'Melhor tempo: '+t},
 };
+// extra strings for the new screens
+const EXTRA={
+  en:{play:'PLAY',how:'How to play',ok:'GOT IT',lvlLbl:'Level',skip:'Skip',pause:'Paused',resume:'Resume',restartL:'Restart',menu:'Menu',next:'Next',retry:'Again',
+    getKey:'All lured — grab the key!',toDoor:'Fly through the door!',freed:n=>n+' of 3 friends free',time:'Time',caught:'Caught',bestL:'Best',
+    captions:['You’re a blue parrot, just having breakfast…','…when you hear rumbling, whistling and sawing.','Workers are cutting down your jungle. Not in your home!']},
+  de:{play:'LOS GEHT’S',how:'So geht’s',ok:'ALLES KLAR',lvlLbl:'Level',skip:'Überspringen',pause:'Pause',resume:'Weiter',restartL:'Neu starten',menu:'Menü',next:'Weiter',retry:'Nochmal',
+    getKey:'Alle gelockt – hol den Schlüssel!',toDoor:'Flieg durch die Tür!',freed:n=>n+' von 3 Artgenossen frei',time:'Zeit',caught:'Gefangen',bestL:'Rekord',
+    captions:['Du bist ein blauer Papagei und frühstückst gerade …','… da hörst du Rollen, Pfeifen und Sägen.','Arbeiter holzen deinen Wald ab. Nicht in deiner Heimat!']},
+  fr:{play:'JOUER',how:'Comment jouer',ok:'COMPRIS',lvlLbl:'Niveau',skip:'Passer',pause:'Pause',resume:'Reprendre',restartL:'Recommencer',menu:'Menu',next:'Suivant',retry:'Encore',
+    getKey:'Tous attirés'+NB+': prends la clé'+NB+'!',toDoor:'Vole jusqu’à la porte'+NB+'!',freed:n=>n+' amis libérés sur 3',time:'Temps',caught:'Attrapé',bestL:'Record',
+    captions:['Tu es un perroquet bleu, en plein petit-déjeuner…','…quand tu entends des grondements, des sifflets et des scies.','Des ouvriers abattent ta jungle. Pas chez toi'+NB+'!']},
+  es:{play:'JUGAR',how:'Cómo se juega',ok:'ENTENDIDO',lvlLbl:'Nivel',skip:'Saltar',pause:'Pausa',resume:'Seguir',restartL:'Reiniciar',menu:'Menú',next:'Siguiente',retry:'Otra vez',
+    getKey:'¡Todos atraídos: coge la llave!',toDoor:'¡Vuela a la puerta!',freed:n=>n+' de 3 amigos libres',time:'Tiempo',caught:'Atrapado',bestL:'Récord',
+    captions:['Eres un loro azul y estás desayunando…','…cuando oyes rugidos, silbidos y sierras.','Unos obreros talan tu selva. ¡En tu casa no!']},
+  it:{play:'GIOCA',how:'Come si gioca',ok:'CAPITO',lvlLbl:'Livello',skip:'Salta',pause:'Pausa',resume:'Riprendi',restartL:'Ricomincia',menu:'Menu',next:'Avanti',retry:'Ancora',
+    getKey:'Tutti attirati: prendi la chiave!',toDoor:'Vola alla porta!',freed:n=>n+' amici liberi su 3',time:'Tempo',caught:'Catturato',bestL:'Record',
+    captions:['Sei un pappagallo blu e stai facendo colazione…','…quando senti rombi, fischi e seghe.','Degli operai abbattono la tua giungla. Non a casa tua!']},
+  pt:{play:'JOGAR',how:'Como jogar',ok:'ENTENDI',lvlLbl:'Nível',skip:'Pular',pause:'Pausa',resume:'Continuar',restartL:'Reiniciar',menu:'Menu',next:'Próximo',retry:'De novo',
+    getKey:'Todos atraídos: pegue a chave!',toDoor:'Voe pela porta!',freed:n=>n+' de 3 amigos livres',time:'Tempo',caught:'Pego',bestL:'Recorde',
+    captions:['Você é um papagaio azul tomando café da manhã…','…quando ouve roncos, apitos e serras.','Operários estão derrubando sua selva. Na sua casa, não!']},
+};
+for(const k in EXTRA)Object.assign(I18N[k],EXTRA[k]);
+
+const ICON={
+  home:'<svg viewBox="0 0 24 24"><path d="M4 11.5 12 4.5l8 7M6.5 10v9h4v-5h3v5h4v-9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  retry:'<svg viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M20.5 3.5v5.5H15z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+  play:'<svg viewBox="0 0 24 24"><path d="M7.5 4.5v15l12-7.5z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+  lock:'<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>',
+  cage:'<svg viewBox="0 0 24 24"><path d="M5 20V10a7 7 0 0 1 14 0v10M9 20V8.5M12 20V6.5M15 20V8.5M4 20h16M12 3v1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  bird:'<svg viewBox="0 0 24 24"><path d="M4 15c3 0 5-2 6-5 1-3 4-5 7-4l3 1-3 1c0 6-4 10-10 10l-3-1z" fill="#FFE58A"/><circle cx="16" cy="8.5" r="1.2" fill="#14213D"/></svg>',
+  clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  net:'<svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19M5 12h14M12 5v14" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>',
+  trophy:'<svg viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0zM7 6H4.5a3 3 0 0 0 3 4M17 6h2.5a3 3 0 0 1-3 4M12 14v3M8 20h8M9.5 17h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+};
+
 function pickLang(){
   const want=[];
   try{const q=new URLSearchParams(location.search).get('lang');if(q)want.push(q)}catch(_){}
@@ -224,83 +305,79 @@ let lang=pickLang(),T=I18N[lang],card=null;
 function applyLang(k,save){
   lang=k;T=I18N[k];document.documentElement.lang=k;
   if(save)try{localStorage.setItem('jungle.lang',k)}catch(_){}
-  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=T[el.dataset.i18n]});
-  $('restartBtn').setAttribute('aria-label',T.restart);$('restartBtn').title=T.restart;
-  $('rules').replaceChildren(...T.rules.map(r=>{const li=document.createElement('li');li.textContent=r;return li}));
-  $('langs').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===k));
-  paintDiffs();
+  $('langName').textContent=T.name;$('playLbl').textContent=T.play;$('lvlLbl').textContent=T.lvlLbl;$('skipLbl').textContent=T.skip;
+  $('howTitle').textContent=T.how;$('okLbl').textContent=T.ok;$('howBtn').setAttribute('aria-label',T.how);$('pauseBtn').setAttribute('aria-label',T.pause);
+  $('rules').replaceChildren(...T.rules.map((r,i)=>{const li=document.createElement('li'),b=document.createElement('b'),s=document.createElement('span');b.textContent=i+1;s.textContent=r;li.append(b,s);return li}));
+  paintMenu();
   if(card)showCard(card.kind);
-  hudCache='';fitTitles();
+  capIdx=-1;
 }
-function fitTitles(){
-  document.querySelectorAll('.card h1').forEach(h=>{
-    h.style.fontSize='';const ov=h.closest('.overlay');const hid=ov.hidden;ov.hidden=false;
-    let fs=parseFloat(getComputedStyle(h).fontSize);
-    while(h.scrollWidth>h.clientWidth+1&&fs>24){fs-=2;h.style.fontSize=fs+'px'}
-    ov.hidden=hid;
-  });
-}
-addEventListener('resize',()=>fitTitles());
-document.fonts&&document.fonts.ready.then(()=>fitTitles());
-for(const k of Object.keys(I18N)){
-  const b=document.createElement('button');b.type='button';b.dataset.lang=k;b.textContent=I18N[k].name;b.lang=k;
-  b.addEventListener('click',()=>applyLang(k,true));$('langs').append(b);
-}
+$('langBtn').addEventListener('click',()=>{const ks=Object.keys(I18N);applyLang(ks[(ks.indexOf(lang)+1)%ks.length],true)});
 
 // ---------- difficulty & progress ----------
 let diff=1;
 try{const d=+localStorage.getItem('jungle.diff');if(d>=0&&d<3)diff=d}catch(_){}
-function paintDiffs(){
-  document.querySelectorAll('.diffs').forEach(g=>{
-    if(!g.children.length)DIFFS.forEach((_,i)=>{const b=document.createElement('button');b.type='button';b.dataset.i=i;
-      b.addEventListener('click',()=>{diff=i;try{localStorage.setItem('jungle.diff',i)}catch(_){}startLvl=null;paintDiffs();if(card&&card.kind==='win')showCard('win')});g.append(b)});
-    [...g.children].forEach((b,i)=>{b.textContent=T.diff[i];b.setAttribute('aria-pressed',i===diff)});
-  });
-  paintLevels();
-}
 const memReach=[1,1,1];
 const reachKey=()=>'jungle.reached.'+DIFFS[diff].k;
 function reached(){try{return Math.min(LEVELS,Math.max(1,+localStorage.getItem(reachKey())||1,memReach[diff]))}catch(_){return memReach[diff]}}
 function setReached(l){l=Math.min(LEVELS,l);memReach[diff]=Math.max(memReach[diff],l);try{if(l>(+localStorage.getItem(reachKey())||1))localStorage.setItem(reachKey(),l)}catch(_){}}
 let startLvl=null;
-function paintLevels(){
-  const top=reached();if(startLvl==null||startLvl>top)startLvl=top;
-  document.querySelectorAll('.lvls').forEach(box=>{
-    box.hidden=top<2;const row=box.querySelector('.lvlrow');
-    if(row.children.length!==top)row.replaceChildren(...Array.from({length:top},(_,i)=>{const b=document.createElement('button');b.type='button';b.textContent=i+1;
-      b.addEventListener('click',()=>{startLvl=i+1;paintLevels()});return b}));
-    [...row.children].forEach((b,i)=>b.setAttribute('aria-pressed',i+1===startLvl));
-  });
-}
 const bestKey=d=>'jungle.best.'+DIFFS[d].k;
 const fmt=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-
-// ---------- canvas setup ----------
-let W=0,H=0,dpr=1,S=40,ox=0,WH=10,GY=9;
-const bcv=document.createElement('canvas'),bctx=bcv.getContext('2d');let bgDirty=true;
-function mkPattern(c0,bg,dot,size,rad){
-  const o=document.createElement('canvas');o.width=o.height=Math.round(size*dpr);const c=o.getContext('2d');c.scale(dpr,dpr);
-  c.fillStyle=bg;c.fillRect(0,0,size,size);c.fillStyle=dot;
-  for(const[x,y]of[[size/4,size/4],[size*3/4,size*3/4]]){c.beginPath();c.arc(x,y,rad,0,7);c.fill()}
-  const p=c0.createPattern(o,'repeat');p.setTransform&&p.setTransform(new DOMMatrix().scale(1/dpr));return p;
+function paintMenu(){
+  const g=$('diffs');
+  if(!g.children.length)DIFFS.forEach((_,i)=>{const b=document.createElement('button');b.type='button';
+    b.addEventListener('click',()=>{diff=i;try{localStorage.setItem('jungle.diff',i)}catch(_){}startLvl=null;paintMenu()});g.append(b)});
+  [...g.children].forEach((b,i)=>{b.innerHTML='<i>'+'<b></b>'.repeat(i+1)+'</i>';b.append(T.diff[i]);b.setAttribute('aria-pressed',i===diff)});
+  const top=reached();if(startLvl==null||startLvl>top)startLvl=top;
+  const m=$('medals');
+  if(!m.children.length)for(let l=1;l<=LEVELS;l++){const b=document.createElement('button');b.type='button';b.className='medal glass';
+    b.addEventListener('click',()=>{startLvl=l;paintMenu()});m.append(b)}
+  [...m.children].forEach((b,i)=>{const l=i+1,open=l<=top;b.disabled=!open;b.innerHTML=open?String(l):ICON.lock;
+    b.setAttribute('aria-pressed',open&&l===startLvl);b.setAttribute('aria-label',T.lvlLbl+' '+l)});
 }
+// ---------- canvas & camera ----------
+// The world is 10 units wide. On a phone the camera shows about 6.6 units and follows the parrot sideways;
+// on a wide screen the whole clearing fits and the camera stands still.
+let land=false,W=0,H=0,dpr=1,S=40,ox=0,GY=9,VW=10,camX=0,ctrlH=150,safe={t:0,r:0,b:0,l:0};
+const bcv=document.createElement('canvas'),bctx=bcv.getContext('2d');let bgDirty=true,bgX0=-1,bgX1=11;
+const camMin=()=>VW>=WORLD?-(VW-WORLD)/2:-.3,camMax=()=>VW>=WORLD?camMin():WORLD-VW+.3;
 function resize(){
   const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);
   W=r.width;H=r.height;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
-  S=Math.max(16,Math.min(W/WORLD,H/6.2));ox=(W-WORLD*S)/2;WH=H/S;GY=WH-.7;
+  const sp=getComputedStyle($('safe'));safe={t:parseFloat(sp.paddingTop)||0,r:parseFloat(sp.paddingRight)||0,b:parseFloat(sp.paddingBottom)||0,l:parseFloat(sp.paddingLeft)||0};
+  ctrlH=$('ctrl').offsetHeight||150;land=W>H*1.25;
+  // portrait: the arrows sit below the ground line; landscape: they float over the bottom corners
+  const ground=land?H-safe.b-44:H-ctrlH;
+  S=Math.max(18,Math.min(W/6.6,(ground-safe.t-64)/(land?6.4:8.2)));
+  VW=W/S;GY=ground/S+.2;
+  bgX0=camMin()-1.2;bgX1=camMax()+VW+1.2;
+  camX=Math.max(camMin(),Math.min(camMax(),camX));
   bgDirty=true;setupFg();
 }
 addEventListener('resize',resize);
-const X=x=>ox+x*S,Y=y=>y*S;
-const TOP=()=>Math.max(.55,GY-6.6);   // how high the parrot can fly
-const DOOR=()=>({x:.85,y:Math.max(1.3,GY-6.1)});
-const BRANCH=()=>({x1:1.3,x2:3.6,y:Math.max(2.2,GY-4.4)});
+const X=x=>(x-camX)*S,Y=y=>y*S;
+const TOP=()=>Math.max((safe.t+78)/S,GY-8.2);   // how high the parrot can fly (below the HUD)
+const DOOR=()=>({x:.85,y:TOP()+.55});
+const BRANCH=()=>({x1:1.3,x2:3.6,y:GY-4.5});
+function camTarget(){
+  if(!st||!st.parrot)return camMin();
+  const p=st.parrot,t=st.sceneT;
+  if(st.mode==='menu')return camMin()+(camMax()-camMin())*.08;
+  if(st.mode==='intro')return t<4?camMin():t<5.8?camMax():camMin();
+  return p.x-VW*.5+p.vx*.25;
+}
+function moveCam(dt){
+  const k=st&&st.mode==='intro'?2.2:4;
+  camX+=(camTarget()-camX)*Math.min(1,dt*k);
+  camX=Math.max(camMin(),Math.min(camMax(),camX));
+}
 
 // ---------- state ----------
 let st=null,last=performance.now(),paused=false;
 const held={l:0,r:0,u:0,d:0},keys={};
 const rnd=(a,b)=>a+Math.random()*(b-a);
-function fresh(level,fromStart){return{mode:'menu',level,runT:0,catches:0,fromStart,parts:[],projs:[],workers:[],banner:null,sceneT:0,diff}}
+function fresh(level,fromStart){return{mode:'menu',level,runT:0,catches:0,fromStart,parts:[],projs:[],workers:[],banner:null,sceneT:0,diff,paused:false}}
 function newLevel(l,withIntro){
   st.level=l;setReached(l);
   const br=BRANCH();
@@ -312,23 +389,23 @@ function newLevel(l,withIntro){
   st.projs=[];st.parts=[];st.caught=null;st.allLured=false;st.sceneT=0;
   st.stumps=[{x:4.6,g:0},{x:7.1,g:0},{x:8.1,g:0},{x:3.2,g:0}];
   st.buddy=null;st.seed=(Math.random()*1e9)|0;bgDirty=true;
-  if(withIntro){st.mode='intro';st.leafOff=0;$('hint').hidden=false}
+  if(withIntro){st.mode='intro';st.leafOff=0;capIdx=-1;setUI('intro')}
   else startPlay();
 }
 function startPlay(){
-  st.mode='play';st.sceneT=0;st.parrot.sit=false;$('hint').hidden=true;
+  st.mode='play';st.sceneT=0;st.parrot.sit=false;setUI('play');
   for(const w of st.workers)w.saw=false;
-  st.banner={text:T.level(st.level),sub:T.lureSub,t:2,max:2};
+  st.banner={text:T.level(st.level),sub:T.lureSub,t:2.2,max:2.2};
 }
 
 // ---------- input ----------
-// Each half of the pad is one big touch zone: a finger anywhere in it presses the nearest arrow,
+// Each half of the arrow strip is one big touch zone: a finger anywhere in it presses the nearest arrow,
 // and sliding the finger over switches arrows without lifting.
 const padTouch=new Map();
 function paintPad(){
   for(const k in held)held[k]=0;
   for(const d of padTouch.values())held[d]=1;
-  document.querySelectorAll('.pad button').forEach(b=>b.classList.toggle('on',!!held[b.dataset.d]));
+  document.querySelectorAll('.pg button').forEach(b=>b.classList.toggle('on',!!held[b.dataset.d]));
 }
 function nearest(zone,e){
   let best=null,bd=1e9;
@@ -343,17 +420,20 @@ document.querySelectorAll('.pg').forEach(zone=>{
   zone.addEventListener('contextmenu',e=>e.preventDefault());
 });
 const KMAP={ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r',ArrowUp:'u',w:'u',ArrowDown:'d',s:'d'};
-addEventListener('keydown',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(KMAP[k]){keys[KMAP[k]]=1;e.preventDefault()}
-  if(st&&st.mode==='intro'&&(k===' '||k==='Enter'))startPlay()});
+addEventListener('keydown',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;
+  if(KMAP[k]&&st&&st.mode!=='menu'){keys[KMAP[k]]=1;e.preventDefault()}
+  if(st&&st.mode==='intro'&&(k===' '||k==='Enter'))startPlay();
+  if((k==='Escape'||k==='p')&&st){if(st.paused)resume();else if(st.mode==='play'||st.mode==='escape')pause()}
+});
 addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(KMAP[k])keys[KMAP[k]]=0});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=0;padTouch.clear();paintPad()});
-document.addEventListener('visibilitychange',()=>{paused=document.hidden;last=performance.now()});
-$('stage').addEventListener('pointerdown',()=>{if(st&&st.mode==='intro'&&st.sceneT>.4)startPlay()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&st&&(st.mode==='play'||st.mode==='escape'))pause();last=performance.now()});
+$('c').addEventListener('pointerdown',()=>{if(st&&st.mode==='intro'&&st.sceneT>.4)startPlay()});
+$('skipBtn').addEventListener('click',()=>{if(st&&st.mode==='intro')startPlay()});
 function dir(){
   let x=(held.r||keys.r?1:0)-(held.l||keys.l?1:0),y=(held.d||keys.d?1:0)-(held.u||keys.u?1:0);
   const L=Math.hypot(x,y);if(L>1){x/=L;y/=L}return{x,y};
 }
-
 // ---------- update ----------
 function popText(x,y,text,col){st.parts.push({type:'pop',x,y,t:0,life:.8,rot:(Math.random()-.5)*.5,text,col})}
 function burst(x,y,n,type,spd){
@@ -385,14 +465,14 @@ function update(dt){
   st.sceneT+=dt;p.flap+=dt*(p.sit?0:18);
   for(const w of st.workers){w.ph+=dt;if(w.stun>0)w.stun+=dt}
   if(st.mode==='intro'){
-    const t=st.sceneT,pts=[[.6,6.2,GY-2.2],[1.4,8.2,GY-2.8],[2.2,5.2,GY-2.6]];
+    const t=st.sceneT,pts=[[1.9,3.9,GY-2.6],[2.6,5.4,GY-3.4],[3.3,3.2,GY-1.6]];
     pts.forEach(([at,x,y],i)=>{if(t-dt<at&&t>=at)popText(x,y,T.intro[i],C.white)});
-    if(t-dt<2.8&&t>=2.8)popText(p.x+.4,p.y-.7,'?',C.white);
-    st.leafOff=Math.max(0,Math.min(1,(t-3.1)/.6));
-    if(t-dt<3.8&&t>=3.8){popText(p.x+.4,p.y-.7,'!',C.white);p.sit=false;p.vy=-2}
-    if(t>3.8){p.flap+=dt*18;p.y+=(BRANCH().y-.9-p.y)*Math.min(1,dt*3)}
-    if(t-dt<4&&t>=4)st.banner={text:T.introBan,t:1.6,max:1.6};
-    if(t>5.6)startPlay();
+    if(t-dt<3.8&&t>=3.8)popText(p.x+.4,p.y-.7,'?',C.white);
+    st.leafOff=Math.max(0,Math.min(1,(t-4.1)/.7));
+    if(t-dt<6&&t>=6){popText(p.x+.4,p.y-.7,'!',C.white);p.sit=false;p.vy=-2}
+    if(t>6){p.flap+=dt*18;p.y+=(BRANCH().y-.9-p.y)*Math.min(1,dt*3)}
+    if(t-dt<6.2&&t>=6.2)st.banner={text:T.introBan,t:1.6,max:1.6};
+    if(t>7.8)startPlay();
     return;
   }
   if(st.mode==='play'||st.mode==='escape'){
@@ -453,7 +533,7 @@ function update(dt){
     }
   }else if(st.mode==='escape'){
     const dr=DOOR();
-    if(Math.hypot(p.x-dr.x,p.y-dr.y)<.55){st.mode='free';st.sceneT=0;st.banner=null;st.projs=[]}
+    if(Math.hypot(p.x-dr.x,p.y-dr.y)<.8){st.mode='free';st.sceneT=0;st.banner=null;st.projs=[]}
   }else if(st.mode==='free'){
     const t=st.sceneT;
     if(t-dt<1&&t>=1)st.parts.push({type:'pop',sx:.56,sy:.38,t:0,life:.8,rot:-.2,text:T.click,col:C.white});
@@ -515,8 +595,9 @@ function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1
 
 // The static jungle — light from the top right, three layers of trees fading into haze, the big tree with the door — is painted once into an offscreen canvas.
 function renderBg(){
-  bcv.width=cv.width;bcv.height=cv.height;const b=bctx;b.setTransform(dpr,0,0,dpr,0,0);
-  const R=mulberry(st?st.seed:7),gy=Y(GY),x0=-ox/S-1,x1=WORLD+ox/S+1;
+  const sW=W,sC=camX;W=(bgX1-bgX0)*S;camX=bgX0;
+  bcv.width=Math.round(W*dpr);bcv.height=Math.round(H*dpr);const b=bctx;b.setTransform(dpr,0,0,dpr,0,0);
+  const R=mulberry(st?st.seed:7),gy=Y(GY),x0=bgX0,x1=bgX1;
   // sky light through the canopy
   let g=b.createLinearGradient(0,0,0,gy);g.addColorStop(0,'#F4F9D2');g.addColorStop(.3,'#B9E0A4');g.addColorStop(.75,'#6FB27A');g.addColorStop(1,'#4C9363');
   b.fillStyle=g;b.fillRect(0,0,W,gy);
@@ -587,7 +668,7 @@ function renderBg(){
     b.beginPath();b.moveTo(x,S*.2);b.bezierCurveTo(x+sw,len*.35,x-sw,len*.7,x+sw*.3,len);b.lineCap='round';b.lineWidth=Math.max(1.5,S*.05);b.strokeStyle='#3C7A31';b.stroke();
     for(let k=1;k<7;k++){const t=k/7,yy=S*.2+(len-S*.2)*t,xx=x+sw*Math.sin(t*3.1)*.6,r=S*.24;leafShape(xx,yy,r,(k%2?.5:Math.PI-.5));b.fillStyle=k%2?'#5FA84A':'#7CC062';b.fill()}
   }
-  bgDirty=false;
+  W=sW;camX=sC;bgDirty=false;
 }
 function shadeB(c,f){return shade(c,f)}
 // big dark leaves in the very front, gently swaying; plus a soft vignette and drifting light motes
@@ -884,34 +965,212 @@ function drawFree(t){
   if(out>0&&out<1)drawParrot(fx,fy,cs*.95,1,performance.now()/1000*18,{});
 }
 function draw(){
-  if(!st){return}
+  if(!st)return;
   if(st.mode==='free'){drawFree(st.sceneT);drawParts(true);return}
   if(bgDirty)renderBg();
-  ctx.drawImage(bcv,0,0,W,H);
+  ctx.drawImage(bcv,X(bgX0),0,bcv.width/dpr,bcv.height/dpr);
   drawBranch();drawDoor();
   for(const s of st.stumps)drawStump(s);
-  if(st.mode!=='intro'&&st.mode!=='outro')drawLog();
+  if(st.mode!=='intro'&&st.mode!=='outro'&&st.mode!=='menu')drawLog();
   for(const q of st.projs)if(q.landed)drawItem(q.type,X(q.x),Y(q.y),S*(q.r||ITEM_R[q.type]),q.rot,1-q.landed);
   drawWorker(st.boss,true);
   for(const w of st.workers)drawWorker(w,false);
   for(const q of st.projs)if(!q.landed)drawItem(q.type,X(q.x),Y(q.y),S*q.r,q.rot,q.dud?.6:1);
   const p=st.parrot;
-  if(st.buddy)drawParrot(X(st.buddy.x),Y(st.buddy.y),S,st.buddy.f||1,st.buddy.ph*18,{});
+  if(st.buddy)drawParrot(X(st.buddy.x),Y(st.buddy.y),S,st.buddy.f||1,st.buddy.ph*18,{seed:1.7});
   drawParrot(X(p.x),Y(p.y),S,p.f,p.flap,{key:p.key,sit:p.sit,vy:p.vy});
-  if(st.mode==='intro'){
-    // breakfast: a slice of mango in the beak
-    if(st.sceneT<2.8){ctx.beginPath();ctx.ellipse(X(p.x+.5*p.f),Y(p.y-.12),S*.1,S*.06,.4,0,7);inkFill('#FFA62B',LW()*.7)}
-    drawBigLeaf(st.leafOff);
+  if(st.mode==='intro'||st.mode==='menu'){
+    if(st.mode==='menu'||st.sceneT<3.8){ctx.beginPath();ctx.ellipse(X(p.x+.5*p.f),Y(p.y-.12),S*.1,S*.06,.4,0,7);gradFill(Y(p.y-.18),Y(p.y-.06),'#FFC86B','#F08A1A')}
+    if(st.mode==='intro')drawBigLeaf(st.leafOff);
   }
   if(st.mode==='caught'&&st.caught)drawItem(st.caught,X(p.x),Y(p.y),S*.42,.2);
   drawFg();
   drawParts(false);
   if(st.banner){
-    const bn=st.banner,k=Math.min(1,(bn.max-bn.t)*6),sz=Math.min(50,W*.1);
-    inkText(bn.text,W/2,H*.3,sz*k+1,C.paper,-.06);
-    if(bn.sub)inkText(bn.sub,W/2+8,H*.3+sz*.85,sz*.48*k+1,C.white,.04);
+    const bn=st.banner,k=Math.min(1,(bn.max-bn.t)*6),sz=Math.min(54,W*.11),y=safe.t+H*.26;
+    ctx.save();ctx.globalAlpha=Math.min(1,bn.t*3);
+    inkText(bn.text,W/2,y,sz*k+1,C.paper,-.04);
+    if(bn.sub)inkText(bn.sub,W/2,y+sz*.9,sz*.42*k+1,C.white,.02);
+    ctx.restore();
+  }
+  if(st.mode==='menu')drawSign();
+  if(st.mode==='play'||st.mode==='escape'||st.mode==='caught'){drawIndicators();drawHud()}
+}
+
+// ---------- in-world HUD ----------
+function glassCircle(x,y,r,ring){
+  ctx.beginPath();ctx.arc(x,y,r,0,7);
+  const g=ctx.createLinearGradient(0,y-r,0,y+r);g.addColorStop(0,'rgba(255,255,255,.32)');g.addColorStop(1,'rgba(255,255,255,.1)');
+  ctx.fillStyle=g;ctx.shadowColor='rgba(0,25,10,.35)';ctx.shadowBlur=8;ctx.shadowOffsetY=3;ctx.fill();ctx.shadowColor='transparent';
+  ctx.lineWidth=ring?3:1.5;ctx.strokeStyle=ring||'rgba(255,255,255,.45)';ctx.stroke();
+}
+function helmetIcon(x,y,r,on){
+  ctx.save();ctx.globalAlpha=on?1:.55;
+  ctx.beginPath();ctx.arc(x,y+r*.18,r*.55,0,7);ctx.fillStyle='#F6C9A3';ctx.fill();
+  ctx.beginPath();ctx.arc(x,y+r*.05,r*.62,Math.PI,0);ctx.closePath();gradFill(y-r*.6,y+r*.05,'#FFE680','#F2B705');
+  ctx.beginPath();ctx.moveTo(x-r*.72,y+r*.06);ctx.lineTo(x+r*.72,y+r*.06);ctx.lineWidth=r*.16;ctx.lineCap='round';ctx.strokeStyle='#D99A00';ctx.stroke();
+  ctx.restore();
+}
+function hudText(txt,x,y,size,align='left',col='#fff'){
+  ctx.save();ctx.font=`600 ${size}px ${V('--display')}`;ctx.textAlign=align;ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=4;ctx.shadowOffsetY=1;ctx.fillStyle=col;ctx.fillText(txt,x,y);ctx.restore();
+}
+function drawHud(){
+  const now=performance.now()/1000,y=safe.t+35,x0=safe.l+30,n=lured(),gap=Math.min(34,(W-safe.l-safe.r-110)/6);
+  // six helmets: one lights up for every worker on the lure side
+  for(let i=0;i<6;i++){
+    const on=i<n,cx=x0+i*gap,r=13;
+    glassCircle(cx,y,r,on?'#8EF07A':null);
+    helmetIcon(cx,y,r,on);
+    if(on){ctx.beginPath();ctx.arc(cx+r*.7,y+r*.7,6,0,7);ctx.fillStyle='#3FAF4A';ctx.fill();ctx.beginPath();ctx.moveTo(cx+r*.7-3,y+r*.7);ctx.lineTo(cx+r*.7-1,y+r*.7+2.2);ctx.lineTo(cx+r*.7+3,y+r*.7-2);ctx.lineWidth=1.8;ctx.strokeStyle='#fff';ctx.stroke()}
+  }
+  // level: three little cages, the freed ones glowing blue
+  for(let l=1;l<=LEVELS;l++){const cx=x0+(l-1)*16-4,cy=y+27;ctx.beginPath();ctx.arc(cx,cy,5,0,7);ctx.fillStyle=l<st.level?'#6CB8FF':l===st.level?'#FFC53D':'rgba(255,255,255,.3)';ctx.fill()}
+  hudText(T.lvlLbl+' '+st.level+'/3',x0+40,y+27,12);
+  // objective toast
+  let msg=null,key=false;
+  if(st.mode==='play'&&st.allLured){msg=T.getKey;key=true}
+  if(st.mode==='escape')msg=T.toDoor;
+  if(msg){
+    const ty=y+62,pulse=1+.04*Math.sin(now*6);
+    ctx.save();ctx.font=`600 15px ${V('--display')}`;const tw=ctx.measureText(msg).width+(key?34:20);
+    ctx.translate(W/2,ty);ctx.scale(pulse,pulse);
+    ctx.beginPath();ctx.roundRect?ctx.roundRect(-tw/2,-17,tw,34,17):ctx.rect(-tw/2,-17,tw,34);
+    const g=ctx.createLinearGradient(0,-17,0,17);g.addColorStop(0,'#FFE58A');g.addColorStop(1,'#FFC53D');ctx.fillStyle=g;
+    ctx.shadowColor='rgba(255,197,61,.6)';ctx.shadowBlur=16;ctx.fill();ctx.shadowColor='transparent';
+    ctx.fillStyle='#5A3B00';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(msg,key?10:0,1);
+    if(key)drawKey(-tw/2+18,0,26,0);
+    ctx.restore();
   }
 }
+// arrows at the screen edge for whatever is off camera: workers (with a count), the boss, the door
+function drawIndicators(){
+  const left=[],right=[];
+  for(const w of st.workers){const x=X(w.x);if(x<-8)left.push(w);else if(x>W+8)right.push(w)}
+  const yW=Math.min(Y(GY-1.1),H-ctrlH-30);
+  const ind=(side,y,draw)=>{
+    const x=side<0?safe.l+24:W-safe.r-24,now=performance.now()/1000,bob=Math.sin(now*5)*3*side;
+    glassCircle(x+bob,y,18);
+    ctx.beginPath();ctx.moveTo(x+bob+side*27,y);ctx.lineTo(x+bob+side*19,y-6);ctx.lineTo(x+bob+side*19,y+6);ctx.closePath();ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();
+    draw(x+bob,y);
+  };
+  const crowd=(arr,side)=>{if(!arr.length)return;ind(side,yW,(x,y)=>{helmetIcon(x,y-1,15,true);
+    ctx.beginPath();ctx.arc(x+side*-12,y+11,8,0,7);ctx.fillStyle='#F04E3E';ctx.fill();hudText(String(arr.length),x+side*-12,y+11.5,11,'center')})};
+  crowd(left,-1);crowd(right,1);
+  if(st.boss.key&&X(st.boss.x)>W+8)ind(1,yW-48,(x,y)=>drawKey(x,y,26,0));
+  if(st.mode==='escape'&&X(DOOR().x)<-8)ind(-1,Y(DOOR().y),(x,y)=>{ctx.beginPath();ctx.roundRect?ctx.roundRect(x-6,y-9,12,18,[6,6,1,1]):ctx.rect(x-6,y-9,12,18);ctx.fillStyle='#8A5A33';ctx.fill()});
+}
+// title sign hanging from two vines
+function drawSign(){
+  const now=performance.now()/1000,sw=land?Math.min(W*.42,380):Math.min(W*.84,400),sh=sw*.46,cx=land?W*.28:W/2,top=land?Math.max(safe.t+60,H*.5-sh*.5-20):safe.t+64+Math.min(30,H*.03),a=Math.sin(now*1.1)*.025;
+  ctx.save();ctx.translate(cx,top-50);ctx.rotate(a);
+  for(const sd of[-1,1]){ctx.beginPath();ctx.moveTo(sd*sw*.36,-top);ctx.bezierCurveTo(sd*sw*.38,-top*.4,sd*sw*.33,0,sd*sw*.36,50+sh*.1);ctx.lineWidth=5;ctx.strokeStyle='#3C7A31';ctx.lineCap='round';ctx.stroke();
+    for(let k=0;k<4;k++){const yy=-top*.75+k*(top*.75+40)/4;ctx.save();ctx.translate(sd*sw*.36+(k%2?6:-6),yy);ctx.rotate(k%2?.6:Math.PI-.6);ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(9,-8,18,0);ctx.quadraticCurveTo(9,8,0,0);ctx.fillStyle=k%2?'#5FA84A':'#7CC062';ctx.fill();ctx.restore()}}
+  ctx.translate(0,50);
+  // plank
+  ctx.shadowColor='rgba(0,20,8,.45)';ctx.shadowBlur=24;ctx.shadowOffsetY=10;
+  ctx.beginPath();ctx.roundRect?ctx.roundRect(-sw/2,0,sw,sh,sh*.14):ctx.rect(-sw/2,0,sw,sh);
+  let g=ctx.createLinearGradient(0,0,0,sh);g.addColorStop(0,'#C98E58');g.addColorStop(.5,'#A86C3C');g.addColorStop(1,'#80502A');ctx.fillStyle=g;ctx.fill();ctx.shadowColor='transparent';
+  ctx.save();ctx.clip();ctx.strokeStyle='rgba(70,35,15,.28)';ctx.lineWidth=2;
+  for(let k=1;k<6;k++){const yy=sh*k/6;ctx.beginPath();ctx.moveTo(-sw/2,yy);ctx.bezierCurveTo(-sw*.2,yy+4,sw*.1,yy-5,sw/2,yy+2);ctx.stroke()}
+  ctx.fillStyle='rgba(255,230,190,.18)';ctx.fillRect(-sw/2,0,sw,sh*.12);ctx.restore();
+  ctx.lineWidth=3;ctx.strokeStyle='#5E3519';ctx.stroke();
+  for(const sd of[-1,1]){ctx.beginPath();ctx.arc(sd*sw*.36,sh*.13,4.5,0,7);gradFill(sh*.13-5,sh*.13+5,'#E2E6EA','#7A858C')}
+  // moss and a leaf on the corners
+  for(const[sx,sy,r]of[[-sw/2+8,sh-6,26],[sw/2-14,6,20]]){ctx.beginPath();ctx.ellipse(sx,sy,r,r*.42,0,0,7);ctx.fillStyle='rgba(110,175,80,.9)';ctx.fill()}
+  // carved title
+  const t1=sh*.19,t2=sh*.44;
+  inkText('DANGER IN THE',0,sh*.33,t1,C.paper,0);
+  inkText('JUNGLE',0,sh*.7,t2,C.paper,-.02);
+  ctx.restore();
+}
+
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(!paused&&st&&!st.paused){update(dt);moveCam(dt);captions()}
+  draw();requestAnimationFrame(loop);
+}
+
+// ---------- flow ----------
+let capIdx=-1;
+function captions(){
+  if(st.mode!=='intro')return;
+  const t=st.sceneT,i=t<1.7?0:t<4.1?1:2;
+  if(i!==capIdx){capIdx=i;const c=$('caption');c.style.opacity=0;setTimeout(()=>{c.textContent=T.captions[i];c.style.opacity=1},capIdx===0?0:250)}
+}
+function setUI(mode){
+  $('menu').hidden=mode!=='menu';$('cine').hidden=mode!=='intro';
+  $('ctrl').classList.toggle('off',mode!=='play');$('pauseBtn').hidden=mode!=='play';
+  if(mode!=='sheet'){$('sheetOv').hidden=true;card=null;cv.classList.remove('dim')}
+  if(mode!=='menu')$('howOv').hidden=true;
+  padTouch.clear();paintPad();
+}
+function fadeTo(cb){
+  const f=$('fade');f.classList.add('on');
+  setTimeout(()=>{cb();requestAnimationFrame(()=>requestAnimationFrame(()=>f.classList.remove('on')))},320);
+}
+function begin(level){
+  try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(_){}
+  fadeTo(()=>{st=fresh(level,level===1);camX=camMin();newLevel(level,level===1)});
+}
+function toMenu(){
+  fadeTo(()=>{st=fresh(1,false);newLevel(1,true);st.mode='menu';setUI('menu');paintMenu();camX=camTarget()});
+}
+function pause(){if(!st||st.paused)return;st.paused=true;showCard('pause')}
+function resume(){if(!st)return;st.paused=false;last=performance.now();setUI('play')}
+function levelDone(){
+  if(st.level<LEVELS){setReached(st.level+1);showCard('done')}
+  else{
+    let best=null;
+    if(st.fromStart){try{const b=+localStorage.getItem(bestKey(st.diff))||0;best=b&&b<st.runT?b:st.runT;localStorage.setItem(bestKey(st.diff),best)}catch(_){best=st.runT}}
+    else{try{best=+localStorage.getItem(bestKey(st.diff))||null}catch(_){}}
+    st.best=best;showCard('win');
+  }
+}
+function act(icon,label,fn,main){
+  const b=document.createElement('button');b.type='button';b.className='act'+(main?' main':'');
+  b.innerHTML='<span class="glass round">'+ICON[icon]+'</span>';const s=document.createElement('span');s.textContent=label;b.append(s);
+  b.addEventListener('click',fn);return b;
+}
+function stat(icon,txt){const d=document.createElement('div');d.className='stat glass';d.innerHTML=ICON[icon];d.append(txt);return d}
+function showCard(kind){
+  setUI('sheet');card={kind};
+  const sh=$('sheet');sh.className='sheet glass'+(kind==='caught'?' bad':'');
+  cv.classList.toggle('dim',kind==='caught'||kind==='pause');
+  const title={caught:T.caughtT,done:T.doneT(st.level),win:T.winT,pause:T.pause}[kind];
+  const text={caught:T.caughtP,done:T.doneP,win:T.winP,pause:''}[kind];
+  $('sTitle').textContent=title;$('sText').textContent=text;$('sText').hidden=!text;
+  const freed=kind==='done'?st.level:kind==='win'?3:0;
+  $('sCages').hidden=!freed;
+  $('sCages').replaceChildren(...[1,2,3].map(l=>{const s=document.createElement('span');s.className='glass'+(l<=freed?' free':'');s.innerHTML=l<=freed?ICON.bird:ICON.cage;return s}));
+  if(freed)$('sCages').setAttribute('aria-label',T.freed(freed));
+  const stats=[];
+  if(kind==='done'||kind==='win')stats.push(stat('clock',fmt(st.runT)));
+  if(kind==='win'){stats.push(stat('net',T.caught+' '+st.catches+'×'));if(st.best)stats.push(stat('trophy',T.bestL+' '+fmt(st.best)))}
+  $('sStats').replaceChildren(...stats);$('sStats').hidden=!stats.length;
+  const acts=[act('home',T.menu,toMenu)];
+  if(kind==='caught')acts.push(act('retry',T.retry,()=>fadeTo(()=>newLevel(st.level,false)),true));
+  if(kind==='done')acts.push(act('play',T.next,()=>fadeTo(()=>newLevel(st.level+1,false)),true));
+  if(kind==='win')acts.push(act('retry',T.retry,()=>begin(1),true));
+  if(kind==='pause'){acts.push(act('retry',T.restartL,()=>fadeTo(()=>{st.paused=false;newLevel(st.level,false)})));acts.push(act('play',T.resume,resume,true))}
+  $('sActs').replaceChildren(...acts);
+  $('sheetOv').hidden=false;
+  setTimeout(()=>{const m=$('sActs').querySelector('.main');m&&m.focus({preventScroll:true})},60);
+}
+$('playBtn').addEventListener('click',()=>begin(startLvl||1));
+$('pauseBtn').addEventListener('click',e=>{e.currentTarget.blur();pause()});
+$('howBtn').addEventListener('click',()=>{$('howOv').hidden=false;$('howClose').focus()});
+$('howClose').addEventListener('click',()=>{$('howOv').hidden=true});
+$('howOv').addEventListener('click',e=>{if(e.target===e.currentTarget)$('howOv').hidden=true});
+
+// title screen: the parrot at breakfast, workers sawing off to the right
+st=fresh(1,false);
+applyLang(lang,false);
+resize();newLevel(1,true);st.mode='menu';setUI('menu');camX=camTarget();
+document.fonts&&document.fonts.ready.then(()=>{bgDirty=true});
+requestAnimationFrame(loop);
+// test hook
+window.__jungle={get st(){return st},keys,held,begin,startPlay,pause,toMenu};
 function drawParts(screen){
   for(const p of st.parts){
     const k=p.t/p.life;
@@ -930,61 +1189,6 @@ function drawParts(screen){
   }
 }
 
-// ---------- HUD ----------
-const lvlEl=$('lvl'),lblEl=$('lureLbl'),fillEl=$('fill');let hudCache='';
-function hud(){
-  if(!st)return;
-  const n=st.workers.length?lured():0,esc=st.mode==='escape'||st.mode==='free'||st.mode==='outro';
-  const s=st.level+'|'+n+'|'+st.mode+'|'+lang;if(s===hudCache)return;hudCache=s;
-  lvlEl.textContent=T.lvl(st.level);
-  lblEl.textContent=st.mode==='free'||st.mode==='outro'?T.saved:esc?T.escape:n===6&&st.mode==='play'?T.keyReady:T.lured(n);
-  fillEl.style.width=(esc?100:n/6*100).toFixed(1)+'%';fillEl.classList.toggle('ready',n===6&&st.mode==='play'||st.mode==='escape');
-}
-function loop(now){
-  const dt=Math.min(.05,(now-last)/1000);last=now;
-  if(!paused)update(dt);draw();hud();requestAnimationFrame(loop);
-}
-
-// ---------- flow ----------
-function hideCards(){card=null;$('cardOv').hidden=true;$('startOv').hidden=true}
-function begin(level){
-  try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(_){}
-  st=fresh(level,level===1);hideCards();$('restartBtn').hidden=false;
-  newLevel(level,level===1);
-}
-function levelDone(){
-  if(st.level<LEVELS){setReached(st.level+1);showCard('done')}
-  else{
-    let best=null;
-    if(st.fromStart){try{const b=+localStorage.getItem(bestKey(st.diff))||0;best=b&&b<st.runT?b:st.runT;localStorage.setItem(bestKey(st.diff),best)}catch(_){best=st.runT}}
-    else{try{best=+localStorage.getItem(bestKey(st.diff))||null}catch(_){}}
-    st.best=best;showCard('win');
-  }
-}
-function showCard(kind){
-  card={kind};const ov=$('cardOv');ov.className='overlay '+(kind==='caught'?'bad':'good');
-  const set=(id,txt)=>{const el=$(id);el.hidden=txt==null;if(txt!=null)el.textContent=txt};
-  if(kind==='caught'){set('cTitle',T.caughtT);set('cText',T.caughtP);set('cBig',null);set('cBest',null);$('cDiffs').hidden=true;set('cBtn',T.again)}
-  if(kind==='done'){set('cTitle',T.doneT(st.level));set('cText',T.doneP);set('cBig',null);set('cBest',null);$('cDiffs').hidden=true;set('cBtn',T.next)}
-  if(kind==='win'){set('cTitle',T.winT);set('cText',T.winP);set('cBig',T.diff[st.diff]+' · '+T.stats(fmt(st.runT),st.catches));set('cBest',st.best?T.best(fmt(st.best)):null);$('cDiffs').hidden=false;set('cBtn',T.again)}
-  ov.hidden=false;fitTitles();setTimeout(()=>$('cBtn').focus(),50);
-}
-$('cBtn').addEventListener('click',()=>{
-  const k=card&&card.kind;
-  if(k==='caught'){hideCards();newLevel(st.level,false)}
-  else if(k==='done'){hideCards();newLevel(st.level+1,false)}
-  else begin(1);
-});
-$('startBtn').addEventListener('click',()=>begin(startLvl||1));
-$('restartBtn').addEventListener('click',e=>{e.currentTarget.blur();if(!st)return;hideCards();newLevel(st.level,false)});
-
-// idle backdrop behind the start card
-st=fresh(1,false);
-applyLang(lang,false);
-resize();newLevel(1,true);st.mode='menu';$('hint').hidden=true;
-requestAnimationFrame(loop);
-// test hook
-window.__jungle={get st(){return st},keys,held,begin,startPlay};
 })();
 </script>
 </body>
