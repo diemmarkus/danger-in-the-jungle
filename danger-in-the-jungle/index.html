@@ -951,6 +951,21 @@ function drawParrot(x,y,u,f,flap,o={}){
   const blink=o.sleep||((now+(o.seed||0))%3.4)<.12,lx=o.look!=null?o.look:.45;
   cEye(hx+.02*u,hy-.02*u,.095*u,.12*u,['#FFE07A','#C9780A'],lx,-.1,blink);
   cEye(hx+.19*u,hy-.03*u,.08*u,.105*u,['#FFE07A','#C9780A'],lx,-.05,blink);
+  // she (the purple partner) gets long curled lashes and a darker lid line
+  if(P===PALS.hyacinth){
+    const lash=(ex,ey,rx,ry,sc)=>{
+      ctx.strokeStyle='#1C1030';ctx.lineCap='round';
+      if(blink){   // closed: a curved lid with lashes hanging down
+        ctx.beginPath();ctx.moveTo(ex-rx,ey);ctx.quadraticCurveTo(ex,ey+ry*.35,ex+rx,ey);ctx.lineWidth=.022*u*sc;ctx.stroke();
+        for(let k=0;k<3;k++){const t=.45+k*.25,x0=ex-rx+2*rx*t,y0=ey+ry*.3*(1-Math.abs(2*t-1));ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo(x0+.02*u,y0+.05*u*sc,x0+.05*u*sc,y0+.07*u*sc);ctx.lineWidth=.014*u*sc;ctx.stroke()}
+        return;
+      }
+      ctx.beginPath();ctx.ellipse(ex,ey,rx,ry,0,Math.PI*1.05,Math.PI*1.95);ctx.lineWidth=.024*u*sc;ctx.stroke();
+      for(let k=0;k<3;k++){const a=-1.25+k*.42,x0=ex+Math.cos(a)*rx,y0=ey+Math.sin(a)*ry,l=(.07+k*.012)*u*sc;
+        ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo(x0+Math.cos(a-.3)*l*.6,y0+Math.sin(a-.3)*l*.9,x0+Math.cos(a+.25)*l,y0+Math.sin(a+.25)*l-.02*u*sc);ctx.lineWidth=.016*u*sc;ctx.stroke()}
+    };
+    lash(hx+.02*u,hy-.02*u,.095*u,.12*u,1);lash(hx+.19*u,hy-.03*u,.08*u,.105*u,.85);
+  }
   // cocky brows: the near one raised
   const bc=shade(P.rim,.9);
   brow(hx-.08*u,hy-.15*u,hx+.01*u,hy-.25*u,hx+.1*u,hy-.17*u,.035*u,bc);
