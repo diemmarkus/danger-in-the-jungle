@@ -334,6 +334,9 @@ const EXTRA_V={
       ['Agora há ovos no ninho.','Sua parceira dorme de novo, mas se você a acordar ela ajuda uma vez.','Lá vêm eles. Proteja os ovos!'],
       ['Os ovos chocaram! Vocês tinham saído para buscar comida…','…e os operários levaram seus filhotes!','Agora querem vocês também. Pegue a chave e liberte os pequenos!']]},
 };
+const PLOP={en:'PLOP!',de:'PLOPP!',fr:'PLOP'+NB+'!',es:'¡PLOP!',it:'PLOP!',pt:'PLOFT!'},FAM={en:'FAMILY!',de:'FAMILIE!',fr:'FAMILLE'+NB+'!',es:'¡FAMILIA!',it:'FAMIGLIA!',pt:'FAMÍLIA!'};
+const LAYCAP={en:'Your partner is laying eggs!',de:'Deine Partnerin legt Eier!',fr:'Ta compagne pond des œufs'+NB+'!',es:'¡Tu pareja está poniendo huevos!',it:'La tua compagna depone le uova!',pt:'Sua parceira está botando ovos!'};
+for(const k in PLOP){EXTRA_V[k].plop=PLOP[k];EXTRA_V[k].family=FAM[k];EXTRA_V[k].vcaps[1][0]=LAYCAP[k]}
 const CHEEP={en:'CHEEP!',de:'PIEP!',fr:'CUI'+NB+'!',es:'¡PÍO!',it:'CIP!',pt:'PIU!'};for(const k in CHEEP)EXTRA_V[k].cheep=CHEEP[k];
 for(const k in EXTRA_V){Object.assign(I18N[k],EXTRA_V[k]);I18N[k].rules=[...I18N[k].rules,...EXTRA_V[k].rulesV]}
 
@@ -423,7 +426,7 @@ const DOOR=()=>({x:.85,y:TOP()+.55});
 const BRANCH=()=>({x1:1.3,x2:3.6,y:GY-4.5});
 function camTargetY(){
   const p=st.parrot,t=st.sceneT,vh=groundPx/S;
-  if(st.mode==='intro'){const o=st.level===6?1.2:0;return t<2.4+o?camMinY():t<5.4+o?camMaxY():p.y-vh*.42}
+  if(st.mode==='intro'){const o=introOff();return t<2.4+o?camMinY():t<5.4+o?camMaxY():p.y-vh*.42}
   if(st.mode==='free')return camY;
   return p.y-vh*.42+p.vy*.2;
 }
@@ -921,7 +924,7 @@ function drawParrot(x,y,u,f,flap,o={}){
   const P=o.pal||PALS.blue,now=performance.now()/1000;
   ctx.save();ctx.translate(x,y);ctx.scale(f,1);ctx.lineJoin='round';ctx.lineCap='round';
   ctx.rotate(o.sit?0:Math.max(-.35,Math.min(.35,(o.vy||0)*.05)));
-  const sway=Math.sin(flap*.5)*.06,wingA=o.sit?.15:-.55+Math.sin(flap)*.9;
+  const sway=Math.sin(flap*.5)*.06,wingA=o.hug?2.5+Math.sin(performance.now()/1000*3)*.12:o.sit?.15:-.55+Math.sin(flap)*.9;
   // soft glow so the bird reads against the leaves
   ctx.beginPath();ctx.ellipse(.05*u,-.05*u,.62*u,.5*u,0,0,7);ctx.fillStyle='rgba(255,255,225,.1)';ctx.fill();
   // tail: three long feathers
@@ -1214,7 +1217,8 @@ function knockDown(w){w.fall=true;w.vy=-2.5;w.vx=(w.x<TX?-1:1)*rnd(.8,1.6);w.rot
 function updateClimb(dt){
   const p=st.parrot,L=CL[st.level],D=DIFFS[st.diff];
   if(st.mode==='intro'){
-    const t=st.sceneT,o=st.level===6?1.2:0;
+    const t=st.sceneT,o=introOff();
+    if(st.level===5)LAY.forEach(at=>{if(t-dt<at&&t>=at){popText(NEST.x+(LAY.indexOf(at)-1)*.4,NEST.y-1.1,T.plop,C.white);burst(NEST.x+(LAY.indexOf(at)-1)*.4,NEST.y-.4,5,'spark',1.5)}});
     if(st.level===6)[1.75,2.1,2.45,2.8].forEach((at,i)=>{if(t-dt<at&&t>=at)popText(NEST.x+(i%3-1)*.55,NEST.y-1.9,T.cheep,C.white)});
     if(t-dt<3.2+o&&t>=3.2+o){for(let i=0;i<3;i++)st.workers.push(mkClimber(LANES[i+1>3?0:i+1],TH,i))}
     for(const w of st.workers){w.y-=.5*dt;w.ph+=dt}
@@ -1303,7 +1307,11 @@ function updateClimb(dt){
   }
   // level 6: fly to the cage on the ground with the key
   if(st.mode==='escape'&&Math.abs(p.x-CAGE.x)<.8&&p.y>GY-1.6){setUI('scene');st.mode='free';st.sceneT=0;st.banner=null;st.projs=[];st.nuts=[]}
-  if(st.mode==='free'){if(st.sceneT>3.6&&!card)levelDone()}
+  if(st.mode==='free'&&st.sceneT>3.6){
+    if(st.level===6){st.mode='family';st.sceneT=0;p.key=false;p.sit=false;p.x=CAGE.x;p.y=GY-1.4;p.vx=p.vy=0;
+      st.kids=[0,1,2].map(i=>({x:CAGE.x+(i-1)*.3,y:GY-.5}));camY=Math.max(camMinY(),Math.min(camMaxY(),p.y-groundPx/S*.42))}
+    else if(!card)levelDone()}
+  if(st.mode==='family')updateFamily(dt);
   if(st.mode==='won'){if(st.sceneT>1.2&&!card)levelDone()}
   if(st.mode==='caught'){if(p.y<GY-.38){p.vy+=G*1.2*dt;p.y=Math.min(GY-.38,p.y+p.vy*dt)}if(st.sceneT>1.2&&!card)showCard(st.caught==='nest'?'nest':'caught')}
 }
@@ -1407,7 +1415,8 @@ function drawNest(){
   ctx.beginPath();ctx.ellipse(x,y,s*.56,s*.17,0,0,7);ctx.fillStyle='#4A2A12';ctx.fill();
   const eggs=[[-.25,'#DDEBFF'],[0,'#EDE4FF'],[.25,'#DDEBFF']],erx=s*.13,ery=s*.17;
   if(st.level===5){
-    eggs.forEach(([ex,c],i)=>{const wob=((now*.7+i*.31)%3)<.4?Math.sin(now*28+i)*.12:0;drawEgg(x+ex*s,y-s*.1,erx,ery,wob,0,false,c)});
+    eggs.forEach(([ex,c],i)=>{const laying=st.mode==='intro'&&t<LAY[2]+.3,e=laying?Math.max(0,Math.min(1,(t-LAY[i])/.18)):1;if(e<=0)return;
+      const wob=((now*.7+i*.31)%3)<.4?Math.sin(now*28+i)*.12:0;drawEgg(x+ex*s,y-s*.1+(1-e)*ery,erx*(.4+.6*e),ery*(.4+.6*e),wob,0,false,c)});
   }else if(st.level===6){
     const hatching=st.mode==='intro'&&t<3.4;
     eggs.forEach(([ex,c],i)=>{
@@ -1446,15 +1455,57 @@ function drawGroundCage(){
   ctx.beginPath();ctx.moveTo(x-s*.65,y);ctx.lineTo(x+s*.65,y);ctx.stroke();
   if(st.mode==='escape'){const gl=.5+.5*Math.sin(performance.now()/1000*6),g=ctx.createRadialGradient(x,y-s*.5,0,x,y-s*.5,s*1.2);g.addColorStop(0,`rgba(255,230,140,${.45*gl})`);g.addColorStop(1,'rgba(255,230,140,0)');ctx.fillStyle=g;ctx.fillRect(x-s*1.2,y-s*1.7,s*2.4,s*2.4)}
 }
+// intro timing: level 5 needs time for laying the eggs, level 6 for the hatching
+const LAY=[1.1,1.75,2.4];
+function introOff(){return st.level===5?2.2:st.level===6?1.2:0}
+// where the purple partner is and what she's doing
+function wifeState(){
+  const t=st.sceneT,home={x:PARTNER.x,y:PARTNER.y,f:1,sit:true,sleep:!(st.partnerAwake>0)};
+  if(st.level===5&&st.mode==='intro'&&t<3.4){
+    const nx=NEST.x+.62,ny=NEST.y-.5;
+    if(t<2.75){let rot=0;for(const at of LAY)if(t>at-.45&&t<at)rot=Math.sin(t*30)*.14;return{x:nx,y:ny,f:-1,sit:true,sleep:false,rot}}
+    const k=Math.min(1,(t-2.75)/.5),e=k*k*(3-2*k);
+    return{x:nx+(PARTNER.x-nx)*e,y:ny+(PARTNER.y-ny)*e-Math.sin(e*Math.PI)*.6,f:-1,sit:k>=1,flap:t*18,sleep:false};
+  }
+  if(st.mode==='family'){
+    if(t<3.4)return home;
+    if(t<3.7)return{...home,sleep:false};
+    const nx=NEST.x+.7,ny=NEST.y-.5,k=Math.min(1,(t-3.7)/.45),e=k*k*(3-2*k);
+    const lean=t>4.2?-(.18+Math.sin(t*2.2)*.05):0;
+    return{x:PARTNER.x+(nx-PARTNER.x)*e,y:PARTNER.y+(ny-PARTNER.y)*e-Math.sin(e*Math.PI)*.6,f:-1,sit:k>=1,flap:t*18,sleep:false,rot:lean,hug:t>4.2};
+  }
+  return home;
+}
+// level 6 ending: the father flies the chicks home, the mother wakes up, everyone cuddles
+function updateFamily(dt){
+  const p=st.parrot,t=st.sceneT,sx=CAGE.x,sy=GY-1.4,tx=NEST.x-.65,ty=NEST.y-.5;
+  if(t<3){const k=t/3,e=k*k*(3-2*k);p.x=sx+(tx-sx)*e+Math.sin(e*Math.PI)*1.2;p.y=sy+(ty-sy)*e;p.f=1;p.flap+=0;p.sit=false}
+  else{p.x=tx;p.y=ty;p.f=1;p.sit=true}
+  st.kids.forEach((c,i)=>{let gx,gy;
+    if(t<3){const lead=i?st.kids[i-1]:{x:p.x,y:p.y};gx=lead.x-.32;gy=lead.y+.32}
+    else{gx=NEST.x+(i-1)*.36;gy=NEST.y-.42}
+    const k=Math.min(1,dt*(t<3?6:4));c.x+=(gx-c.x)*k;c.y+=(gy-c.y)*k});
+  if(t-dt<3.4&&t>=3.4)popText(PARTNER.x,PARTNER.y-.8,'!',C.white);
+  if(t-dt<4.3&&t>=4.3)st.banner={text:T.family,t:2.6,max:2.6};
+  if(t>4.2&&Math.random()<dt*7)st.parts.push({type:'heart',x:NEST.x+rnd(-.8,.8),y:NEST.y-rnd(.6,1.2),vx:rnd(-.3,.3),vy:-.5,rot:0,vr:0,t:0,life:1.3});
+  if(t>4.4&&Math.random()<dt*1.2)popText(NEST.x+rnd(-.4,.4),NEST.y-1.5,T.cheep,C.white);
+  if(t>7.4&&!card)levelDone();
+}
+function drawFamily(){
+  const t=st.sceneT;
+  st.kids.forEach((c,i)=>drawChick(X(c.x),Y(c.y),S*.5,i,{fly:t<3,f:1,rot:t>4.2?Math.sin(t*3+i)*.12:undefined}));
+}
 function drawClimb(){
   if(st.mode==='free'){drawFree(st.sceneT);drawParts(true);return}
   if(bgDirty)renderBgV();
   ctx.drawImage(bcv,X(bgX0),Y(bgY0),bcv.width/dpr,bcv.height/dpr);
   drawNest();
   // the sleeping partner on her branch
-  const now=performance.now()/1000,awake=st.partnerAwake>0;
-  drawParrot(X(PARTNER.x),Y(PARTNER.y),S*.92,1,0,{sit:true,pal:PALS.hyacinth,sleep:!awake,seed:2.2});
-  if(!awake&&st.mode!=='intro'){ctx.save();for(let k=0;k<3;k++){const t=(now*.6+k/3)%1;ctx.globalAlpha=1-t;ctx.font=`700 ${S*(.18+t*.18)}px ${V('--display')}`;ctx.fillStyle='#fff';ctx.fillText('z',X(PARTNER.x+.35+t*.5),Y(PARTNER.y-.5-t*.9))}ctx.restore()}
+  const now=performance.now()/1000,ws=wifeState(),awake=!ws.sleep;
+  ctx.save();ctx.translate(X(ws.x),Y(ws.y));ctx.rotate(ws.rot||0);
+  drawParrot(0,0,S*.92,ws.f,ws.flap||0,{sit:ws.sit,pal:PALS.hyacinth,sleep:ws.sleep,seed:2.2,hug:ws.hug});ctx.restore();
+  if(st.mode==='family')drawFamily();
+  if(!awake&&st.mode!=='intro'&&st.mode!=='family'){ctx.save();for(let k=0;k<3;k++){const t=(now*.6+k/3)%1;ctx.globalAlpha=1-t;ctx.font=`700 ${S*(.18+t*.18)}px ${V('--display')}`;ctx.fillStyle='#fff';ctx.fillText('z',X(PARTNER.x+.35+t*.5),Y(PARTNER.y-.5-t*.9))}ctx.restore()}
   if(st.level===5&&!st.wakeUsed&&st.mode==='play'){const gl=.5+.5*Math.sin(now*5);ctx.beginPath();ctx.arc(X(PARTNER.x),Y(PARTNER.y),S*(.55+gl*.06),0,7);ctx.lineWidth=3;ctx.strokeStyle=`rgba(255,229,138,${.5+gl*.4})`;ctx.stroke()}
   if(st.level===6)drawGroundCage();
   const b=st.boss;
@@ -1467,7 +1518,8 @@ function drawClimb(){
   for(const q of st.nuts)drawNut(q.type,X(q.x),Y(q.y),S*.14,q.rot);
   for(const q of st.projs)if(q.home)drawNut('gold',X(q.x),Y(q.y),S*.15,q.rot);else drawItem(q.type,X(q.x),Y(q.y),S*q.r,q.rot,1);
   const p=st.parrot;
-  drawParrot(X(p.x),Y(p.y),S,p.f,p.flap,{key:p.key,vy:p.vy});
+  if(st.mode==='family'&&st.sceneT>3){const lean=st.sceneT>4.2?.18+Math.sin(st.sceneT*2.2)*.05:0;ctx.save();ctx.translate(X(p.x),Y(p.y));ctx.rotate(lean);drawParrot(0,0,S,p.f,p.flap,{sit:true,hug:st.sceneT>4.2});ctx.restore()}
+  else drawParrot(X(p.x),Y(p.y),S,p.f,p.flap,{key:p.key,vy:p.vy});
   if(st.mode==='play'&&st.ammoCD<=0)drawNut(CL[st.level].ammo[0],X(p.x+.42*p.f),Y(p.y+.05),S*.1,0);
   if(st.mode==='caught'&&st.caught&&st.caught!=='nest')drawItem(st.caught,X(p.x),Y(p.y),S*.42,.2);
   drawFg();drawParts(false);
@@ -1638,7 +1690,7 @@ function loop(now){
 let capIdx=-1;
 function captions(){
   if(st.mode!=='intro')return;
-  const t=st.sceneT,o6=st.vert&&st.level===6?1.2:0,i=st.vert?(t<2.4+o6?0:t<5+o6?1:2):(t<1.7?0:t<4.1?1:2),caps=st.vert?T.vcaps[st.level-4]:T.captions;
+  const t=st.sceneT,o6=st.vert?introOff():0,i=st.vert?(t<2.4+o6?0:t<5+o6?1:2):(t<1.7?0:t<4.1?1:2),caps=st.vert?T.vcaps[st.level-4]:T.captions;
   if(i!==capIdx){capIdx=i;const c=$('caption');c.style.opacity=0;setTimeout(()=>{c.textContent=caps[i];c.style.opacity=1},capIdx===0?0:250)}
 }
 function setUI(mode){
