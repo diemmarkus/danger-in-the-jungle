@@ -46,6 +46,11 @@ canvas.dim{filter:saturate(.35) brightness(.7)}
 #joyBase svg{position:absolute;inset:0;width:100%;height:100%}
 #joyKnob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFFFFF,#FFE58A 45%,#F2B705);box-shadow:0 6px 14px rgba(0,25,10,.45),inset 0 -3px 6px rgba(150,90,0,.35);transition:transform .15s ease}
 #joyBase.live #joyKnob{transition:none}
+#dropBtn{position:absolute;right:calc(var(--sr) + 22px);top:calc(50% - var(--sb)/2);margin-top:-44px;width:88px;height:88px;display:none;touch-action:none}
+#dropBtn svg{width:54px;height:54px}
+#dropBtn.on{background:linear-gradient(180deg,#FFE58A,#FFC53D);transform:scale(.92)}
+#ctrl.v #dropBtn{display:grid}
+#ctrl.v #joyBase:not(.live){left:34%}
 /* title screen: the sign is painted on the canvas; the controls sit at the bottom */
 #menu{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--st) + 12px) calc(var(--sr) + 14px) calc(var(--sb) + 18px) calc(var(--sl) + 14px);pointer-events:none}
 #menu>*{pointer-events:auto}
@@ -58,8 +63,8 @@ canvas.dim{filter:saturate(.35) brightness(.7)}
 .seg button i{display:inline-flex;gap:2px}
 .seg button i b{width:6px;height:10px;border-radius:6px 0 6px 0;background:currentColor;opacity:.9}
 .seg button[aria-pressed="true"]{background:linear-gradient(180deg,#FFE58A,#FFC53D);color:#5A3B00;box-shadow:0 3px 10px rgba(255,197,61,.45)}
-.medals{display:flex;gap:16px}
-.medal{width:62px;height:62px;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:24px;position:relative;padding:0}
+.medals{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+.medal{width:48px;height:48px;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;position:relative;padding:0}
 .medal[aria-pressed="true"]{background:radial-gradient(circle at 35% 30%,#FFF1B0,#FFC53D 60%,#E09A10);color:#5A3B00;border-color:#FFF2C0;box-shadow:0 0 0 4px rgba(255,197,61,.35),0 8px 22px rgba(0,25,10,.35)}
 .medal:disabled{cursor:default;opacity:.55}
 .medal svg{width:22px;height:22px}
@@ -126,6 +131,7 @@ canvas.dim{filter:saturate(.35) brightness(.7)}
       <svg viewBox="0 0 120 120"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".75"><path d="M52 18l8-8 8 8"/><path d="M52 102l8 8 8-8"/><path d="M18 52l-8 8 8 8"/><path d="M102 52l8 8-8 8"/></g></svg>
       <div id="joyKnob"></div>
     </div>
+    <button type="button" id="dropBtn" class="glass round" aria-label="Drop"><svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="23" rx="10" ry="11" fill="#C98A50"/><ellipse cx="20" cy="15" rx="11" ry="5.5" fill="#6B4A22"/><path d="M20 9.5V5" stroke="#6B4A22" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="16" cy="22" rx="2.5" ry="4" fill="rgba(255,255,255,.35)"/></svg></button>
   </div>
 
   <button type="button" id="pauseBtn" class="glass round" hidden aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor"/></svg></button>
@@ -178,7 +184,7 @@ const V=n=>css.getPropertyValue(n).trim();
 const C={paper:V('--paper'),ink:V('--ink'),jungle:V('--jungle'),deep:V('--deep'),leaf:V('--leaf'),hedge:V('--hedge'),bark:V('--bark'),dirt:V('--dirt'),pop:V('--pop'),blue:V('--blue'),vest:V('--vest'),soda:V('--soda'),white:V('--white')};
 
 // World units: the clearing is 10 units wide, x to the right, y downward from the top of the stage.
-const WORLD=10,LINE=5,BOSS_X=9,LEVELS=3;
+const WORLD=10,LINE=5,BOSS_X=9,LEVELS=6;
 const PR=.3;                 // parrot hit radius
 const PV=4.8;                // parrot flying speed (units/s)
 const G=6;                   // gravity on thrown things (units/s²)
@@ -273,6 +279,59 @@ const EXTRA={
     captions:['Você é um papagaio azul tomando café da manhã…','…quando ouve roncos, apitos e serras.','Operários estão derrubando sua selva. Na sua casa, não!']},
 };
 for(const k in EXTRA)Object.assign(I18N[k],EXTRA[k]);
+// strings for levels 4–6 (the tall tree)
+const EXTRA_V={
+  en:{hitSub:'DROP NUTS ON ALL 6!',bonk:'BONK!',hitPop:'OUCH!',bossComes:'THE BOSS IS CLIMBING!',keyring:'Take the key ring from his hip!',toCage:'Fly to the cage and free your babies!',
+    wake:'WAKE UP!',wakeHint:'Fly to your partner: one perfect throw!',perfect:'PERFECT!',nestPop:'OH NO!',nestT:'NEST IN DANGER!',nestP:'A worker reached your nest. Try again!',bossL:'Boss',drop:'Drop',
+    donePv:['The boss lies on the ground and the nest is safe — for now.','The eggs are safe and the boss is down. Something is about to hatch…'],
+    winP:'Your babies are free, the workers are gone and the jungle is safe for good.',
+    rulesV:['From level 4 the workers climb your tree: fly above them and drop nuts and fruit with the round button.','Knock all 6 down, then the boss 3 times — and take his key ring.'],
+    vcaps:[['Back home in your nest, high up in the tree.','Your partner is fast asleep on the branch…','…but workers have found out how rare you are. They’re climbing up!'],
+      ['Now there are eggs in your nest.','Your partner is asleep again — but she can help once if you wake her.','Here they come. Protect the eggs!'],
+      ['The eggs have hatched! You both went out to find food…','…and the workers took your babies!','Now they want you too. Get the key and free the little ones!']]},
+  de:{hitSub:'WIRF NÜSSE AUF ALLE 6!',bonk:'BONK!',hitPop:'AUTSCH!',bossComes:'DER CHEF KLETTERT HOCH!',keyring:'Nimm ihm den Schlüsselbund von der Hüfte!',toCage:'Flieg zum Käfig und befrei deine Babys!',
+    wake:'AUFWACHEN!',wakeHint:'Flieg zu deiner Partnerin: ein perfekter Wurf!',perfect:'VOLLTREFFER!',nestPop:'OH NEIN!',nestT:'NEST IN GEFAHR!',nestP:'Ein Arbeiter hat euer Nest erreicht. Nochmal!',bossL:'Chef',drop:'Abwerfen',
+    donePv:['Der Chef liegt am Boden und das Nest ist sicher – vorerst.','Die Eier sind in Sicherheit und der Chef ist gestürzt. Bald schlüpft da was …'],
+    winP:'Deine Babys sind frei, die Arbeiter sind weg und der Dschungel ist für immer sicher.',
+    rulesV:['Ab Level 4 klettern die Arbeiter auf euren Baum: Flieg über sie und wirf mit dem runden Knopf Nüsse und Obst ab.','Wirf alle 6 herunter, dann den Chef dreimal – und nimm ihm den Schlüsselbund ab.'],
+    vcaps:[['Zurück zu Hause in eurem Nest, hoch oben im Baum.','Deine Partnerin schläft tief und fest auf dem Ast …','… aber die Arbeiter wissen jetzt, wie selten ihr seid. Sie klettern hoch!'],
+      ['Jetzt liegen Eier in eurem Nest.','Deine Partnerin schläft wieder – aber wenn du sie weckst, hilft sie dir einmal.','Da kommen sie. Beschütze die Eier!'],
+      ['Die Eier sind geschlüpft! Ihr wart beide auf Futtersuche …','… und die Arbeiter haben eure Babys entführt!','Jetzt wollen sie auch euch. Hol den Schlüssel und befrei die Kleinen!']]},
+  fr:{hitSub:'LANCE DES NOIX SUR LES 6'+NB+'!',bonk:'BONK'+NB+'!',hitPop:'AÏE'+NB+'!',bossComes:'LE CHEF GRIMPE'+NB+'!',keyring:'Prends le trousseau de clés à sa ceinture'+NB+'!',toCage:'Vole jusqu’à la cage et libère tes petits'+NB+'!',
+    wake:'RÉVEILLE-TOI'+NB+'!',wakeHint:'Vole vers ta compagne'+NB+': un lancer parfait'+NB+'!',perfect:'EN PLEIN DANS LE MILLE'+NB+'!',nestPop:'OH NON'+NB+'!',nestT:'NID EN DANGER'+NB+'!',nestP:'Un ouvrier a atteint votre nid. Recommence'+NB+'!',bossL:'Chef',drop:'Lâcher',
+    donePv:['Le chef est à terre et le nid est sauvé – pour l’instant.','Les œufs sont sauvés et le chef est tombé. Quelque chose va bientôt éclore…'],
+    winP:'Tes petits sont libres, les ouvriers sont partis et la jungle est sauvée pour de bon.',
+    rulesV:['Dès le niveau 4, les ouvriers grimpent dans ton arbre'+NB+': vole au-dessus d’eux et lâche noix et fruits avec le bouton rond.','Fais tomber les 6, puis le chef trois fois – et prends son trousseau.'],
+    vcaps:[['De retour au nid, tout en haut de l’arbre.','Ta compagne dort profondément sur sa branche…','…mais les ouvriers savent maintenant que vous êtes très rares. Ils grimpent'+NB+'!'],
+      ['Il y a maintenant des œufs dans le nid.','Ta compagne dort encore – mais si tu la réveilles, elle t’aide une fois.','Les voilà. Protège les œufs'+NB+'!'],
+      ['Les œufs ont éclos'+NB+'! Vous étiez partis chercher à manger…','…et les ouvriers ont enlevé vos petits'+NB+'!','Maintenant, ils veulent vous aussi. Prends la clé et libère les petits'+NB+'!']]},
+  es:{hitSub:'¡TIRA NUECES A LOS 6!',bonk:'¡BONK!',hitPop:'¡AY!',bossComes:'¡EL JEFE ESTÁ TREPANDO!',keyring:'¡Quítale el llavero de la cadera!',toCage:'¡Vuela a la jaula y libera a tus crías!',
+    wake:'¡DESPIERTA!',wakeHint:'Vuela hacia tu pareja: ¡un lanzamiento perfecto!',perfect:'¡EN EL BLANCO!',nestPop:'¡OH NO!',nestT:'¡NIDO EN PELIGRO!',nestP:'Un obrero llegó a vuestro nido. ¡Otra vez!',bossL:'Jefe',drop:'Soltar',
+    donePv:['El jefe está en el suelo y el nido está a salvo… por ahora.','Los huevos están a salvo y el jefe ha caído. Pronto algo va a nacer…'],
+    winP:'Tus crías son libres, los obreros se han ido y la selva está a salvo para siempre.',
+    rulesV:['Desde el nivel 4 los obreros trepan a tu árbol: vuela sobre ellos y suelta nueces y fruta con el botón redondo.','Tira a los 6, luego al jefe tres veces, y quítale el llavero.'],
+    vcaps:[['De vuelta en vuestro nido, en lo alto del árbol.','Tu pareja duerme profundamente en la rama…','…pero los obreros ya saben lo raros que sois. ¡Están trepando!'],
+      ['Ahora hay huevos en el nido.','Tu pareja vuelve a dormir, pero si la despiertas te ayuda una vez.','¡Ahí vienen! ¡Protege los huevos!'],
+      ['¡Los huevos han eclosionado! Habíais salido a buscar comida…','…¡y los obreros se llevaron a vuestras crías!','Ahora también os quieren a vosotros. ¡Coge la llave y libera a los pequeños!']]},
+  it:{hitSub:'LANCIA NOCI SU TUTTI E 6!',bonk:'BONK!',hitPop:'AHIA!',bossComes:'IL CAPO STA SALENDO!',keyring:'Prendigli il mazzo di chiavi dal fianco!',toCage:'Vola alla gabbia e libera i tuoi piccoli!',
+    wake:'SVEGLIA!',wakeHint:'Vola dalla tua compagna: un lancio perfetto!',perfect:'CENTRO!',nestPop:'OH NO!',nestT:'NIDO IN PERICOLO!',nestP:'Un operaio ha raggiunto il vostro nido. Riprova!',bossL:'Capo',drop:'Lancia',
+    donePv:['Il capo è a terra e il nido è salvo – per ora.','Le uova sono salve e il capo è caduto. Presto si schiuderà qualcosa…'],
+    winP:'I tuoi piccoli sono liberi, gli operai se ne sono andati e la giungla è salva per sempre.',
+    rulesV:['Dal livello 4 gli operai si arrampicano sul tuo albero: volagli sopra e lascia cadere noci e frutta con il pulsante rotondo.','Butta giù tutti e 6, poi il capo tre volte, e prendigli le chiavi.'],
+    vcaps:[['Di nuovo a casa nel vostro nido, in cima all’albero.','La tua compagna dorme profondamente sul ramo…','…ma gli operai hanno scoperto quanto siete rari. Stanno salendo!'],
+      ['Ora nel nido ci sono le uova.','La tua compagna dorme di nuovo, ma se la svegli ti aiuta una volta.','Eccoli. Proteggi le uova!'],
+      ['Le uova si sono schiuse! Eravate fuori a cercare cibo…','…e gli operai hanno rapito i vostri piccoli!','Ora vogliono anche voi. Prendi la chiave e libera i piccoli!']]},
+  pt:{hitSub:'JOGUE NOZES NOS 6!',bonk:'BONK!',hitPop:'AI!',bossComes:'O CHEFE ESTÁ SUBINDO!',keyring:'Pegue o chaveiro do quadril dele!',toCage:'Voe até a gaiola e liberte seus filhotes!',
+    wake:'ACORDA!',wakeHint:'Voe até sua parceira: um arremesso perfeito!',perfect:'NA MOSCA!',nestPop:'AH NÃO!',nestT:'NINHO EM PERIGO!',nestP:'Um operário chegou ao ninho. De novo!',bossL:'Chefe',drop:'Soltar',
+    donePv:['O chefe está no chão e o ninho está seguro – por enquanto.','Os ovos estão seguros e o chefe caiu. Logo algo vai nascer…'],
+    winP:'Seus filhotes estão livres, os operários foram embora e a selva está segura para sempre.',
+    rulesV:['A partir do nível 4 os operários sobem na sua árvore: voe sobre eles e solte nozes e frutas com o botão redondo.','Derrube os 6, depois o chefe três vezes, e pegue o chaveiro dele.'],
+    vcaps:[['De volta ao ninho, lá no alto da árvore.','Sua parceira dorme profundamente no galho…','…mas os operários descobriram como vocês são raros. Estão subindo!'],
+      ['Agora há ovos no ninho.','Sua parceira dorme de novo, mas se você a acordar ela ajuda uma vez.','Lá vêm eles. Proteja os ovos!'],
+      ['Os ovos chocaram! Vocês tinham saído para buscar comida…','…e os operários levaram seus filhotes!','Agora querem vocês também. Pegue a chave e liberte os pequenos!']]},
+};
+for(const k in EXTRA_V){Object.assign(I18N[k],EXTRA_V[k]);I18N[k].rules=[...I18N[k].rules,...EXTRA_V[k].rulesV]}
+
 
 const ICON={
   home:'<svg viewBox="0 0 24 24"><path d="M4 11.5 12 4.5l8 7M6.5 10v9h4v-5h3v5h4v-9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -299,7 +358,7 @@ function applyLang(k,save){
   lang=k;T=I18N[k];document.documentElement.lang=k;
   if(save)try{localStorage.setItem('jungle.lang',k)}catch(_){}
   $('langName').textContent=T.name;$('playLbl').textContent=T.play;$('lvlLbl').textContent=T.lvlLbl;$('skipLbl').textContent=T.skip;
-  $('howTitle').textContent=T.how;$('okLbl').textContent=T.ok;$('howBtn').setAttribute('aria-label',T.how);$('pauseBtn').setAttribute('aria-label',T.pause);
+  $('howTitle').textContent=T.how;$('okLbl').textContent=T.ok;$('howBtn').setAttribute('aria-label',T.how);$('pauseBtn').setAttribute('aria-label',T.pause);$('dropBtn').setAttribute('aria-label',T.drop);
   $('rules').replaceChildren(...T.rules.map((r,i)=>{const li=document.createElement('li'),b=document.createElement('b'),s=document.createElement('span');b.textContent=i+1;s.textContent=r;li.append(b,s);return li}));
   paintMenu();
   if(card)showCard(card.kind);
@@ -332,9 +391,16 @@ function paintMenu(){
 // ---------- canvas & camera ----------
 // The world is 10 units wide. On a phone the camera shows about 6.6 units and follows the parrot sideways;
 // on a wide screen the whole clearing fits and the camera stands still.
-let land=false,W=0,H=0,dpr=1,S=40,ox=0,GY=9,VW=10,camX=0,ctrlH=150,safe={t:0,r:0,b:0,l:0};
+let land=false,camY=0,bgY0=0,WWD=10,groundPx=600,W=0,H=0,dpr=1,S=40,ox=0,GY=9,VW=10,camX=0,ctrlH=150,safe={t:0,r:0,b:0,l:0};
 const bcv=document.createElement('canvas'),bctx=bcv.getContext('2d');let bgDirty=true,bgX0=-1,bgX1=11;
-const camMin=()=>VW>=WORLD?-(VW-WORLD)/2:-.3,camMax=()=>VW>=WORLD?camMin():WORLD-VW+.3;
+const camMin=()=>VW>=WWD?-(VW-WWD)/2:-.3,camMax=()=>VW>=WWD?camMin():WWD-VW+.3;
+const camMinY=()=>st&&st.vert?-1.2:0,camMaxY=()=>st&&st.vert?Math.max(camMinY(),GY-groundPx/S+.2):0;
+// world size and ground line: the wide clearing (levels 1–3) or the tall tree (levels 4–6)
+function layoutWorld(){
+  if(st&&st.vert){WWD=TW;GY=TH;bgY0=-1.6}else{WWD=WORLD;GY=groundPx/S+.2;bgY0=0;camY=0}
+  bgX0=camMin()-1.2;bgX1=camMax()+VW+1.2;
+  camX=Math.max(camMin(),Math.min(camMax(),camX));camY=Math.max(camMinY(),Math.min(camMaxY(),camY));bgDirty=true;
+}
 function resize(){
   const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);
   W=r.width;H=r.height;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -343,16 +409,19 @@ function resize(){
   // portrait: the arrows sit below the ground line; landscape: they float over the bottom corners
   const ground=land?H-safe.b-44:H-ctrlH;
   S=Math.max(18,Math.min(W/6.6,(ground-safe.t-64)/(land?6.4:8.2)));
-  VW=W/S;GY=ground/S+.2;
-  bgX0=camMin()-1.2;bgX1=camMax()+VW+1.2;
-  camX=Math.max(camMin(),Math.min(camMax(),camX));
-  bgDirty=true;setupFg();
+  VW=W/S;groundPx=ground;layoutWorld();setupFg();
 }
 addEventListener('resize',resize);
-const X=x=>(x-camX)*S,Y=y=>y*S;
+const X=x=>(x-camX)*S,Y=y=>(y-camY)*S;
 const TOP=()=>Math.max((safe.t+78)/S,GY-8.2);   // how high the parrot can fly (below the HUD)
 const DOOR=()=>({x:.85,y:TOP()+.55});
 const BRANCH=()=>({x1:1.3,x2:3.6,y:GY-4.5});
+function camTargetY(){
+  const p=st.parrot,t=st.sceneT,vh=groundPx/S;
+  if(st.mode==='intro')return t<2.4?camMinY():t<5.4?camMaxY():p.y-vh*.42;
+  if(st.mode==='free')return camY;
+  return p.y-vh*.42+p.vy*.2;
+}
 function camTarget(){
   if(!st||!st.parrot)return camMin();
   const p=st.parrot,t=st.sceneT;
@@ -364,15 +433,18 @@ function moveCam(dt){
   const k=st&&st.mode==='intro'?2.2:4;
   camX+=(camTarget()-camX)*Math.min(1,dt*k);
   camX=Math.max(camMin(),Math.min(camMax(),camX));
+  if(st&&st.vert){camY+=(camTargetY()-camY)*Math.min(1,dt*(st.mode==='intro'?1.6:4));camY=Math.max(camMinY(),Math.min(camMaxY(),camY))}
 }
 
 // ---------- state ----------
 let st=null,last=performance.now(),paused=false;
 const keys={};
 const rnd=(a,b)=>a+Math.random()*(b-a);
-function fresh(level,fromStart){return{mode:'menu',level,runT:0,catches:0,fromStart,parts:[],projs:[],workers:[],banner:null,sceneT:0,diff,paused:false}}
+function fresh(level,fromStart){return{seen:{},mode:'menu',level,runT:0,catches:0,fromStart,parts:[],projs:[],workers:[],banner:null,sceneT:0,diff,paused:false}}
 function newLevel(l,withIntro){
   st.level=l;setReached(l);
+  if(l>=4){const intro=!st.seen[l];st.seen[l]=1;return newClimbLevel(l,intro)}
+  st.vert=false;layoutWorld();
   const br=BRANCH();
   st.parrot={x:2.5,y:br.y-.42,vx:0,vy:0,f:1,flap:0,key:false,sit:!!withIntro};
   const offs=[-1.5,-.9,-.3,.3,.9,1.5].sort(()=>Math.random()-.5);
@@ -382,12 +454,14 @@ function newLevel(l,withIntro){
   st.projs=[];st.parts=[];st.caught=null;st.allLured=false;st.sceneT=0;
   st.stumps=[{x:4.6,g:0},{x:7.1,g:0},{x:8.1,g:0},{x:3.2,g:0}];
   st.buddy=null;st.seed=(Math.random()*1e9)|0;bgDirty=true;
-  if(!st.palBag||!st.palBag.length)st.palBag=['scarlet','green','hyacinth','sun','rose'].filter(k=>k!==st.palKey).sort(()=>Math.random()-.5);
+  if(!st.palBag||!st.palBag.length)st.palBag=['scarlet','green','sun','rose'].filter(k=>k!==st.palKey).sort(()=>Math.random()-.5);
   st.palKey=st.palBag.pop();st.pal=PALS[st.palKey];
+  if(l===3){st.palKey='hyacinth';st.pal=PALS.hyacinth}   // the friend from level 3 becomes your purple partner
   if(withIntro){st.mode='intro';st.leafOff=0;capIdx=-1;setUI('intro')}
   else startPlay();
 }
 function startPlay(){
+  if(st.vert)return startPlayV();
   st.mode='play';st.sceneT=0;st.parrot.sit=false;setUI('play');
   for(const w of st.workers)w.saw=false;
   st.banner={text:T.level(st.level),sub:T.lureSub,t:2.2,max:2.2};
@@ -401,6 +475,11 @@ const JR=()=>$('joyBase').offsetWidth*.42;
 function joyPaint(){const k=$('joyKnob'),r=JR();k.style.transform=`translate(${joy.x*r}px,${joy.y*r}px)`}
 function joyReset(){joy.id=null;joy.x=joy.y=0;const b=$('joyBase');b.classList.remove('live');b.style.left='';b.style.top='';joyPaint()}
 function joyMove(e){const r=JR();let dx=(e.clientX-joy.bx)/r,dy=(e.clientY-joy.by)/r;const L=Math.hypot(dx,dy);if(L>1){dx/=L;dy/=L}joy.x=dx;joy.y=dy;joyPaint()}
+let dropHeld=false;
+(()=>{const d=$('dropBtn');
+  d.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();dropHeld=true;d.classList.add('on');drop()});
+  const up=e=>{dropHeld=false;d.classList.remove('on')};d.addEventListener('pointerup',up);d.addEventListener('pointercancel',up);d.addEventListener('pointerleave',up);
+})();
 (()=>{const z=$('ctrl'),b=$('joyBase');
   z.addEventListener('pointerdown',e=>{if(joy.id!=null)return;e.preventDefault();try{z.setPointerCapture(e.pointerId)}catch(_){}
     const zr=z.getBoundingClientRect(),half=b.offsetWidth/2;
@@ -415,6 +494,7 @@ const KMAP={ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r',ArrowUp:'u',w:'u',ArrowDown
 addEventListener('keydown',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(KMAP[k]&&st&&st.mode!=='menu'){keys[KMAP[k]]=1;e.preventDefault()}
   if(st&&st.mode==='intro'&&(k===' '||k==='Enter'))startPlay();
+  else if(k===' '&&st&&st.vert){e.preventDefault();drop()}
   if((k==='Escape'||k==='p')&&st){if(st.paused)resume();else if(st.mode==='play'||st.mode==='escape')pause()}
 });
 addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(KMAP[k])keys[KMAP[k]]=0});
@@ -455,6 +535,7 @@ function update(dt){
   if(st.banner){st.banner.t-=dt;if(st.banner.t<=0)st.banner=null}
   const p=st.parrot;if(!p)return;
   st.sceneT+=dt;p.flap+=dt*(p.sit?0:18);
+  if(st.vert){for(const w of st.workers)if(w.stun>0)w.stun+=dt;return updateClimb(dt)}
   for(const w of st.workers){w.ph+=dt;if(w.stun>0)w.stun+=dt}
   if(st.mode==='intro'){
     const t=st.sceneT,pts=[[1.9,3.9,GY-2.6],[2.6,5.4,GY-3.4],[3.3,3.2,GY-1.6]];
@@ -862,7 +943,7 @@ function drawParrot(x,y,u,f,flap,o={}){
   ctx.fillStyle='#FFFDF6';ctx.beginPath();ctx.ellipse(hx+.02*u,hy+.02*u,.13*u,.15*u,0,0,7);ctx.ellipse(hx+.19*u,hy+.01*u,.1*u,.13*u,0,0,7);ctx.fill();
   ctx.strokeStyle='rgba(30,30,60,.3)';ctx.lineWidth=Math.max(.7,.008*u);for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(hx-.06*u+k*.025*u,hy+.09*u);ctx.quadraticCurveTo(hx-.03*u+k*.025*u,hy+.11*u,hx+k*.025*u,hy+.1*u);ctx.stroke()}
   // huge eyes, blinking now and then
-  const blink=((now+(o.seed||0))%3.4)<.12,lx=o.look!=null?o.look:.45;
+  const blink=o.sleep||((now+(o.seed||0))%3.4)<.12,lx=o.look!=null?o.look:.45;
   cEye(hx+.02*u,hy-.02*u,.095*u,.12*u,['#FFE07A','#C9780A'],lx,-.1,blink);
   cEye(hx+.19*u,hy-.03*u,.08*u,.105*u,['#FFE07A','#C9780A'],lx,-.05,blink);
   // cocky brows: the near one raised
@@ -888,7 +969,7 @@ function drawParrot(x,y,u,f,flap,o={}){
 // tiny hat, bulb nose, moustache, toothy grin); feet on the ground at world x
 function drawWorker(w,boss){
   if(boss)return drawBoss(w);
-  const x=X(w.x),gy=Y(GY),u=S*1.12,now=performance.now()/1000,f=w.f||-1;
+  const x=X(w.x),gy=Y(w.y!=null?w.y:GY),u=S*1.12,now=performance.now()/1000,f=w.f||-1;
   const walk=w.walking?Math.sin(w.ph*10):0,bob=Math.abs(walk)*u*.03,breathe=Math.sin(now*2.4+w.ph)*u*.01;
   ctx.save();ctx.translate(x,gy);ctx.lineJoin='round';ctx.lineCap='round';
   const sg=ctx.createRadialGradient(0,0,0,0,0,u*.38);sg.addColorStop(0,'rgba(30,15,5,.4)');sg.addColorStop(1,'rgba(30,15,5,0)');ctx.fillStyle=sg;ctx.beginPath();ctx.ellipse(0,0,u*.38,u*.08,0,0,7);ctx.fill();
@@ -904,8 +985,9 @@ function drawWorker(w,boss){
   ctx.save();body();ctx.clip();ctx.fillStyle='#FFF6C8';ctx.fillRect(-u*.3,-u*.6,u*.6,u*.045);ctx.fillRect(-u*.08,top,u*.035,u*.5);ctx.fillRect(u*.045,top,u*.035,u*.5);ctx.restore();
   rimLight(body,'rgba(255,240,190,.5)',u*.02);
   // back arm
-  ctx.beginPath();ctx.moveTo(-f*u*.09,top+u*.08);ctx.quadraticCurveTo(-f*u*.22,-u*.62,-f*u*.2,-u*.48-walk*u*.03);ctx.lineWidth=u*.07;ctx.strokeStyle='#C8560A';ctx.stroke();
-  ctx.beginPath();ctx.arc(-f*u*.2,-u*.48-walk*u*.03,u*.05,0,7);radFill(-f*u*.21,-u*.5,u*.06,'#FFD8B8','#C98A64');
+  const bax=w.climb?f*u*.05:-f*u*.2,bay=w.climb?top-u*.55-Math.sin(w.ph*8)*u*.1:-u*.48-walk*u*.03;
+  ctx.beginPath();ctx.moveTo(-f*u*.09,top+u*.08);ctx.quadraticCurveTo(-f*u*.22,(top+bay)/2,bax,bay);ctx.lineWidth=u*.07;ctx.strokeStyle='#C8560A';ctx.stroke();
+  ctx.beginPath();ctx.arc(bax,bay,u*.05,0,7);radFill(-f*u*.21,-u*.5,u*.06,'#FFD8B8','#C98A64');
   // long neck
   ctx.beginPath();ctx.roundRect?ctx.roundRect(-u*.035,top-u*.16,u*.07,u*.2,u*.03):ctx.rect(-u*.035,top-u*.16,u*.07,u*.2);radFill(0,top-u*.1,u*.12,'#FFD8B8','#C98A64');
   // egg head
@@ -941,6 +1023,7 @@ function drawWorker(w,boss){
   // throwing arm
   const sh={x:f*u*.1,y:top+u*.08};let hx,hy2;
   if(w.wind>0){hx=-f*u*.06;hy2=hy-u*.45}
+  else if(w.climb){hx=f*u*.16;hy2=hy-u*.3+Math.sin(w.ph*8)*u*.1}
   else if(w.reload>.6){hx=f*u*.5;hy2=top-u*.02}
   else if(w.saw){hx=f*u*.4;hy2=-u*.55+Math.sin(now*14)*u*.06}
   else{hx=f*u*.24;hy2=-u*.5+walk*u*.03}
@@ -957,7 +1040,7 @@ function drawWorker(w,boss){
 }
 function stunStars(x,y,u){const now=performance.now()/1000;for(let k=0;k<3;k++){const a=now*5+k*2.1;star(x+Math.cos(a)*u*.28,y+Math.sin(a)*u*.07,u*.075,u*.035,5);ctx.shadowColor='rgba(255,220,90,.9)';ctx.shadowBlur=u*.1;ctx.fillStyle='#FFE27A';ctx.fill();ctx.shadowColor='transparent'}}
 function drawBoss(b){
-  const x=X(b.x),gy=Y(GY),u=S*1.25,now=performance.now()/1000,f=b.leave?1:-1,breathe=Math.sin(now*1.8)*u*.012;
+  const x=X(b.x),gy=Y(b.y!=null?b.y:GY),u=S*1.25,now=performance.now()/1000,f=b.f||(b.leave?1:-1),breathe=Math.sin(now*1.8)*u*.012;
   const walk=b.leave?Math.sin(now*9):0,scold=b.cd>0;
   ctx.save();ctx.translate(x,gy);ctx.lineJoin='round';ctx.lineCap='round';
   const sg=ctx.createRadialGradient(0,0,0,0,0,u*.5);sg.addColorStop(0,'rgba(30,15,5,.45)');sg.addColorStop(1,'rgba(30,15,5,0)');ctx.fillStyle=sg;ctx.beginPath();ctx.ellipse(0,0,u*.5,u*.1,0,0,7);ctx.fill();
@@ -977,7 +1060,7 @@ function drawBoss(b){
   ctx.lineWidth=u*.14;ctx.strokeStyle='#C8392F';
   ctx.beginPath();ctx.moveTo(-f*u*.32,top+u*.14);ctx.quadraticCurveTo(-f*u*.62,-u*.6,-f*u*.42,-u*.42);ctx.stroke();
   ctx.beginPath();ctx.arc(-f*u*.42,-u*.42,u*.08,0,7);radFill(-f*u*.44,-u*.45,u*.1,'#FFD8B8','#D08A64');
-  const fy=scold?top-u*.25+Math.sin(now*18)*u*.03:-u*.45,fx=scold?f*u*.55:f*u*.42;
+  const fy=b.climb&&!b.down?top-u*.45+Math.sin(b.ph*7)*u*.08:scold?top-u*.25+Math.sin(now*18)*u*.03:-u*.45,fx=b.climb&&!b.down?f*u*.3:scold?f*u*.55:f*u*.42;
   ctx.beginPath();ctx.moveTo(f*u*.32,top+u*.14);ctx.quadraticCurveTo(f*u*.62,scold?top:-u*.6,fx,fy);ctx.lineWidth=u*.14;ctx.strokeStyle='#C8392F';ctx.stroke();
   ctx.beginPath();ctx.arc(fx,fy,u*.08,0,7);radFill(fx-u*.02,fy-u*.03,u*.1,'#FFD8B8','#D08A64');
   if(scold){ctx.beginPath();ctx.roundRect?ctx.roundRect(fx-u*.025,fy-u*.18,u*.05,u*.14,u*.025):ctx.rect(fx-u*.025,fy-u*.18,u*.05,u*.14);ctx.fillStyle='#F0B894';ctx.fill()}
@@ -1043,7 +1126,8 @@ function drawFree(t){
   // perch and the friend
   bar(cx-cs*.55,cy+cs*.32,cx+cs*.55,cy+cs*.32,lw*1.3);
   const fu=cs*.62;
-  if(out<=0)drawParrot(cx-cs*.05,cy+cs*.12,fu,-1,0,{sit:true,pal:st.pal,seed:1.3});
+  const kids=st.level===6?[[-.3,PALS.blue,.5],[0,PALS.hyacinth,.5],[.3,PALS.blue,.5]]:[[-.05,st.pal,1]];
+  if(out<=0)for(const[kx,kp,ks]of kids)drawParrot(cx+kx*cs,cy+cs*(ks<1?.22:.12),fu*ks,-1,0,{sit:true,pal:kp,seed:kx*5+1.3});
   // front bars, leaving a gap for the door
   for(let k=-3;k<=3;k++){const x=cx+k*cs*.27;if(x>dl+2&&x<dr-2)continue;bar(x,bot,x,top+cs*.05)}
   ctx.beginPath();ctx.ellipse(cx,top+cs*.05,cs*.85,cs*.72,0,Math.PI,0);ctx.lineWidth=lw*1.5;ctx.strokeStyle='#5E3A12';ctx.stroke();ctx.lineWidth=lw*.6;ctx.strokeStyle='#E8B85A';ctx.stroke();
@@ -1070,12 +1154,279 @@ function drawFree(t){
   if(t>2.2){const k=Math.min(1,(t-2.2)/1.1);px+=k*W*.7;py-=k*cs*1.6;pf=1}
   if(t>=.9&&t<1.5){const turn=(t-.9)/.6*Math.PI/2;ctx.save();ctx.translate(lx+cs*.2,ly-cs*.01);ctx.scale(1,Math.max(.08,Math.cos(turn)));drawKey(0,0,cs*.42,0);ctx.restore()}
   // the friend flies out through the open door
-  if(out>0){const fx=dl+(dr-dl)*.5+out*(W*.75),fy=cy+cs*.12-Math.sin(out*Math.PI*.8)*cs*1.3-out*cs*.6;drawParrot(fx,fy,fu,1,now*18,{pal:st.pal,seed:1.3})}
+  if(out>0)kids.forEach(([kx,kp,ks],i)=>{const o2=Math.max(0,Math.min(1,out*1.2-i*.12)),fx=dl+(dr-dl)*.5+o2*(W*.75),fy=cy+cs*.12-Math.sin(o2*Math.PI*.8)*cs*(1.3+i*.3)-o2*cs*.6;drawParrot(fx,fy,fu*ks,1,now*18,{pal:kp,seed:1.3+i})});
   drawParrot(px,py,pu,pf,now*18,{key:t<.9});
   if(out>0)for(let k=0;k<3;k++){const hx=dr+out*W*.5-k*cs*.4,hy=cy-cs*.3-out*cs*.9+Math.sin(now*4+k)*cs*.1;ctx.save();ctx.globalAlpha=Math.max(0,1-out)*.9;ctx.beginPath();const r=cs*.06;ctx.moveTo(hx,hy+r);ctx.bezierCurveTo(hx-r*2,hy-r*.4,hx-r*.6,hy-r*1.6,hx,hy-r*.5);ctx.bezierCurveTo(hx+r*.6,hy-r*1.6,hx+r*2,hy-r*.4,hx,hy+r);ctx.fillStyle='#F04E3E';ctx.fill();ctx.restore()}
 }
+// ---------- levels 4–6: the tall tree (vertical) ----------
+// World: 7 units wide, ground at y=TH. The nest sits near the top on a branch to the right of the trunk.
+const TW=7,TH=26,TX=3.5,NEST={x:TX+1.55,y:4.6},PARTNER={x:TX+.75,y:4.35},TDOOR={x:TX,y:7.2},LOSE_Y=6.6;
+const LANES=[TX-2.4,TX-.55,TX+.55,TX+2.4];
+const CL=[null,null,null,null,
+  {climb:.6,spawn:3.2,boss:.5,ammo:['nut','mango'],nets:false},
+  {climb:.7,spawn:2.6,boss:.58,ammo:['nut','mango'],nets:false},
+  {climb:.8,spawn:2.2,boss:.66,ammo:['nut','mango','stick'],nets:true,cd:[3.4,5.6]},
+];
+const CAGE={x:TX+2.3};
+function newClimbLevel(l,withIntro){
+  st.vert=true;layoutWorld();
+  st.parrot={x:TX+.4,y:NEST.y-1.4,vx:0,vy:0,f:-1,flap:0,key:false,sit:false};
+  st.workers=[];st.toSpawn=6;st.spawnT=1.5;st.downN=0;
+  st.boss=null;st.projs=[];st.nuts=[];st.parts=[];st.caught=null;st.sceneT=0;st.ammoCD=0;
+  st.wakeUsed=l!==5;st.partnerAwake=0;st.pal=PALS.hyacinth;st.seed=(Math.random()*1e9)|0;bgDirty=true;
+  st.stumps=[];st.allLured=false;
+  camX=Math.max(camMin(),Math.min(camMax(),st.parrot.x-VW/2));camY=camMinY();
+  if(withIntro){st.mode='intro';capIdx=-1;setUI('intro')}else startPlayV();
+}
+function startPlayV(){
+  st.mode='play';st.sceneT=0;setUI('play');
+  st.banner={text:T.level(st.level),sub:T.hitSub,t:2.2,max:2.2};
+}
+function drop(){
+  if(!st||!st.vert||st.mode!=='play'||st.ammoCD>0)return;
+  const p=st.parrot,a=CL[st.level].ammo,type=a[Math.random()*a.length|0];
+  st.nuts.push({type,x:p.x+.32*p.f,y:p.y+.3,vx:p.vx*.4,vy:Math.max(.5,p.vy*.3+1),rot:0,spin:(Math.random()-.5)*10});
+  st.ammoCD=.42;
+}
+const workerHit=(w,q)=>Math.abs(q.x-w.x)<.34&&q.y>w.y-1.5&&q.y<w.y-.1;
+function knockDown(w){w.fall=true;w.vy=-2.5;w.vx=(w.x<TX?-1:1)*rnd(.8,1.6);w.rot=0;w.climb=false;st.downN++;
+  popText(w.x,w.y-1.2,T.bonk,C.white);burst(w.x,w.y-1.2,6,'spark',2.5)}
+function updateClimb(dt){
+  const p=st.parrot,L=CL[st.level],D=DIFFS[st.diff];
+  if(st.mode==='intro'){
+    const t=st.sceneT;
+    if(t-dt<3.2&&t>=3.2){for(let i=0;i<3;i++)st.workers.push(mkClimber(LANES[i+1>3?0:i+1],TH,i))}
+    for(const w of st.workers){w.y-=.5*dt;w.ph+=dt}
+    if(t>7.6){st.workers=[];startPlayV()}
+    return;
+  }
+  if(st.mode==='play'||st.mode==='escape'){
+    st.runT+=dt;st.ammoCD-=dt;
+    const d=dir(),k=Math.min(1,dt*10);
+    p.vx+=(d.x*PV-p.vx)*k;p.vy+=(d.y*PV-p.vy)*k;p.x+=p.vx*dt;p.y+=p.vy*dt;
+    p.x=Math.max(.4,Math.min(TW-.4,p.x));p.y=Math.max(.7,Math.min(GY-.45,p.y));
+    if(Math.abs(p.vx)>.4)p.f=p.vx>0?1:-1;
+  }
+  // nuts and fruit fall
+  for(const q of st.nuts){q.vy+=12*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.rot+=q.spin*dt;
+    if(st.mode==='play'){
+      for(const w of st.workers)if(!w.fall&&workerHit(w,q)){knockDown(w);q.gone=true;break}
+      const b=st.boss;
+      if(!q.gone&&b&&!b.fall&&!b.down&&Math.abs(q.x-b.x)<.5&&q.y>b.y-2&&q.y<b.y-.2){
+        q.gone=true;b.hp--;burst(q.x,q.y,8,'spark',3);
+        if(b.hp>0){b.y=Math.min(GY,b.y+2.6);b.stunT=.9;popText(b.x,b.y-2,T.hitPop,C.white)}
+        else{b.fall=true;b.vy=-2;popText(b.x,b.y-2,T.hitPop,C.white)}
+      }
+    }
+    if(q.y>GY+.5)q.gone=true;
+    if(q.y>GY-.1&&!q.gone){q.gone=true;burst(q.x,GY-.1,4,'leaf',1.5)}
+  }
+  st.nuts=st.nuts.filter(q=>!q.gone);
+  // the partner's one perfect throw (level 5): a golden nut that homes in on the highest climber
+  for(const q of st.projs.filter(q=>q.home)){
+    const w=q.target;if(!w||w.fall){q.gone=true;continue}
+    const tx=w.x,ty=w.y-1,dx=tx-q.x,dy=ty-q.y,dd=Math.hypot(dx,dy)||1;
+    q.x+=dx/dd*9*dt;q.y+=dy/dd*9*dt;q.rot+=dt*12;
+    if(dd<.3){knockDown(w);q.gone=true;popText(w.x,w.y-1.6,T.perfect,C.paper)}
+  }
+  if(st.partnerAwake>0)st.partnerAwake-=dt;
+  // thrown nets (level 6) fly up at the parrot
+  for(const q of st.projs.filter(q=>!q.home)){
+    q.age+=dt;q.vy+=G*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.rot+=q.spin*dt;q.r=q.type==='net'?Math.min(.62,ITEM_R.net+q.age*.55):ITEM_R[q.type];
+    if(q.y>GY+1||q.age>6)q.gone=true;
+    if(st.mode==='play'&&!q.dud&&Math.hypot(q.x-p.x,q.y-p.y)<PR*.85+q.r*.7){q.gone=true;catchParrot(q.type)}
+  }
+  st.projs=st.projs.filter(q=>!q.gone);
+  if(st.mode==='play'){
+    // spawn climbers
+    st.spawnT-=dt;
+    if(st.toSpawn>0&&st.spawnT<=0){st.toSpawn--;st.spawnT=L.spawn*(1+(1-D.walk)*2);
+      const lane=LANES[Math.random()*LANES.length|0];st.workers.push(mkClimber(lane,GY,6-st.toSpawn))}
+    // wake the partner (level 5)
+    if(!st.wakeUsed&&Math.hypot(p.x-PARTNER.x,p.y-PARTNER.y)<.8){
+      const tgt=st.workers.filter(w=>!w.fall&&w.y<GY-.5).sort((a,b)=>a.y-b.y)[0];
+      if(tgt){st.wakeUsed=true;st.partnerAwake=1.6;popText(PARTNER.x,PARTNER.y-.8,T.wake,C.white);
+        st.projs.push({home:true,type:'gold',x:PARTNER.x+.2,y:PARTNER.y,target:tgt,rot:0})}
+    }
+  }
+  for(const w of st.workers){
+    w.ph+=dt;
+    if(w.fall){w.vy+=12*dt;w.y+=w.vy*dt;w.x+=w.vx*dt;w.rot+=w.vx*dt*1.5;if(w.y>GY+1.5)w.gone=true;continue}
+    if(st.mode!=='play'){w.walking=false;continue}
+    if(w.wind>0){w.wind-=dt;if(w.wind<=0){climbThrow(w);w.reload=.9;w.cd=rnd(...L.cd)*D.cd}continue}
+    if(w.reload>0)w.reload-=dt;
+    w.walking=true;w.y-=L.climb*D.walk*dt;
+    if(L.nets&&p.y<w.y){w.cd-=dt;if(w.cd<=0&&w.reload<=0&&Math.abs(p.x-w.x)<4&&w.y-p.y<7&&st.projs.filter(q=>!q.home).length<2){w.wind=.75*D.wind}}
+    if(w.y<LOSE_Y){nestLost();return}
+  }
+  st.workers=st.workers.filter(w=>!w.gone);
+  // the boss climbs up once all six are down
+  if(st.mode==='play'&&!st.boss&&st.toSpawn===0&&st.downN>=6&&!st.workers.length){
+    st.boss={x:TX,y:GY,hp:3,ph:0,cd:0,key:false,climb:true,stunT:0,leave:0};
+    st.banner={text:T.bossComes,t:2,max:2};
+  }
+  const b=st.boss;
+  if(b){b.ph+=dt;
+    if(b.fall){b.vy+=12*dt;b.y=Math.min(GY,b.y+b.vy*dt);if(b.y>=GY){b.fall=false;b.down=true;b.stun=.001;burst(b.x,GY-.3,10,'leaf',2.5);popText(b.x,GY-1.5,T.bonk,C.white)}}
+    else if(b.down){b.stun+=dt;
+      if(st.mode==='play'&&Math.abs(p.x-b.x)<.9&&p.y>GY-1.4){b.down=2;p.key=true;popText(b.x,GY-1,T.snatch,C.white);burst(b.x,GY-.6,8,'spark',3);
+        if(st.level===6){st.mode='escape';for(const w of st.workers)w.stun=.001}
+        else{st.mode='won';st.sceneT=0}}
+    }
+    else if(st.mode==='play'){
+      if(b.stunT>0){b.stunT-=dt;b.stun=.001}else{b.stun=0;b.y-=L.boss*D.walk*dt;b.walking=true}
+      b.f=p.x<b.x?-1:1;
+      if(b.y-1.2<LOSE_Y){nestLost();return}
+    }
+  }
+  // level 6: fly to the cage on the ground with the key
+  if(st.mode==='escape'&&Math.abs(p.x-CAGE.x)<.8&&p.y>GY-1.6){setUI('scene');st.mode='free';st.sceneT=0;st.banner=null;st.projs=[];st.nuts=[]}
+  if(st.mode==='free'){if(st.sceneT>3.6&&!card)levelDone()}
+  if(st.mode==='won'){if(st.sceneT>1.2&&!card)levelDone()}
+  if(st.mode==='caught'){if(p.y<GY-.38){p.vy+=G*1.2*dt;p.y=Math.min(GY-.38,p.y+p.vy*dt)}if(st.sceneT>1.2&&!card)showCard(st.caught==='nest'?'nest':'caught')}
+}
+function mkClimber(x,y,i){return{x:x+rnd(-.05,.05),y,climb:true,item:CL[st.level]&&CL[st.level].nets?'net':null,cd:rnd(2,4),wind:0,reload:0,f:x<TX?1:-1,ph:Math.random()*7,stun:0,walking:true}}
+function climbThrow(w){
+  const p=st.parrot,o={x:w.x,y:w.y-1.55},sp=4.5*DIFFS[st.diff].speed;
+  const dx=p.x-o.x,dy=p.y-o.y,Tf=Math.max(.6,Math.hypot(dx,dy)/sp);
+  st.projs.push({type:'net',x:o.x,y:o.y,vx:dx/Tf,vy:(dy-.5*G*Tf*Tf)/Tf,rot:0,spin:2,age:0,r:ITEM_R.net});
+}
+function nestLost(){st.mode='caught';st.caught='nest';st.sceneT=0;st.catches++;popText(NEST.x,NEST.y-.6,T.nestPop,C.white);st.banner=null}
+
+// the tall tree, painted once
+function renderBgV(){
+  const BW=(bgX1-bgX0)*S,BH=(GY+1.5-bgY0)*S;
+  bcv.width=Math.round(BW*dpr);bcv.height=Math.round(BH*dpr);const b=bctx;b.setTransform(dpr,0,0,dpr,0,0);
+  const R=mulberry(st.seed),bx=x=>(x-bgX0)*S,by=y=>(y-bgY0)*S,gy=by(GY);
+  let g=b.createLinearGradient(0,0,0,gy);g.addColorStop(0,'#CFEFFF');g.addColorStop(.12,'#F4F9D2');g.addColorStop(.4,'#A9D898');g.addColorStop(1,'#3E8558');b.fillStyle=g;b.fillRect(0,0,BW,gy);
+  g=b.createRadialGradient(BW*.8,by(1),0,BW*.8,by(1),BH*.5);g.addColorStop(0,'rgba(255,246,200,.95)');g.addColorStop(.4,'rgba(255,240,190,.3)');g.addColorStop(1,'rgba(255,240,190,0)');b.fillStyle=g;b.fillRect(0,0,BW,BH);
+  // far canopy layers down the height
+  const layers=[['#B3DDAA','#CBEABD'],['#7DBB80','#98CE8E'],['#4F9562','#67AE6E']];
+  layers.forEach(([c0,c1],li)=>{
+    for(let y=bgY0+li*.8;y<GY;y+=1.8-li*.3)for(let x=bgX0;x<bgX1;x+=1+R()*.8){
+      if(Math.abs(x-TX)<1.6&&li===2)continue;const r=S*(.5+R()*.6);b.fillStyle=R()<.5?c0:c1;b.beginPath();b.arc(bx(x),by(y+R()),r,0,7);b.fill()}
+    g=b.createLinearGradient(0,0,0,gy);g.addColorStop(0,'rgba(240,250,215,.3)');g.addColorStop(1,'rgba(200,235,190,.1)');b.fillStyle=g;b.fillRect(0,0,BW,gy);
+  });
+  // light rays
+  b.save();b.globalCompositeOperation='lighter';
+  for(let i=0;i<6;i++){const sx=BW*(.4+R()*.7),w=S*(.4+R()*.9);b.save();b.translate(sx,by(i*4));b.rotate(.35);g=b.createLinearGradient(0,0,0,S*8);g.addColorStop(0,'rgba(255,250,215,.18)');g.addColorStop(1,'rgba(255,250,215,0)');b.fillStyle=g;b.beginPath();b.moveTo(-w*.3,0);b.lineTo(w*.3,0);b.lineTo(w,S*8);b.lineTo(-w,S*8);b.closePath();b.fill();b.restore()}
+  b.restore();
+  // vines for the outer lanes
+  for(const lx of[LANES[0],LANES[3]]){
+    b.beginPath();b.moveTo(bx(lx),by(bgY0));for(let y=bgY0;y<=GY;y+=.5)b.lineTo(bx(lx+Math.sin(y*.7)*.08),by(y));b.lineCap='round';b.lineWidth=S*.09;b.strokeStyle='#2F6E2A';b.stroke();b.lineWidth=S*.04;b.strokeStyle='#5FA84A';b.stroke();
+    for(let y=bgY0+.5;y<GY;y+=.7){const s=(y*3|0)%2?1:-1;b.save();b.translate(bx(lx+Math.sin(y*.7)*.08),by(y));b.rotate(s>0?.5:Math.PI-.5);b.beginPath();b.moveTo(0,0);b.quadraticCurveTo(S*.13,-S*.1,S*.26,0);b.quadraticCurveTo(S*.13,S*.1,0,0);b.fillStyle=s>0?'#6FB24F':'#86C96A';b.fill();b.restore()}
+  }
+  // the trunk, rising out of the frame
+  const tl=bx(TX-.62),tr=bx(TX+.62);
+  b.beginPath();b.moveTo(tl+S*.1,by(bgY0));b.lineTo(tr-S*.1,by(bgY0));b.lineTo(tr,gy-S*1.2);b.quadraticCurveTo(tr+S*.2,gy-S*.2,tr+S*.8,gy+S*.1);b.lineTo(tl-S*.8,gy+S*.1);b.quadraticCurveTo(tl-S*.2,gy-S*.2,tl,gy-S*1.2);b.closePath();
+  g=b.createLinearGradient(tl,0,tr,0);g.addColorStop(0,'#3E2414');g.addColorStop(.5,'#7A4A2A');g.addColorStop(.85,'#A06A3C');g.addColorStop(1,'#C88A52');b.fillStyle=g;b.fill();
+  b.save();b.clip();b.strokeStyle='rgba(40,20,10,.35)';b.lineCap='round';
+  for(let i=0;i<40;i++){const y=bgY0+R()*(GY-bgY0),x=TX-.45+R()*.9,l=S*(.5+R());b.lineWidth=S*(.03+R()*.03);b.beginPath();b.moveTo(bx(x),by(y));b.bezierCurveTo(bx(x)+S*.1,by(y)+l*.3,bx(x)-S*.08,by(y)+l*.6,bx(x)+S*.02,by(y)+l);b.stroke()}
+  for(let i=0;i<12;i++){b.fillStyle='rgba(110,170,80,.5)';b.beginPath();b.ellipse(bx(TX-.4+R()*.8),by(bgY0+R()*(GY-bgY0)),S*.25,S*.12,R(),0,7);b.fill()}
+  b.restore();
+  // side branches with leaf clusters
+  const branch=(y,side,len)=>{const x0=bx(TX+side*.5),x1=bx(TX+side*(.5+len)),yy=by(y);
+    b.beginPath();b.moveTo(x0,yy-S*.13);b.quadraticCurveTo((x0+x1)/2,yy-S*.2,x1,yy-S*.05);b.lineTo(x1,yy+S*.02);b.quadraticCurveTo((x0+x1)/2,yy-S*.02,x0,yy+S*.13);b.closePath();
+    g=b.createLinearGradient(0,yy-S*.15,0,yy+S*.15);g.addColorStop(0,'#B98352');g.addColorStop(1,'#4E2C14');b.fillStyle=g;b.fill();
+    for(let k=0;k<6;k++){const a=(side>0?0:Math.PI)+(k-2.5)*.5,r=S*(.35+R()*.2);b.save();b.translate(x1,yy-S*.04);b.rotate(a);b.beginPath();b.moveTo(0,0);b.quadraticCurveTo(r*.5,-r*.4,r,0);b.quadraticCurveTo(r*.5,r*.4,0,0);b.fillStyle=k%2?'#5FA84A':'#86C96A';b.fill();b.restore()}};
+  for(let y=9;y<GY-3;y+=3.3)branch(y+R()*.6,(y|0)%2?1:-1,1+R()*.6);
+  branch(NEST.y+.25,1,1.35);branch(PARTNER.y+.25,-1,.1);
+  // ground
+  g=b.createLinearGradient(0,gy,0,gy+S*1.5);g.addColorStop(0,'#B98552');g.addColorStop(1,'#5E3920');b.fillStyle=g;b.fillRect(0,gy,BW,S*1.5);
+  b.fillStyle='#7CC062';b.beginPath();b.moveTo(0,gy+S*.04);for(let x=0;x<=BW+S*.3;x+=S*.3)b.quadraticCurveTo(x+S*.15,gy-S*.1-R()*S*.05,x+S*.3,gy);b.lineTo(BW,gy+S*.08);b.lineTo(0,gy+S*.08);b.fill();
+  // the canopy top
+  for(let x=bgX0;x<bgX1;x+=.45){const r=S*(.6+R()*.4);g=b.createRadialGradient(bx(x)+r*.3,by(bgY0+.3)-r*.2,r*.1,bx(x),by(bgY0+.3),r*1.1);g.addColorStop(0,'#6DBA5E');g.addColorStop(1,'#2A6B3E');b.fillStyle=g;b.beginPath();b.arc(bx(x),by(bgY0+.2+R()*.4),r,0,7);b.fill()}
+  bgDirty=false;
+}
+function drawNest(){
+  const x=X(NEST.x),y=Y(NEST.y),s=S;
+  // eggs (level 5) sit inside the bowl
+  if(st.level===5)for(const[ex,c]of[[-.22,'#F4EEDC'],[0,'#E8F2FF'],[.22,'#F4EEDC']]){ctx.beginPath();ctx.ellipse(x+ex*s,y-s*.12,s*.11,s*.14,ex*.6,0,7);radFill(x+ex*s-s*.03,y-s*.18,s*.16,'#FFFFFF',c);
+    ctx.fillStyle='rgba(120,90,150,.35)';for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(x+ex*s+(k-1)*s*.04,y-s*.1-k*s*.04,s*.012,0,7);ctx.fill()}}
+  ctx.beginPath();ctx.ellipse(x,y,s*.55,s*.2,0,0,Math.PI);ctx.lineTo(x-s*.55,y);radFill(x,y-s*.05,s*.6,'#B98352','#5E3519');
+  ctx.strokeStyle='rgba(60,30,10,.55)';ctx.lineWidth=Math.max(1,s*.025);for(let k=0;k<9;k++){ctx.beginPath();ctx.moveTo(x-s*.55+k*s*.13,y+s*.02);ctx.quadraticCurveTo(x-s*.45+k*s*.13,y+s*.18,x-s*.3+k*s*.12,y+s*.04);ctx.stroke()}
+  ctx.beginPath();ctx.ellipse(x,y,s*.56,s*.08,0,0,7);ctx.lineWidth=s*.07;ctx.strokeStyle='#8A5A33';ctx.stroke();
+}
+function drawNut(type,x,y,r,rot){
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+  if(type==='nut'){ctx.beginPath();ctx.ellipse(0,r*.15,r*.8,r*.9,0,0,7);radFill(-r*.3,-r*.1,r,'#D9A066','#7A4A22');ctx.beginPath();ctx.ellipse(0,-r*.55,r*.85,r*.38,0,0,7);radFill(-r*.2,-r*.7,r*.9,'#8A6A3A','#4A3418');}
+  else if(type==='mango'){ctx.beginPath();ctx.ellipse(0,0,r*.85,r*1.05,.3,0,7);radFill(-r*.3,-r*.4,r*1.2,'#FFE07A','#E8502A');ctx.beginPath();ctx.ellipse(r*.2,-r*1,r*.35,r*.15,-.4,0,7);ctx.fillStyle='#5FA84A';ctx.fill()}
+  else if(type==='stick'){ctx.beginPath();ctx.roundRect?ctx.roundRect(-r*1.6,-r*.22,r*3.2,r*.44,r*.2):ctx.rect(-r*1.6,-r*.22,r*3.2,r*.44);gradFill(-r*.22,r*.22,'#A06A3C','#5E3519');ctx.beginPath();ctx.moveTo(r*.4,-r*.2);ctx.lineTo(r*.9,-r*.8);ctx.lineWidth=r*.25;ctx.strokeStyle='#7A4A2A';ctx.stroke()}
+  else if(type==='gold'){ctx.shadowColor='rgba(255,220,90,.9)';ctx.shadowBlur=r*2;ctx.beginPath();ctx.ellipse(0,0,r*.8,r*.95,0,0,7);radFill(-r*.3,-r*.3,r,'#FFF2A8','#E3A200');ctx.shadowColor='transparent'}
+  ctx.restore();
+}
+function drawGroundCage(){
+  const x=X(CAGE.x),y=Y(GY),s=S,open=st.mode==='free';
+  ctx.beginPath();ctx.ellipse(x,y,s*.75,s*.12,0,0,7);ctx.fillStyle='rgba(30,15,5,.35)';ctx.fill();
+  for(const[cx,c]of[[-.25,PALS.blue],[0,PALS.hyacinth],[.25,PALS.blue]])if(!open)drawParrot(x+cx*s,y-s*.35,s*.38,cx<0?1:-1,0,{sit:true,pal:c,seed:cx*7});
+  ctx.strokeStyle='#5E3A12';ctx.lineWidth=Math.max(1.5,s*.04);for(let k=-3;k<=3;k++){ctx.beginPath();ctx.moveTo(x+k*s*.2,y);ctx.lineTo(x+k*s*.2,y-s*.95);ctx.stroke()}
+  ctx.beginPath();ctx.ellipse(x,y-s*.95,s*.62,s*.42,0,Math.PI,0);ctx.lineWidth=Math.max(2,s*.06);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x-s*.65,y);ctx.lineTo(x+s*.65,y);ctx.stroke();
+  if(st.mode==='escape'){const gl=.5+.5*Math.sin(performance.now()/1000*6),g=ctx.createRadialGradient(x,y-s*.5,0,x,y-s*.5,s*1.2);g.addColorStop(0,`rgba(255,230,140,${.45*gl})`);g.addColorStop(1,'rgba(255,230,140,0)');ctx.fillStyle=g;ctx.fillRect(x-s*1.2,y-s*1.7,s*2.4,s*2.4)}
+}
+function drawClimb(){
+  if(st.mode==='free'){drawFree(st.sceneT);drawParts(true);return}
+  if(bgDirty)renderBgV();
+  ctx.drawImage(bcv,X(bgX0),Y(bgY0),bcv.width/dpr,bcv.height/dpr);
+  drawNest();
+  // the sleeping partner on her branch
+  const now=performance.now()/1000,awake=st.partnerAwake>0;
+  drawParrot(X(PARTNER.x),Y(PARTNER.y),S*.92,1,0,{sit:true,pal:PALS.hyacinth,sleep:!awake,seed:2.2});
+  if(!awake&&st.mode!=='intro'){ctx.save();for(let k=0;k<3;k++){const t=(now*.6+k/3)%1;ctx.globalAlpha=1-t;ctx.font=`700 ${S*(.18+t*.18)}px ${V('--display')}`;ctx.fillStyle='#fff';ctx.fillText('z',X(PARTNER.x+.35+t*.5),Y(PARTNER.y-.5-t*.9))}ctx.restore()}
+  if(st.level===5&&!st.wakeUsed&&st.mode==='play'){const gl=.5+.5*Math.sin(now*5);ctx.beginPath();ctx.arc(X(PARTNER.x),Y(PARTNER.y),S*(.55+gl*.06),0,7);ctx.lineWidth=3;ctx.strokeStyle=`rgba(255,229,138,${.5+gl*.4})`;ctx.stroke()}
+  if(st.level===6)drawGroundCage();
+  const b=st.boss;
+  if(b){
+    if(b.down){ctx.save();ctx.translate(X(b.x),Y(GY));ctx.rotate(-1.45);ctx.translate(-X(b.x),-Y(GY));drawWorker(b,true);ctx.restore();
+      if(b.down!==2){const gl=.5+.5*Math.sin(now*6);ctx.save();ctx.shadowColor=`rgba(255,220,90,${gl})`;ctx.shadowBlur=20;drawKey(X(b.x+.15),Y(GY-.45),S*.5,.4);drawKey(X(b.x+.3),Y(GY-.4),S*.45,-.3);ctx.restore()}}
+    else{ctx.save();if(b.fall){ctx.translate(X(b.x),Y(b.y)-S);ctx.rotate(b.vy*.08);ctx.translate(-X(b.x),-(Y(b.y)-S))}drawWorker(b,true);ctx.restore()}
+  }
+  for(const w of st.workers){ctx.save();if(w.fall){const cx=X(w.x),cy=Y(w.y)-S*.6;ctx.translate(cx,cy);ctx.rotate(w.rot);ctx.translate(-cx,-cy)}drawWorker(w,false);ctx.restore()}
+  for(const q of st.nuts)drawNut(q.type,X(q.x),Y(q.y),S*.14,q.rot);
+  for(const q of st.projs)if(q.home)drawNut('gold',X(q.x),Y(q.y),S*.15,q.rot);else drawItem(q.type,X(q.x),Y(q.y),S*q.r,q.rot,1);
+  const p=st.parrot;
+  drawParrot(X(p.x),Y(p.y),S,p.f,p.flap,{key:p.key,vy:p.vy});
+  if(st.mode==='play'&&st.ammoCD<=0)drawNut(CL[st.level].ammo[0],X(p.x+.42*p.f),Y(p.y+.05),S*.1,0);
+  if(st.mode==='caught'&&st.caught&&st.caught!=='nest')drawItem(st.caught,X(p.x),Y(p.y),S*.42,.2);
+  drawFg();drawParts(false);
+  if(st.banner){const bn=st.banner,k=Math.min(1,(bn.max-bn.t)*6),sz=Math.min(54,W*.11),y=safe.t+H*.26;ctx.save();ctx.globalAlpha=Math.min(1,bn.t*3);inkText(bn.text,W/2,y,sz*k+1,C.paper,-.04);if(bn.sub)inkText(bn.sub,W/2,y+sz*.9,sz*.42*k+1,C.white,.02);ctx.restore()}
+  if(st.mode==='play'||st.mode==='escape'||st.mode==='caught'){drawIndicatorsV();drawHudV()}
+}
+function drawIndicatorsV(){
+  const below=st.workers.filter(w=>!w.fall&&Y(w.y-1)>H-ctrlH-10),above=st.workers.filter(w=>!w.fall&&Y(w.y)<safe.t+60);
+  const ind=(y,dirn,draw)=>{const x=W/2,now=performance.now()/1000,bob=Math.sin(now*5)*3*dirn;glassCircle(x,y+bob,18);
+    ctx.beginPath();ctx.moveTo(x,y+bob+dirn*27);ctx.lineTo(x-6,y+bob+dirn*19);ctx.lineTo(x+6,y+bob+dirn*19);ctx.closePath();ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();draw(x,y+bob)};
+  const yb=H-ctrlH-34;
+  if(below.length){const dist=Math.min(...below.map(w=>w.y))-(camY+(H-ctrlH)/S);ind(yb,1,(x,y)=>{helmetIcon(x,y-1,15,true);ctx.beginPath();ctx.arc(x+12,y+11,8,0,7);ctx.fillStyle='#F04E3E';ctx.fill();hudText(String(below.length),x+12,y+11.5,11,'center')});
+    hudText(Math.max(0,Math.round(dist))+' m',W/2+30,yb,12)}
+  const b=st.boss;
+  if(b&&!b.down&&Y(b.y-1)>H-ctrlH-10)ind(yb-48,1,(x,y)=>{ctx.beginPath();ctx.arc(x,y,9,Math.PI,0);ctx.fillStyle='#E8E8E8';ctx.fill()});
+  if(b&&b.down===true&&Y(GY)>H-ctrlH)ind(yb-48,1,(x,y)=>drawKey(x,y,26,0));
+  if(st.mode==='escape'&&Y(GY)>H-ctrlH)ind(yb-48,1,(x,y)=>{ctx.strokeStyle='#5E3A12';ctx.lineWidth=2;for(let k=-1;k<=1;k++){ctx.beginPath();ctx.moveTo(x+k*5,y+7);ctx.lineTo(x+k*5,y-6);ctx.stroke()}});
+  if(above.length)ind(safe.t+96,-1,(x,y)=>helmetIcon(x,y,15,true));
+}
+function drawHudV(){
+  const now=performance.now()/1000,y=safe.t+35,x0=safe.l+30,gap=Math.min(34,(W-safe.l-safe.r-110)/6);
+  for(let i=0;i<6;i++){const on=i<st.downN,cx=x0+i*gap,r=13;glassCircle(cx,y,r,on?'#8EF07A':null);helmetIcon(cx,y,r,!on);
+    if(on){ctx.beginPath();ctx.moveTo(cx-7,y-7);ctx.lineTo(cx+7,y+7);ctx.moveTo(cx+7,y-7);ctx.lineTo(cx-7,y+7);ctx.lineWidth=3;ctx.strokeStyle='#F04E3E';ctx.stroke()}}
+  for(let l=1;l<=LEVELS;l++){const cx=x0+(l-1)*12-4,cy=y+27;ctx.beginPath();ctx.arc(cx,cy,4,0,7);ctx.fillStyle=l<st.level?'#6CB8FF':l===st.level?'#FFC53D':'rgba(255,255,255,.3)';ctx.fill()}
+  hudText(T.lvlLbl+' '+st.level+'/'+LEVELS,x0+70,y+27,12);
+  const b=st.boss;
+  if(b&&!b.down&&!b.fall||b&&b.fall){for(let k=0;k<3;k++){const hx=x0+k*22,hy=y+52,r=8,on=k<b.hp;ctx.save();ctx.globalAlpha=on?1:.3;ctx.beginPath();ctx.moveTo(hx,hy+r);ctx.bezierCurveTo(hx-r*2,hy-r*.4,hx-r*.6,hy-r*1.6,hx,hy-r*.5);ctx.bezierCurveTo(hx+r*.6,hy-r*1.6,hx+r*2,hy-r*.4,hx,hy+r);ctx.fillStyle='#F04E3E';ctx.fill();ctx.restore()}hudText(T.bossL,x0+62,y+52,12)}
+  if(st.level===5){const px=W-safe.r-86,py=y;glassCircle(px,py,16,st.wakeUsed?null:'#FFE58A');drawParrot(px-2,py+3,22,1,0,{sit:true,pal:PALS.hyacinth,sleep:st.wakeUsed||st.partnerAwake<=0,seed:4});
+    if(st.wakeUsed){ctx.beginPath();ctx.moveTo(px-10,py-10);ctx.lineTo(px+10,py+10);ctx.lineWidth=2.5;ctx.strokeStyle='rgba(255,255,255,.7)';ctx.stroke()}}
+  let msg=null;
+  if(st.mode==='play'&&b&&b.down===true)msg=T.keyring;
+  if(st.mode==='escape')msg=T.toCage;
+  if(st.mode==='play'&&!b&&st.level===5&&!st.wakeUsed&&st.downN<6&&st.workers.some(w=>!w.fall&&w.y<GY-6))msg=T.wakeHint;
+  if(msg){const ty=y+(b?84:62),pulse=1+.03*Math.sin(now*6);ctx.save();ctx.font=`600 14px ${V('--display')}`;const tw=Math.min(W-30,ctx.measureText(msg).width+24);
+    ctx.translate(W/2,ty);ctx.scale(pulse,pulse);ctx.beginPath();ctx.roundRect?ctx.roundRect(-tw/2,-16,tw,32,16):ctx.rect(-tw/2,-16,tw,32);
+    const g=ctx.createLinearGradient(0,-16,0,16);g.addColorStop(0,'#FFE58A');g.addColorStop(1,'#FFC53D');ctx.fillStyle=g;ctx.shadowColor='rgba(255,197,61,.6)';ctx.shadowBlur=16;ctx.fill();ctx.shadowColor='transparent';
+    ctx.fillStyle='#5A3B00';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(msg,0,1,tw-16);ctx.restore()}
+}
 function draw(){
   if(!st)return;
+  if(st.vert)return drawClimb();
   if(st.mode==='free'){drawFree(st.sceneT);drawParts(true);return}
   if(bgDirty)renderBg();
   ctx.drawImage(bcv,X(bgX0),0,bcv.width/dpr,bcv.height/dpr);
@@ -1135,8 +1486,8 @@ function drawHud(){
     if(on){ctx.beginPath();ctx.arc(cx+r*.7,y+r*.7,6,0,7);ctx.fillStyle='#3FAF4A';ctx.fill();ctx.beginPath();ctx.moveTo(cx+r*.7-3,y+r*.7);ctx.lineTo(cx+r*.7-1,y+r*.7+2.2);ctx.lineTo(cx+r*.7+3,y+r*.7-2);ctx.lineWidth=1.8;ctx.strokeStyle='#fff';ctx.stroke()}
   }
   // level: three little cages, the freed ones glowing blue
-  for(let l=1;l<=LEVELS;l++){const cx=x0+(l-1)*16-4,cy=y+27;ctx.beginPath();ctx.arc(cx,cy,5,0,7);ctx.fillStyle=l<st.level?'#6CB8FF':l===st.level?'#FFC53D':'rgba(255,255,255,.3)';ctx.fill()}
-  hudText(T.lvlLbl+' '+st.level+'/3',x0+40,y+27,12);
+  for(let l=1;l<=LEVELS;l++){const cx=x0+(l-1)*12-4,cy=y+27;ctx.beginPath();ctx.arc(cx,cy,4,0,7);ctx.fillStyle=l<st.level?'#6CB8FF':l===st.level?'#FFC53D':'rgba(255,255,255,.3)';ctx.fill()}
+  hudText(T.lvlLbl+' '+st.level+'/'+LEVELS,x0+70,y+27,12);
   // objective toast
   let msg=null,key=false;
   if(st.mode==='play'&&st.allLured){msg=T.getKey;key=true}
@@ -1197,7 +1548,7 @@ function drawSign(){
 
 function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
-  if(!paused&&st&&!st.paused){update(dt);moveCam(dt);captions()}
+  if(!paused&&st&&!st.paused){if(dropHeld)drop();update(dt);moveCam(dt);captions()}
   draw();requestAnimationFrame(loop);
 }
 
@@ -1205,12 +1556,12 @@ function loop(now){
 let capIdx=-1;
 function captions(){
   if(st.mode!=='intro')return;
-  const t=st.sceneT,i=t<1.7?0:t<4.1?1:2;
-  if(i!==capIdx){capIdx=i;const c=$('caption');c.style.opacity=0;setTimeout(()=>{c.textContent=T.captions[i];c.style.opacity=1},capIdx===0?0:250)}
+  const t=st.sceneT,i=st.vert?(t<2.4?0:t<5?1:2):(t<1.7?0:t<4.1?1:2),caps=st.vert?T.vcaps[st.level-4]:T.captions;
+  if(i!==capIdx){capIdx=i;const c=$('caption');c.style.opacity=0;setTimeout(()=>{c.textContent=caps[i];c.style.opacity=1},capIdx===0?0:250)}
 }
 function setUI(mode){
   $('menu').hidden=mode!=='menu';$('cine').hidden=mode!=='intro';
-  $('ctrl').classList.toggle('off',mode!=='play');$('pauseBtn').hidden=mode!=='play';
+  $('ctrl').classList.toggle('off',mode!=='play');$('ctrl').classList.toggle('v',!!(st&&st.vert));$('pauseBtn').hidden=mode!=='play';
   if(mode!=='sheet'){$('sheetOv').hidden=true;card=null;cv.classList.remove('dim')}
   if(mode!=='menu')$('howOv').hidden=true;
   joyReset();
@@ -1245,12 +1596,12 @@ function act(icon,label,fn,main){
 function stat(icon,txt){const d=document.createElement('div');d.className='stat glass';d.innerHTML=ICON[icon];d.append(txt);return d}
 function showCard(kind){
   setUI('sheet');card={kind};
-  const sh=$('sheet');sh.className='sheet glass'+(kind==='caught'?' bad':'');
-  cv.classList.toggle('dim',kind==='caught'||kind==='pause');
-  const title={caught:T.caughtT,done:T.doneT(st.level),win:T.winT,pause:T.pause}[kind];
-  const text={caught:T.caughtP,done:T.doneP,win:T.winP,pause:''}[kind];
+  const sh=$('sheet');sh.className='sheet glass'+(kind==='caught'||kind==='nest'?' bad':'');
+  cv.classList.toggle('dim',kind==='caught'||kind==='nest'||kind==='pause');
+  const title={caught:T.caughtT,nest:T.nestT,done:T.doneT(st.level),win:T.winT,pause:T.pause}[kind];
+  const text={caught:T.caughtP,nest:T.nestP,done:st.level>=4?T.donePv[st.level-4]:T.doneP,win:T.winP,pause:''}[kind];
   $('sTitle').textContent=title;$('sText').textContent=text;$('sText').hidden=!text;
-  const freed=kind==='done'?st.level:kind==='win'?3:0;
+  const freed=kind==='done'&&st.level<=3?st.level:0;
   $('sCages').hidden=!freed;
   $('sCages').replaceChildren(...[1,2,3].map(l=>{const s=document.createElement('span');s.className='glass'+(l<=freed?' free':'');s.innerHTML=l<=freed?ICON.bird:ICON.cage;return s}));
   if(freed)$('sCages').setAttribute('aria-label',T.freed(freed));
@@ -1259,7 +1610,7 @@ function showCard(kind){
   if(kind==='win'){stats.push(stat('net',T.caught+' '+st.catches+'×'));if(st.best)stats.push(stat('trophy',T.bestL+' '+fmt(st.best)))}
   $('sStats').replaceChildren(...stats);$('sStats').hidden=!stats.length;
   const acts=[act('home',T.menu,toMenu)];
-  if(kind==='caught')acts.push(act('retry',T.retry,()=>fadeTo(()=>newLevel(st.level,false)),true));
+  if(kind==='caught'||kind==='nest')acts.push(act('retry',T.retry,()=>fadeTo(()=>newLevel(st.level,false)),true));
   if(kind==='done')acts.push(act('play',T.next,()=>fadeTo(()=>newLevel(st.level+1,false)),true));
   if(kind==='win')acts.push(act('retry',T.retry,()=>begin(1),true));
   if(kind==='pause'){acts.push(act('retry',T.restartL,()=>fadeTo(()=>{st.paused=false;newLevel(st.level,false)})));acts.push(act('play',T.resume,resume,true))}
@@ -1280,7 +1631,7 @@ resize();newLevel(1,true);st.mode='menu';setUI('menu');camX=camTarget();
 document.fonts&&document.fonts.ready.then(()=>{bgDirty=true});
 requestAnimationFrame(loop);
 // test hook
-window.__jungle={get st(){return st},keys,joy,begin,startPlay,pause,toMenu};
+window.__jungle={get st(){return st},drop,keys,joy,begin,startPlay,pause,toMenu};
 function drawParts(screen){
   for(const p of st.parts){
     const k=p.t/p.life;
