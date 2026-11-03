@@ -63,6 +63,18 @@ a.game:focus-visible{outline:3px dashed var(--gold);outline-offset:5px}
 .langs button{font-family:var(--display);font-size:15px;letter-spacing:.06em;background:var(--white);color:var(--ink);border:2px solid var(--ink);border-radius:6px;padding:2px 8px;box-shadow:2px 2px 0 var(--ink);cursor:pointer}
 .langs button[aria-pressed="true"]{background:var(--gold)}
 .langs button:focus-visible{outline:3px dashed var(--gold);outline-offset:2px}
+.more{margin-top:34px}
+.more .lbl{display:block;text-align:center;font-family:var(--display);font-size:22px;letter-spacing:.06em;color:var(--white);-webkit-text-stroke:1px var(--ink);text-shadow:2px 2px 0 var(--ink);margin:0 0 12px}
+.friend{display:flex;align-items:center;gap:12px;border:4px solid var(--ink);border-radius:10px;box-shadow:6px 6px 0 var(--ink);padding:10px 12px;color:inherit;text-decoration:none;transform:rotate(.6deg);background:var(--white)}
+.friend:active{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--ink)}
+.friend:focus-visible{outline:3px dashed var(--white);outline-offset:5px}
+.friend .pic{width:64px;height:64px}
+.friend h2{font-family:var(--display);font-size:26px;line-height:.95;letter-spacing:.03em;margin:0 0 2px;-webkit-text-stroke:1.2px var(--ink);text-shadow:2px 2px 0 var(--ink)}
+.friend p{margin:0;font-size:14px;line-height:1.25}
+.friend .go{flex:none;width:42px;height:42px;border:3px solid var(--ink);border-radius:50%;display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink)}
+.friend .go svg{width:22px;height:22px}
+.jonas h2{color:#8E5BD9}
+.jonas .go{background:#8FDB6A}
 </style>
 </head>
 <body>
@@ -131,6 +143,24 @@ a.game:focus-visible{outline:3px dashed var(--gold);outline-offset:5px}
       </div>
     </div>
   </div>
+  <div class="more">
+    <span class="lbl" data-i18n="more">MEHR SPIELE</span>
+    <a class="friend jonas" href="../maze/">
+      <div class="pic" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#8E5BD9"/>
+            <g fill="#7A45C7"><circle cx="7" cy="7" r="2"/><circle cx="21" cy="7" r="2"/><circle cx="35" cy="7" r="2"/><circle cx="49" cy="7" r="2"/><circle cx="14" cy="18" r="2"/><circle cx="56" cy="18" r="2"/></g>
+            <rect x="10" y="22" width="44" height="34" fill="#F4D9A0" stroke="#16120F" stroke-width="2"/>
+            <g fill="none" stroke="#2E9A4B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 22H54V56H10Z"/><path d="M24 22V40H36"/><path d="M44 32V48H24"/></g>
+            <circle cx="17" cy="49" r="4.5" fill="#E8322E" stroke="#16120F" stroke-width="1.8"/>
+            <circle cx="47" cy="29" r="4" fill="#16120F"/></svg>
+      </div>
+      <div class="txt">
+        <h2 data-i18n="jonasH">JONAS' SPIELE</h2>
+        <p data-i18n="jonasT">Irrgarten, Skiing und mehr.</p>
+      </div>
+      <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="#16120F" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
   <div class="langs" id="langs" role="group" aria-label="Language"></div>
 </main>
 <script>
@@ -145,12 +175,12 @@ a.game:focus-visible{outline:3px dashed var(--gold);outline-offset:5px}
     g.append(e)}})();
 
 const L={
-  de:{doc:'Abenteuer',title:'ABENTEUER',sub:'Such dir ein Spiel aus!',j1T:'Flieg als blauer Papagei, lock die Holzfäller weg und befrei deine Freunde.',j2T:'Das nächste Dschungel-Abenteuer ist schon in Arbeit.',play:'SPIELEN!',soon:'KOMMT BALD'},
-  en:{doc:'Adventures',title:'ADVENTURES',sub:'Pick a game!',j1T:'Fly as a blue parrot, lure the lumberjacks away and free your friends.',j2T:'The next jungle adventure is already in the works.',play:'PLAY!',soon:'COMING SOON'},
-  fr:{doc:'Aventures',title:'AVENTURES',sub:'Choisis un jeu !',j1T:'Vole comme un perroquet bleu, éloigne les bûcherons et libère tes amis.',j2T:'La prochaine aventure dans la jungle est déjà en préparation.',play:'JOUER !',soon:'BIENTÔT'},
-  es:{doc:'Aventuras',title:'AVENTURAS',sub:'¡Elige un juego!',j1T:'Vuela como un loro azul, aleja a los leñadores y libera a tus amigos.',j2T:'La próxima aventura en la selva ya está en marcha.',play:'¡JUGAR!',soon:'MUY PRONTO'},
-  it:{doc:'Avventure',title:'AVVENTURE',sub:'Scegli un gioco!',j1T:'Vola come un pappagallo blu, attira via i taglialegna e libera i tuoi amici.',j2T:'La prossima avventura nella giungla è già in lavorazione.',play:'GIOCA!',soon:'IN ARRIVO'},
-  pt:{doc:'Aventuras',title:'AVENTURAS',sub:'Escolha um jogo!',j1T:'Voe como um papagaio azul, atraia os lenhadores para longe e liberte seus amigos.',j2T:'A próxima aventura na selva já está em construção.',play:'JOGAR!',soon:'EM BREVE'}
+  de:{doc:'Abenteuer',title:'ABENTEUER',sub:'Such dir ein Spiel aus!',j1T:'Flieg als blauer Papagei, lock die Holzfäller weg und befrei deine Freunde.',j2T:'Das nächste Dschungel-Abenteuer ist schon in Arbeit.',play:'SPIELEN!',soon:'KOMMT BALD',more:'MEHR SPIELE',jonasH:"JONAS' SPIELE",jonasT:'Irrgarten, Skiing und mehr.'},
+  en:{doc:'Adventures',title:'ADVENTURES',sub:'Pick a game!',j1T:'Fly as a blue parrot, lure the lumberjacks away and free your friends.',j2T:'The next jungle adventure is already in the works.',play:'PLAY!',soon:'COMING SOON',more:'MORE GAMES',jonasH:"JONAS'S GAMES",jonasT:'Maze, Skiing and more.'},
+  fr:{doc:'Aventures',title:'AVENTURES',sub:'Choisis un jeu !',j1T:'Vole comme un perroquet bleu, éloigne les bûcherons et libère tes amis.',j2T:'La prochaine aventure dans la jungle est déjà en préparation.',play:'JOUER !',soon:'BIENTÔT',more:'PLUS DE JEUX',jonasH:'LES JEUX DE JONAS',jonasT:'Labyrinthe, ski et plus.'},
+  es:{doc:'Aventuras',title:'AVENTURAS',sub:'¡Elige un juego!',j1T:'Vuela como un loro azul, aleja a los leñadores y libera a tus amigos.',j2T:'La próxima aventura en la selva ya está en marcha.',play:'¡JUGAR!',soon:'MUY PRONTO',more:'MÁS JUEGOS',jonasH:'LOS JUEGOS DE JONAS',jonasT:'Laberinto, esquí y más.'},
+  it:{doc:'Avventure',title:'AVVENTURE',sub:'Scegli un gioco!',j1T:'Vola come un pappagallo blu, attira via i taglialegna e libera i tuoi amici.',j2T:'La prossima avventura nella giungla è già in lavorazione.',play:'GIOCA!',soon:'IN ARRIVO',more:'ALTRI GIOCHI',jonasH:'I GIOCHI DI JONAS',jonasT:'Labirinto, sci e altro.'},
+  pt:{doc:'Aventuras',title:'AVENTURAS',sub:'Escolha um jogo!',j1T:'Voe como um papagaio azul, atraia os lenhadores para longe e liberte seus amigos.',j2T:'A próxima aventura na selva já está em construção.',play:'JOGAR!',soon:'EM BREVE',more:'MAIS JOGOS',jonasH:'OS JOGOS DO JONAS',jonasT:'Labirinto, esqui e mais.'}
 };
 // Shares the language choice with Danger in the Jungle (same origin, same key).
 const KEY='jungle.lang';

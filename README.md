@@ -7,6 +7,8 @@ Our games page. The start page (`index.html`, glittering magenta) lets you pick 
 | Danger in the Jungle | [`danger-in-the-jungle/`](danger-in-the-jungle/) | playable |
 | Danger in the Jungle 2 | — | coming soon |
 
+At the bottom, **Mehr Spiele** links to Jonas' start page ([Jonas' Spiele](https://diemmarkus.github.io/maze/)).
+
 Play: https://diemmarkus.github.io/danger-in-the-jungle/
 
 ---
