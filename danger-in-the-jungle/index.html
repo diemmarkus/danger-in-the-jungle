@@ -1263,7 +1263,7 @@ function updateClimb(dt){
     if(w.wind>0){w.wind-=dt;if(w.wind<=0){climbThrow(w);w.reload=.9;w.cd=rnd(...L.cd)*D.cd}continue}
     if(w.reload>0)w.reload-=dt;
     w.walking=true;w.y-=L.climb*D.walk*dt;
-    if(L.nets&&p.y<w.y){w.cd-=dt;if(w.cd<=0&&w.reload<=0&&Math.abs(p.x-w.x)<4&&w.y-p.y<7&&st.projs.filter(q=>!q.home).length<2){w.wind=.75*D.wind}}
+    if(L.nets&&!w.thrown&&p.y<w.y){w.cd-=dt;if(w.cd<=0&&w.reload<=0&&Math.abs(p.x-w.x)<4&&w.y-p.y<7&&st.projs.filter(q=>!q.home).length<2){w.wind=.75*D.wind}}
     if(w.y<LOSE_Y){nestLost();return}
   }
   st.workers=st.workers.filter(w=>!w.gone);
@@ -1294,6 +1294,7 @@ function updateClimb(dt){
 }
 function mkClimber(x,y,i){return{x:x+rnd(-.05,.05),y,climb:true,item:CL[st.level]&&CL[st.level].nets?'net':null,cd:rnd(2,4),wind:0,reload:0,f:x<TX?1:-1,ph:Math.random()*7,stun:0,walking:true}}
 function climbThrow(w){
+  w.thrown=true;w.item=null;   // level 6: every worker has just one net
   const p=st.parrot,o={x:w.x,y:w.y-1.55},sp=4.5*DIFFS[st.diff].speed;
   const dx=p.x-o.x,dy=p.y-o.y,Tf=Math.max(.6,Math.hypot(dx,dy)/sp);
   st.projs.push({type:'net',x:o.x,y:o.y,vx:dx/Tf,vy:(dy-.5*G*Tf*Tf)/Tf,rot:0,spin:2,age:0,r:ITEM_R.net});
