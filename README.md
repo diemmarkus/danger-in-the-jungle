@@ -1,8 +1,21 @@
-# Danger in the Jungle
+# Abenteuer
+
+Our games page. The start page (`index.html`, glittering magenta) lets you pick a game:
+
+| Game | Folder | Status |
+|---|---|---|
+| Danger in the Jungle | [`danger-in-the-jungle/`](danger-in-the-jungle/) | playable |
+| Danger in the Jungle 2 | — | coming soon |
+
+Play: https://diemmarkus.github.io/danger-in-the-jungle/
+
+---
+
+## Danger in the Jungle
 
 A painted, 2D-animation-style jungle game for the phone. You're a blue parrot having breakfast when you hear rumbling, whistling and sawing — workers are cutting down your jungle. Get the key from the boss and free your friend.
 
-- **Title screen:** a wooden sign hanging in the jungle; pick difficulty and any of the 6 levels (all are open from the start), switch language (globe), read the rules (**?**).
+- **Title screen:** the house button goes back to Abenteuer; a wooden sign hanging in the jungle; pick difficulty and any of the 6 levels (all are open from the start), switch language (globe), read the rules (**?**).
 - **Intro:** a short letterboxed scene with subtitles; skip it with the button or a tap.
 - **Fly** with the joystick on the ground: touch anywhere in the bottom strip and it jumps under your thumb, then drag in any direction. It is analog — a small push flies slowly, a full push at full speed. Keyboard: arrow keys or WASD, `Esc`/`P` pauses.
 - **Camera:** on a phone the view is zoomed in and follows the parrot; arrows at the screen edge point to workers (with a count), the boss and the door when they're off screen.
@@ -17,6 +30,4 @@ A painted, 2D-animation-style jungle game for the phone. You're a blue parrot ha
   - **Level 6:** the intro shows the eggs wobbling, cracking and the chicks popping out and cheeping; then the babies have been kidnapped into a cage on the ground, and the climbers throw nets at you. Take the key and free them. **Difficulty:** Easy, Medium, Hard. Reached levels and the best time for a full run are kept per difficulty.
 - Languages: EN, DE, FR, ES, IT, PT.
 
-Single self-contained `index.html` — no build step.
-
-Play: enable GitHub Pages (Settings → Pages → deploy from `main`) and open it on your phone.
+Single self-contained `danger-in-the-jungle/index.html` — no build step. GitHub Pages deploys from `main`.
