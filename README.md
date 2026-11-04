@@ -27,7 +27,7 @@ A painted, 2D-animation-style jungle game for the phone. You're a blue parrot ha
 - **Caught?** You have to do the level again. Pause menu: resume, restart, menu.
 - **Levels 1–3 (the clearing):** lure, snatch the key, free a friend — faster and more throws each level. The friend from level 3 is your purple partner from then on.
 - **Levels 4–6 (the tall tree):** the camera scrolls up and down a huge tree with your nest at the top. Workers climb up the trunk and the vines; a round **drop button** (or `Space`) drops nuts and fruit (sticks in level 6). One hit knocks a worker down; after all 6 the boss climbs up and needs 3 hits. When he falls, fly down and take the key ring from his hip. If anyone reaches the nest, the level starts over.
-  - **Level 4:** your partner sleeps on her branch by the nest.
+  - **Level 4:** your partner sleeps on her branch by the nest. When you win levels 4 and 5 she wakes up and the two of you fly loops up the tree together.
   - **Level 5:** the intro shows your partner laying three eggs (plop, plop, plop) before she falls asleep; they wobble now and then. Once per level you can fly to your partner to wake her — she throws one perfect nut.
   - **Level 6:** the intro shows the eggs wobbling, cracking and the chicks popping out and cheeping; then the babies have been kidnapped into a cage on the ground, and each climber can throw one net at you. Take the key and free them — then you fly the chicks home, your partner wakes up and the whole family cuddles in the nest. **Difficulty:** Easy, Medium, Hard. Reached levels and the best time for a full run are kept per difficulty.
 - Languages: EN, DE, FR, ES, IT, PT.

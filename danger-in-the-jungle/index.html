@@ -1297,7 +1297,7 @@ function updateClimb(dt){
     else if(b.down){b.stun+=dt;
       if(st.mode==='play'&&Math.abs(p.x-b.x)<.9&&p.y>GY-1.4){b.down=2;p.key=true;popText(b.x,GY-1,T.snatch,C.white);burst(b.x,GY-.6,8,'spark',3);
         if(st.level===6){st.mode='escape';for(const w of st.workers)w.stun=.001}
-        else{st.mode='won';st.sceneT=0}}
+        else{st.mode='won';st.sceneT=0;setUI('scene')}}
     }
     else if(st.mode==='play'){
       if(b.stunT>0){b.stunT-=dt;b.stun=.001}else{b.stun=0;b.y-=L.boss*D.walk*dt;b.walking=true}
@@ -1312,7 +1312,7 @@ function updateClimb(dt){
       st.kids=[0,1,2].map(i=>({x:CAGE.x+(i-1)*.3,y:GY-.5}));camY=Math.max(camMinY(),Math.min(camMaxY(),p.y-groundPx/S*.42))}
     else if(!card)levelDone()}
   if(st.mode==='family')updateFamily(dt);
-  if(st.mode==='won'){if(st.sceneT>1.2&&!card)levelDone()}
+  if(st.mode==='won')updateWon(dt);
   if(st.mode==='caught'){if(p.y<GY-.38){p.vy+=G*1.2*dt;p.y=Math.min(GY-.38,p.y+p.vy*dt)}if(st.sceneT>1.2&&!card)showCard(st.caught==='nest'?'nest':'caught')}
 }
 function mkClimber(x,y,i){return{x:x+rnd(-.05,.05),y,climb:true,item:CL[st.level]&&CL[st.level].nets?'net':null,cd:rnd(2,4),wind:0,reload:0,f:x<TX?1:-1,ph:Math.random()*7,stun:0,walking:true}}
@@ -1467,6 +1467,7 @@ function wifeState(){
     const k=Math.min(1,(t-2.75)/.5),e=k*k*(3-2*k);
     return{x:nx+(PARTNER.x-nx)*e,y:ny+(PARTNER.y-ny)*e-Math.sin(e*Math.PI)*.6,f:-1,sit:k>=1,flap:t*18,sleep:false};
   }
+  if(st.mode==='won'&&st.wife)return{x:st.wife.x,y:st.wife.y,f:st.wife.f,sit:false,flap:t*18,sleep:false};
   if(st.mode==='family'){
     if(t<3.4)return home;
     if(t<3.7)return{...home,sleep:false};
@@ -1475,6 +1476,18 @@ function wifeState(){
     return{x:PARTNER.x+(nx-PARTNER.x)*e,y:PARTNER.y+(ny-PARTNER.y)*e-Math.sin(e*Math.PI)*.6,f:-1,sit:k>=1,flap:t*18,sleep:false,rot:lean,hug:t>4.2};
   }
   return home;
+}
+// levels 4 and 5 ending: your partner wakes up and the two of you fly loops up the tree together
+function updateWon(dt){
+  const p=st.parrot,t=st.sceneT;
+  if(!st.wife)st.wife={x:PARTNER.x,y:PARTNER.y,f:1};
+  if(t-dt<.3&&t>=.3)popText(PARTNER.x,PARTNER.y-.8,'!',C.white);
+  const k=Math.min(1,t/4),cx=TX+.8+(TX+.3-(TX+.8))*k,cy=GY-2.6+(NEST.y+2.2-(GY-2.6))*k*k*(3-2*k),a=t*2.4;
+  const px=cx+Math.cos(a)*1.4,py=cy+Math.sin(a)*.8;
+  p.vx=(px-p.x)*3;p.vy=(py-p.y)*3;p.x+=p.vx*dt;p.y+=p.vy*dt;p.f=p.vx>0?1:-1;p.sit=false;
+  if(t>.6){const w=st.wife,wx=cx+Math.cos(a-.9)*1.4,wy=cy+Math.sin(a-.9)*.8+.15,r=Math.min(1,dt*(t<1.8?2:3.5)),ox=w.x;w.x+=(wx-w.x)*r;w.y+=(wy-w.y)*r;if(Math.abs(w.x-ox)>.002)w.f=w.x>ox?1:-1}
+  if(t>1&&Math.random()<dt*5)st.parts.push({type:'heart',x:p.x,y:p.y-.3,vx:rnd(-.4,.4),vy:-.6,rot:0,vr:0,t:0,life:1.1});
+  if(t>4.6&&!card)levelDone();
 }
 // level 6 ending: the father flies the chicks home, the mother wakes up, everyone cuddles
 function updateFamily(dt){
