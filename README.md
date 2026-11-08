@@ -5,7 +5,7 @@ Our games page. The start page (`index.html`, glittering magenta) lets you pick 
 | Game | Folder | Status |
 |---|---|---|
 | Danger in the Jungle | [`danger-in-the-jungle/`](danger-in-the-jungle/) | playable |
-| Danger in the Jungle 2 | — | coming soon |
+| Danger in the Jungle 2 | [`danger-in-the-jungle-2/`](danger-in-the-jungle-2/) | playable |
 
 At the bottom, **Mehr Spiele** links to Jonas' start page ([Jonas' Spiele](https://diemmarkus.github.io/maze/)).
 
@@ -33,3 +33,30 @@ A painted, 2D-animation-style jungle game for the phone. You're a blue parrot ha
 - Languages: EN, DE, FR, ES, IT, PT.
 
 Single self-contained `danger-in-the-jungle/index.html` — no build step. GitHub Pages deploys from `main`.
+
+---
+
+## Danger in the Jungle 2
+
+The parrot leaves the small clearing and flies through a huge, scrolling jungle (the camera follows in both directions; a map strip at the top shows the nest, the six missions and you).
+
+- **Title screen:** same controls as part 1 — difficulty, start at any mission 1–6 or straight at the nest (boss fight), language (DE/EN), rules (**?**).
+- **Intro:** the family in the nest, then the camera pans to the monkey in the net (“HILFE!”).
+- **Six missions**, each the same idea and getting harder:
+  1. fly to the right tree and **pick** a nut, mango or coconut with your beak,
+  2. fly above the worker who carries the tool and **drop** it on his head with the round button (a dotted line shows where it falls; it turns yellow when you're on target) — **BONK!**, he sees stars,
+  3. while he's dizzy, **snatch the tool** from his hip (knife, key or scissors),
+  4. fly to the animal and **free it**.
+- | # | Animal | Trap | Tool | Fruit | Crew |
+  |---|---|---|---|---|---|
+  | 1 | Monkey | net | knife | nut (high up) | 1 guard |
+  | 2 | Toucan | cage on a crate | key | mango | + 1 rope thrower |
+  | 3 | Sloth | tied up under a branch | knife | coconut | + 1 net thrower |
+  | 4 | Jaguar cub | cage on a cart | key | nut | foreman (2 hits) + 2 throwers |
+  | 5 | Baby elephant | rope to a stake | scissors | mango | + 2 throwers |
+  | 6 | Baby gorilla | big cage | key | coconut | foreman (2 hits) + 3 throwers |
+- Throwers follow you and throw ropes, nets, landing nets and baskets; fly too close to a worker who isn't dizzy and he grabs you. **Caught** = that mission starts over from its checkpoint. A yellow arrow always points to the next thing to do, with a hint at the top.
+- **Home:** after all six you fly back to the nest. You and your purple partner are both awake, hug and clack your beaks — then the **boss** comes and climbs your tree (a bit faster than in part 1). **Break a dry branch** off your tree (they glow), fly above him and drop it on his head. He has **3 lives**; each hit knocks him down the trunk. If he reaches the nest, the boss fight starts over. Broken branches grow back after a few seconds.
+- **Ending:** the boss falls and runs away, all six animals come to the tree and cheer, the family cuddles in the nest.
+
+Single self-contained `danger-in-the-jungle-2/index.html` — the characters (parrots, workers, boss, thrown things) reuse the drawing code from part 1.

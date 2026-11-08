@@ -115,7 +115,7 @@ a.game:focus-visible{outline:3px dashed var(--gold);outline-offset:5px}
         <span class="tag" data-i18n="play">SPIELEN!</span>
       </div>
     </a>
-    <div class="game j2 soon" aria-disabled="true">
+    <a class="game j2" href="danger-in-the-jungle-2/">
       <div class="pic" aria-hidden="true">
         <svg viewBox="0 0 92 92">
           <rect width="92" height="92" fill="#2A5D7A"/>
@@ -138,10 +138,10 @@ a.game:focus-visible{outline:3px dashed var(--gold);outline-offset:5px}
       </div>
       <div class="txt">
         <h2>DANGER IN THE JUNGLE 2</h2>
-        <p data-i18n="j2T">Das nächste Dschungel-Abenteuer ist schon in Arbeit.</p>
-        <span class="tag" data-i18n="soon">KOMMT BALD</span>
+        <p data-i18n="j2T">Flieg durch den riesigen Dschungel, befrei 6 Tiere und besiege den Chef.</p>
+        <span class="tag" data-i18n="play">SPIELEN!</span>
       </div>
-    </div>
+    </a>
   </div>
   <div class="more">
     <span class="lbl" data-i18n="more">MEHR SPIELE</span>
@@ -175,12 +175,12 @@ a.game:focus-visible{outline:3px dashed var(--gold);outline-offset:5px}
     g.append(e)}})();
 
 const L={
-  de:{doc:'Abenteuer',title:'ABENTEUER',sub:'Such dir ein Spiel aus!',j1T:'Flieg als blauer Papagei, lock die Holzfäller weg und befrei deine Freunde.',j2T:'Das nächste Dschungel-Abenteuer ist schon in Arbeit.',play:'SPIELEN!',soon:'KOMMT BALD',more:'MEHR SPIELE',jonasH:"JONAS' SPIELE",jonasT:'Irrgarten, Skiing und mehr.'},
-  en:{doc:'Adventures',title:'ADVENTURES',sub:'Pick a game!',j1T:'Fly as a blue parrot, lure the lumberjacks away and free your friends.',j2T:'The next jungle adventure is already in the works.',play:'PLAY!',soon:'COMING SOON',more:'MORE GAMES',jonasH:"JONAS'S GAMES",jonasT:'Maze, Skiing and more.'},
-  fr:{doc:'Aventures',title:'AVENTURES',sub:'Choisis un jeu !',j1T:'Vole comme un perroquet bleu, éloigne les bûcherons et libère tes amis.',j2T:'La prochaine aventure dans la jungle est déjà en préparation.',play:'JOUER !',soon:'BIENTÔT',more:'PLUS DE JEUX',jonasH:'LES JEUX DE JONAS',jonasT:'Labyrinthe, ski et plus.'},
-  es:{doc:'Aventuras',title:'AVENTURAS',sub:'¡Elige un juego!',j1T:'Vuela como un loro azul, aleja a los leñadores y libera a tus amigos.',j2T:'La próxima aventura en la selva ya está en marcha.',play:'¡JUGAR!',soon:'MUY PRONTO',more:'MÁS JUEGOS',jonasH:'LOS JUEGOS DE JONAS',jonasT:'Laberinto, esquí y más.'},
-  it:{doc:'Avventure',title:'AVVENTURE',sub:'Scegli un gioco!',j1T:'Vola come un pappagallo blu, attira via i taglialegna e libera i tuoi amici.',j2T:'La prossima avventura nella giungla è già in lavorazione.',play:'GIOCA!',soon:'IN ARRIVO',more:'ALTRI GIOCHI',jonasH:'I GIOCHI DI JONAS',jonasT:'Labirinto, sci e altro.'},
-  pt:{doc:'Aventuras',title:'AVENTURAS',sub:'Escolha um jogo!',j1T:'Voe como um papagaio azul, atraia os lenhadores para longe e liberte seus amigos.',j2T:'A próxima aventura na selva já está em construção.',play:'JOGAR!',soon:'EM BREVE',more:'MAIS JOGOS',jonasH:'OS JOGOS DO JONAS',jonasT:'Labirinto, esqui e mais.'}
+  de:{doc:'Abenteuer',title:'ABENTEUER',sub:'Such dir ein Spiel aus!',j1T:'Flieg als blauer Papagei, lock die Holzfäller weg und befrei deine Freunde.',j2T:'Flieg durch den riesigen Dschungel, befrei 6 Tiere und besiege den Chef.',play:'SPIELEN!',soon:'KOMMT BALD',more:'MEHR SPIELE',jonasH:"JONAS' SPIELE",jonasT:'Irrgarten, Skiing und mehr.'},
+  en:{doc:'Adventures',title:'ADVENTURES',sub:'Pick a game!',j1T:'Fly as a blue parrot, lure the lumberjacks away and free your friends.',j2T:'Fly through the huge jungle, free 6 animals and beat the boss.',play:'PLAY!',soon:'COMING SOON',more:'MORE GAMES',jonasH:"JONAS'S GAMES",jonasT:'Maze, Skiing and more.'},
+  fr:{doc:'Aventures',title:'AVENTURES',sub:'Choisis un jeu !',j1T:'Vole comme un perroquet bleu, éloigne les bûcherons et libère tes amis.',j2T:'Vole à travers l’immense jungle, libère 6 animaux et bats le chef.',play:'JOUER !',soon:'BIENTÔT',more:'PLUS DE JEUX',jonasH:'LES JEUX DE JONAS',jonasT:'Labyrinthe, ski et plus.'},
+  es:{doc:'Aventuras',title:'AVENTURAS',sub:'¡Elige un juego!',j1T:'Vuela como un loro azul, aleja a los leñadores y libera a tus amigos.',j2T:'Vuela por la enorme selva, libera a 6 animales y vence al jefe.',play:'¡JUGAR!',soon:'MUY PRONTO',more:'MÁS JUEGOS',jonasH:'LOS JUEGOS DE JONAS',jonasT:'Laberinto, esquí y más.'},
+  it:{doc:'Avventure',title:'AVVENTURE',sub:'Scegli un gioco!',j1T:'Vola come un pappagallo blu, attira via i taglialegna e libera i tuoi amici.',j2T:'Vola nella giungla immensa, libera 6 animali e sconfiggi il capo.',play:'GIOCA!',soon:'IN ARRIVO',more:'ALTRI GIOCHI',jonasH:'I GIOCHI DI JONAS',jonasT:'Labirinto, sci e altro.'},
+  pt:{doc:'Aventuras',title:'AVENTURAS',sub:'Escolha um jogo!',j1T:'Voe como um papagaio azul, atraia os lenhadores para longe e liberte seus amigos.',j2T:'Voe pela selva enorme, liberte 6 animais e vença o chefe.',play:'JOGAR!',soon:'EM BREVE',more:'MAIS JOGOS',jonasH:'OS JOGOS DO JONAS',jonasT:'Labirinto, esqui e mais.'}
 };
 // Shares the language choice with Danger in the Jungle (same origin, same key).
 const KEY='jungle.lang';
