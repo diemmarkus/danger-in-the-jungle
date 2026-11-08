@@ -42,15 +42,15 @@ The parrot leaves the small clearing and flies through a huge, scrolling jungle 
 
 - **Title screen:** same controls as part 1 — difficulty, start at any mission 1–6 or straight at the nest (boss fight), language (DE/EN), rules (**?**).
 - **Intro:** the family in the nest, then the camera pans to the monkey in the net (“HILFE!”).
-- **Six missions**, each the same idea and getting harder:
+- **Six missions**, far apart: between two animals there's a long flight through the jungle (past plain jungle trees). Each mission is the same idea and gets harder:
   1. fly to the right tree and **pick** a nut, mango or coconut with your beak,
   2. fly above the worker who carries the tool and **drop** it on his head with the round button (a dotted line shows where it falls; it turns yellow when you're on target) — **BONK!**, he sees stars,
   3. while he's dizzy, **snatch the tool** from his hip (knife, key or scissors),
   4. fly to the animal and **free it**.
 - | # | Animal | Trap | Tool | Fruit | Crew |
   |---|---|---|---|---|---|
-  | 1 | Monkey | net | knife | nut (high up) | 1 guard |
-  | 2 | Toucan | cage on a crate | key | mango | + 1 rope thrower |
+  | 1 | Monkey | net hanging from a branch | knife | nut (high up) | 1 guard |
+  | 2 | Toucan | cage hanging from a branch | key | mango | + 1 rope thrower |
   | 3 | Sloth | tied up under a branch | knife | coconut | + 1 net thrower |
   | 4 | Jaguar cub | cage on a cart | key | nut | foreman (2 hits) + 2 throwers |
   | 5 | Baby elephant | rope to a stake | scissors | mango | + 2 throwers |

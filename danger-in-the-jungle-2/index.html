@@ -194,7 +194,7 @@ const C={paper:V('--paper'),ink:V('--ink'),jungle:V('--jungle'),deep:V('--deep')
 
 // World units: the jungle is WW units wide, x to the right, y downward; the ground is at y=GY.
 // Your home tree with the nest is on the far left, the six rescue missions lie to the right.
-const WW=67,GY=14,HX=3,LINE=-1e9,MISSIONS=6,LEVELS=7;
+const WW=118,GY=14,HX=3,LINE=-1e9,MISSIONS=6,LEVELS=7;
 const NEST={x:HX+1.75,y:5.2},WIFE={x:NEST.x+.72,y:NEST.y-.5},HOMEP={x:NEST.x-.66,y:NEST.y-.5};
 const PR=.3,PV=4.8,G=6,GF=12;
 const ITEM_R={rope:.34,net:.26,kescher:.36,basket:.36};
@@ -205,13 +205,18 @@ const FRUIT={nut:'nut',mango:'mango',palm:'coco'};
 const ZONE={net:.7,cage:.9,ropes:0,cart:1.05,stake:1.25,bigcage:1.55};
 // the six missions, getting harder: more workers, faster throws, shorter dizzy spells, a foreman who needs two hits
 const MIS=[
-  {animal:'monkey',trap:'net',tool:'knife',tx:13,ty:GY,tree:{type:'nut',x:9.4,y:2.6},crew:[{x:14.4,tool:1}],stun:9,cd:[5,8],wind:.85,speed:4.2,max:1},
-  {animal:'toucan',trap:'cage',tool:'key',tx:22,ty:GY,tree:{type:'mango',x:18.2,y:6.4},crew:[{x:23.3,tool:1},{x:20.4,item:'rope'}],stun:8,cd:[5,8],wind:.85,speed:4.2,max:1},
-  {animal:'sloth',trap:'ropes',tool:'knife',tx:31,ty:8.6,tree:{type:'palm',x:26.8,y:4.8},crew:[{x:30.4,tool:1},{x:33.2,item:'net'}],stun:7.5,cd:[4.2,6.8],wind:.8,speed:4.8,max:1},
+  {animal:'monkey',trap:'net',tool:'knife',tx:13,ty:9.6,hang:1,tree:{type:'nut',x:9.4,y:2.6},crew:[{x:14.4,tool:1}],stun:9,cd:[5,8],wind:.85,speed:4.2,max:1},
+  {animal:'toucan',trap:'cage',tool:'key',tx:22,ty:9,hang:1,tree:{type:'mango',x:18.2,y:6.4},crew:[{x:23.3,tool:1},{x:20.4,item:'rope'}],stun:8,cd:[5,8],wind:.85,speed:4.2,max:1},
+  {animal:'sloth',trap:'ropes',tool:'knife',tx:31,ty:8.6,hang:1,tree:{type:'palm',x:26.8,y:4.8},crew:[{x:30.4,tool:1},{x:33.2,item:'net'}],stun:7.5,cd:[4.2,6.8],wind:.8,speed:4.8,max:1},
   {animal:'jaguar',trap:'cart',tool:'key',tx:40,ty:GY,tree:{type:'nut',x:44.4,y:3},crew:[{x:41.5,tool:1,hp:2},{x:38.2,item:'basket'},{x:43,item:'rope'}],stun:7,cd:[3.8,6],wind:.75,speed:5.2,max:2},
   {animal:'elephant',trap:'stake',tool:'scissors',tx:50,ty:GY,tree:{type:'mango',x:54.5,y:5.6},crew:[{x:51.6,tool:1},{x:48.2,item:'rope'},{x:53,item:'net'}],stun:6.5,cd:[3.2,5.2],wind:.7,speed:5.8,max:2},
   {animal:'gorilla',trap:'bigcage',tool:'key',tx:60,ty:GY,tree:{type:'palm',x:64.4,y:4.2},crew:[{x:61.9,tool:1,hp:2},{x:57.6,item:'net'},{x:56.2,item:'kescher'},{x:63.4,item:'basket'}],stun:6,cd:[2.8,4.8],wind:.62,speed:6.2,max:3},
 ];
+// the animals are far apart: a long flight through the jungle from one to the next
+const GAP=18;MIS.forEach((m,i)=>{const d=20+i*GAP-m.tx;m.tx+=d;m.tree.x+=d;for(const c of m.crew)c.x+=d});
+// plain jungle trees along the way (not too close to a mission)
+const DECOR=[];{let x=8;const R=(a=>()=>{a=(a*16807)%2147483647;return a/2147483647})(7);
+  while(x<WW-2){if(MIS.every(m=>Math.abs(x-m.tx)>3.2&&Math.abs(x-m.tree.x)>2.2))DECOR.push({x,y:2.2+R()*6,r:.9+R()*.6,w:.45+R()*.35,c:R()<.5});x+=2.6+R()*3.2}}
 // dry branches on the home tree: break one off and drop it on the boss
 const BR=[{x:HX-.7,y:3.4,s:-1},{x:HX+.7,y:7.6,s:1},{x:HX-.7,y:8.9,s:-1},{x:HX+.7,y:10.6,s:1},{x:HX-.7,y:2.2,s:-1}];
 
@@ -341,7 +346,7 @@ function camTarget(){
   return{x:p.x-VW*.5+p.vx*.25,y:p.y-VH()*(st.mode==='boss'?.36:.45)+p.vy*.12};
 }
 function moveCam(dt,snap){
-  const c=camTarget(),k=snap?1:Math.min(1,dt*(st.mode==='intro'||st.mode==='reunion'||st.mode==='ending'?1.8:4));
+  const c=camTarget(),k=snap?1:Math.min(1,dt*(st.mode==='intro'?4.5:st.mode==='reunion'||st.mode==='reunion'||st.mode==='ending'?1.8:4));
   camX+=(c.x-camX)*k;camY+=(c.y-camY)*k;
   camX=Math.max(camMin(),Math.min(camMax(),camX));camY=Math.max(camMinY(),Math.min(camMaxY(),camY));
 }
@@ -378,7 +383,7 @@ function placeAtCheckpoint(){
   let x,y;
   if(i>=MISSIONS){x=HX+6;y=6}
   else if(i===0){x=NEST.x+.6;y=NEST.y-1}
-  else{const pm=MIS[i-1];x=pm.tx+2.4;y=6.5}
+  else{x=MIS[i].tx-10;y=6.5}
   st.parrot={x,y,vx:0,vy:0,f:1,flap:0,sit:false,carry:null};
 }
 function startPlay(){
@@ -461,7 +466,7 @@ function catchParrot(type){
   const p=st.parrot;if(p.carry==='stick'||DROPPABLE[p.carry])p.carry=null;
   popText(p.x,p.y,T.caughtPop,C.white);burst(p.x,p.y,10,'feather',2.5);
 }
-const trapPos=i=>{const m=MIS[i];return m.trap==='ropes'?{x:m.tx,y:m.ty+.35}:{x:m.tx,y:m.ty-.55}};
+const trapPos=i=>{const m=MIS[i];return m.hang?{x:m.tx,y:m.ty+.25}:{x:m.tx,y:m.ty-.55}};
 const hipPos=w=>({x:w.x-w.f*.2,y:GY-.5});
 function update(dt){
   if(!st)return;
@@ -553,7 +558,7 @@ function updMission(dt){
     w.walking=Math.abs(dx)>.05;w.x+=Math.sign(dx)*Math.min(Math.abs(dx),sp*dt);
     if(!w.carrier){
       // throwers don't walk through the trap or into each other
-      const z=ZONE[M.trap];if(z&&Math.abs(w.x-M.tx)<z)w.x=M.tx+(w.post<M.tx?-z:z);
+      const z=M.hang?0:ZONE[M.trap];if(z&&Math.abs(w.x-M.tx)<z)w.x=M.tx+(w.post<M.tx?-z:z);
       for(const o of ms.workers)if(o!==w&&!o.flee&&Math.abs(w.x-o.x)<.62)w.x=o.x+(w.post<o.x?-.62:.62);
     }
     if(w.item){w.cd-=dt;
@@ -1310,18 +1315,33 @@ function drawTrap(i){
   const lock=(lx,ly)=>{ctx.save();ctx.translate(lx,ly);ctx.beginPath();ctx.arc(0,-s*.07,s*.06,Math.PI,0);ctx.lineWidth=lw;ctx.strokeStyle='#8A949B';ctx.stroke();
     ctx.beginPath();ctx.roundRect?ctx.roundRect(-s*.09,-s*.08,s*.18,s*.15,s*.03):ctx.rect(-s*.09,-s*.08,s*.18,s*.15);gradFill(-s*.08,s*.08,'#FFE07A','#D99A00','#8A5A00',lw*.6);ctx.restore()};
   const animal=(ux,uy,u)=>{if(!show)return;ctx.save();ctx.globalAlpha=al;drawAnimal(M.animal,ux+ax,uy+ay,u,{sad,cheer,fly,f:free&&ft>1.2?-1:1});ctx.restore()};
+  const by=Y(M.ty-.7);
+  if(M.hang){const tr=X(M.tx+1.2);
+    ctx.beginPath();ctx.moveTo(tr,by-s*.15);ctx.quadraticCurveTo(x,by-s*.2,x-s*.9,by-s*.05);ctx.lineTo(x-s*.9,by+s*.04);ctx.quadraticCurveTo(x,by-s*.02,tr,by+s*.15);ctx.closePath();gradFill(by-s*.2,by+s*.15,'#B98352','#4E2C14');
+    leafAt(x-s*.9,by,s*.35,Math.PI+.3,'#9BE36E','#3E9A3A');leafAt(x-s*.9,by,s*.3,Math.PI-.4,'#8FDB6A','#357F33')}
   if(M.trap==='net'){
-    animal(x,gy-s*.48,s*.95);
+    // a net bag hanging on a rope from the branch
+    const sw=Math.sin(now*1.4)*s*.04,cy=by+s*.9;
+    ctx.beginPath();ctx.moveTo(x,by);ctx.lineTo(x+sw,by+s*.32);ctx.lineWidth=lw;ctx.strokeStyle='#D7A35C';ctx.stroke();
+    animal(x+sw,cy+s*.02,s*.85);
+    if(!free){const bag=()=>{ctx.beginPath();ctx.moveTo(x+sw-s*.1,by+s*.32);ctx.bezierCurveTo(x+sw-s*.6,by+s*.5,x+sw-s*.55,cy+s*.6,x+sw,cy+s*.58);ctx.bezierCurveTo(x+sw+s*.55,cy+s*.6,x+sw+s*.6,by+s*.5,x+sw+s*.1,by+s*.32);ctx.closePath()};
+      bag();ctx.fillStyle='rgba(255,253,246,.12)';ctx.fill();ctx.save();bag();ctx.clip();ctx.strokeStyle='#E8D2A0';ctx.lineWidth=Math.max(1.2,s*.03);
+      for(let k=-6;k<=6;k++){const o=k*s*.16;ctx.beginPath();ctx.moveTo(x+o-s,by);ctx.lineTo(x+o+s,by+s*2);ctx.stroke();ctx.beginPath();ctx.moveTo(x+o+s,by);ctx.lineTo(x+o-s,by+s*2);ctx.stroke()}
+      ctx.restore();bag();ctx.lineWidth=lw;ctx.strokeStyle='#4A3020';ctx.stroke();ctx.beginPath();ctx.arc(x+sw,by+s*.32,s*.06,0,7);ctx.fillStyle='#D7A35C';ctx.fill()}
+    else{ctx.beginPath();ctx.moveTo(x+sw-s*.1,by+s*.32);ctx.quadraticCurveTo(x+sw-s*.25,by+s*.7,x+sw-s*.12,by+s*.95);ctx.moveTo(x+sw+s*.1,by+s*.32);ctx.quadraticCurveTo(x+sw+s*.25,by+s*.7,x+sw+s*.14,by+s*.9);ctx.lineWidth=lw*1.3;ctx.strokeStyle='#E8D2A0';ctx.stroke()}
+  }else if(false){
     if(!free){ctx.beginPath();ctx.moveTo(x-s*.55,gy);ctx.quadraticCurveTo(x-s*.6,gy-s*.9,x,gy-s*1.05);ctx.quadraticCurveTo(x+s*.6,gy-s*.9,x+s*.55,gy);ctx.closePath();
       ctx.fillStyle='rgba(255,253,246,.12)';ctx.fill();ctx.save();ctx.clip();ctx.strokeStyle='#E8D2A0';ctx.lineWidth=Math.max(1.2,s*.03);
       for(let k=-6;k<=6;k++){const o=k*s*.16;ctx.beginPath();ctx.moveTo(x+o-s,gy-s*1.2);ctx.lineTo(x+o+s,gy+s*.2);ctx.stroke();ctx.beginPath();ctx.moveTo(x+o+s,gy-s*1.2);ctx.lineTo(x+o-s,gy+s*.2);ctx.stroke()}
       ctx.restore();ctx.beginPath();ctx.moveTo(x-s*.55,gy);ctx.quadraticCurveTo(x-s*.6,gy-s*.9,x,gy-s*1.05);ctx.quadraticCurveTo(x+s*.6,gy-s*.9,x+s*.55,gy);ctx.lineWidth=lw;ctx.strokeStyle='#4A3020';ctx.stroke();ctx.beginPath();ctx.arc(x,gy-s*1.05,s*.06,0,7);ctx.fillStyle='#D7A35C';ctx.fill()}
     else{ctx.beginPath();ctx.ellipse(x+s*.2,gy-s*.04,s*.55,s*.07,0,0,7);ctx.fillStyle='rgba(244,227,184,.6)';ctx.fill()}
   }else if(M.trap==='cage'||M.trap==='cart'||M.trap==='bigcage'){
-    const big=M.trap==='bigcage',cart=M.trap==='cart',cw=s*(big?1.2:.75),ch=s*(big?1.5:1),base=cart?gy-s*.38:M.trap==='cage'?gy-s*.42:gy;
+    const big=M.trap==='bigcage',cart=M.trap==='cart',cw=s*(big?1.2:M.hang?.6:.75),ch=s*(big?1.5:M.hang?.9:1),base=M.hang?by+s*1.4:cart?gy-s*.38:M.trap==='cage'?gy-s*.42:gy;
+    if(M.hang){ctx.beginPath();ctx.moveTo(x,by);ctx.lineTo(x,base-ch-s*.25);ctx.lineWidth=lw;ctx.strokeStyle='#8A949B';ctx.setLineDash([lw*1.5,lw]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.ellipse(x,base-ch,cw,s*.25,0,Math.PI,0);ctx.lineWidth=lw*1.3;ctx.strokeStyle='#5E3A12';ctx.stroke()}
     if(cart){ctx.beginPath();ctx.rect(x-cw*1.1,base,cw*2.2,s*.12);gradFill(base,base+s*.12,'#B98352','#6B4426','#3A200E',lw*.6);
       for(const sd of[-1,1]){ctx.beginPath();ctx.arc(x+sd*cw*.75,gy-s*.18,s*.18,0,7);gradFill(gy-s*.36,gy,'#8A5A33','#4A2A12','#2A1508',lw*.6);ctx.beginPath();ctx.arc(x+sd*cw*.75,gy-s*.18,s*.05,0,7);ctx.fillStyle='#D9A86A';ctx.fill()}}
-    if(M.trap==='cage'){ctx.beginPath();ctx.rect(x-cw*1.05,base,cw*2.1,gy-base);gradFill(base,gy,'#C98E58','#7A4A2A','#4A2A12',lw*.6);ctx.strokeStyle='rgba(60,30,10,.4)';ctx.lineWidth=lw*.6;ctx.beginPath();ctx.moveTo(x-cw*1.05,base+(gy-base)/2);ctx.lineTo(x+cw*1.05,base+(gy-base)/2);ctx.stroke()}
+    if(M.trap==='cage'&&!M.hang){ctx.beginPath();ctx.rect(x-cw*1.05,base,cw*2.1,gy-base);gradFill(base,gy,'#C98E58','#7A4A2A','#4A2A12',lw*.6);ctx.strokeStyle='rgba(60,30,10,.4)';ctx.lineWidth=lw*.6;ctx.beginPath();ctx.moveTo(x-cw*1.05,base+(gy-base)/2);ctx.lineTo(x+cw*1.05,base+(gy-base)/2);ctx.stroke()}
     animal(x,base-ch*.42,s*(big?1.2:.85));
     const top=base-ch;
     ctx.beginPath();ctx.rect(x-cw,top,cw*2,ch);ctx.fillStyle='rgba(255,230,180,.06)';ctx.fill();
@@ -1330,9 +1350,6 @@ function drawTrap(i){
       ctx.strokeStyle=big?'#5A646A':'#5E3A12';ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(x+cw*.6,top);ctx.lineTo(x+cw*1.25,top-ch*.12);ctx.lineTo(x+cw*1.25,base+ch*.1);ctx.lineTo(x+cw*.6,base);ctx.stroke()}
   }else if(M.trap==='ropes'){
     // the sloth hangs under a branch, tied up with ropes
-    const by=Y(M.ty-.7),tr=X(M.tx+1.2);
-    ctx.beginPath();ctx.moveTo(tr,by-s*.15);ctx.quadraticCurveTo(x,by-s*.2,x-s*.9,by-s*.05);ctx.lineTo(x-s*.9,by+s*.04);ctx.quadraticCurveTo(x,by-s*.02,tr,by+s*.15);ctx.closePath();gradFill(by-s*.2,by+s*.15,'#B98352','#4E2C14');
-    leafAt(x-s*.9,by,s*.35,Math.PI+.3,'#9BE36E','#3E9A3A');leafAt(x-s*.9,by,s*.3,Math.PI-.4,'#8FDB6A','#357F33');
     animal(x,by+s*.62,s*.95);
     if(!free){ctx.lineWidth=lw*1.4;ctx.strokeStyle='#4A3020';for(const[a,b]of[[.35,.55],[.6,.8],[.85,1.02]]){ctx.beginPath();ctx.moveTo(x-s*.27,by+s*a);ctx.quadraticCurveTo(x,by+s*(a+b)/2+s*.06,x+s*.27,by+s*b);ctx.stroke()}
       ctx.lineWidth=lw*.7;ctx.strokeStyle='#D7A35C';for(const[a,b]of[[.35,.55],[.6,.8],[.85,1.02]]){ctx.beginPath();ctx.moveTo(x-s*.27,by+s*a);ctx.quadraticCurveTo(x,by+s*(a+b)/2+s*.06,x+s*.27,by+s*b);ctx.stroke()}
@@ -1366,8 +1383,9 @@ function draw(){
   drawSky();drawTile(tiles.far,.3);drawTile(tiles.mid,.6);
   drawHomeTree();
   for(let i=0;i<st.trees.length;i++)drawFruitTree(st.trees[i],st.mode==='play'&&i===st.m&&!st.parrot.carry);
-  // the sloth's tree
-  if(vis(MIS[2].tx+1.3,3)){trunk(MIS[2].tx+1.3,MIS[2].ty-2.2,GY,.6,.36);crown(MIS[2].tx+1.3,MIS[2].ty-2.4,1.2,'#6BBF5A','#2A6B30',8)}
+  // plain jungle trees along the way, and the trees the hanging traps hang from
+  for(const d of DECOR)if(vis(d.x,3)){trunk(d.x,d.y+.3,GY,d.w*1.4,d.w);crown(d.x,d.y,d.r,d.c?'#6BBF5A':'#7DC86A',d.c?'#2A6B30':'#2F7A3E',8)}
+  for(const m of MIS)if(m.hang&&vis(m.tx+1.3,3)){trunk(m.tx+1.3,m.ty-2.2,GY,.6,.36);crown(m.tx+1.3,m.ty-2.4,1.2,'#6BBF5A','#2A6B30',8)}
   drawTile(tiles.near,1);
   drawHomeNest();
   const wf=drawWife();
