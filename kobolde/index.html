@@ -174,7 +174,7 @@ const TX=6.7;                          // the parrots' tree
 const NX=5.15,NY=4.7;                  // the nest on a branch of that tree
 const PERCH={x:NX+.95,y:NY-.42};       // where the blue parrot sits
 const PURP={x:NX-.55,y:NY-.36};        // the purple parrot on the rim of the nest
-const EGG_RX=.1,EGG_RY=.13;
+const EGG_RX=.12,EGG_RY=.155;
 const SLOT=i=>({x:NX+(i-1)*.25,y:NY-.1});
 const REST={x:SLOT(2).x,y:GY-.5};      // where the falling egg lands on the sleeping bag
 const GX=30;                           // the gate
@@ -483,16 +483,19 @@ function paintNear(x0,x1,R){
 
 // screen-space foreground: big dark leaves in the corners, light motes
 let fgLeaves=[],motes=[],flies=[];
+const FGP=1.35;
 function setupFg(){
   const R=mulberry(99);fgLeaves=[];
-  for(const side of[-1,1])for(let i=0;i<3;i++)fgLeaves.push({x:side<0?R()*W*.08:W-R()*W*.08,y:groundPx+S*(.8+R()*.7),s:1.5+R()*.7,f:side<0?1:-1,a:(side<0?.2:-.2)+R()*.25*side,ph:R()*7});
+  // plants standing in the world in front of the path; they scroll faster than the forest (FGP) for depth
+  for(let x=camMin()*FGP-1;x<camMax()*FGP+VW+2;x+=1.6+R()*2.4){const n=R()<.35?2:1;for(let k=0;k<n;k++)fgLeaves.push({x:x+k*.7,dy:1.05+R()*.5,s:.95+R()*.4,f:R()<.5?1:-1,a:(R()-.5)*.35,ph:R()*7})}
   motes=Array.from({length:22},()=>({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*2.2,ph:Math.random()*7,v:4+Math.random()*10}));
   flies=Array.from({length:12},()=>({x:Math.random()*W,y:Math.random()*groundPx,ph:Math.random()*7,v:.4+Math.random()*.6}));
 }
 function drawFg(){
   const now=performance.now()/1000;
-  for(const l of fgLeaves){ctx.save();ctx.translate(l.x,l.y);ctx.rotate(l.a+Math.sin(now*.8+l.ph)*.04);ctx.translate(-l.x,-l.y);
-    drawLeafPlant(l.x/S,l.y/S,l.s,l.f,'#2A5E3E');ctx.restore()}
+  for(const l of fgLeaves){const x=(l.x-camX*FGP)*S,y=groundPx+S*l.dy;if(x<-S*2.5||x>W+S*2.5)continue;
+    ctx.save();ctx.translate(x,y);ctx.rotate(l.a+Math.sin(now*.8+l.ph)*.04);ctx.translate(-x,-y);
+    drawLeafPlant(x/S,y/S,l.s,l.f,'#2A5E3E');ctx.restore()}
   const day=1-st.night;
   if(day>0){ctx.save();ctx.globalCompositeOperation='lighter';
     for(const m of motes){const y=(m.y-now*m.v)%H,yy=y<0?y+H:y,x=m.x+Math.sin(now*.7+m.ph)*12,a=(.2+.2*Math.sin(now*2+m.ph))*day;
@@ -638,13 +641,18 @@ function drawUpper(u,f,o){
   // arms behind the body first (the far one)
   const arm=(side,front)=>{
     const sx=side*.17*u,sy=-.42*u;
-    let a=side===f&&o.armUp?lerp(.2*side,2.64*side,o.armUp):(.12*side-sw*side*.5);
+    const up=side===f&&o.armUp!=null;
+    let a=up?lerp(.2*side,2.85*side,o.armUp):(.12*side-sw*side*.5);const AL=(up?lerp(.42,.63,o.armUp):.42)*u;
     if(o.wave&&side===f)a=side*(2.5+Math.sin(now*10)*.25);
-    const hx=sx+Math.sin(a)*.42*u,hy=sy+Math.cos(a)*.42*u;
+    const hx=sx+Math.sin(a)*AL,hy=sy+Math.cos(a)*AL;
     ctx.lineCap='round';
     ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(hx,hy);ctx.lineWidth=.09*u;ctx.strokeStyle=front?SKIN:shade(SKIN,.92);ctx.stroke();
     ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.sin(a)*.14*u,sy+Math.cos(a)*.14*u);ctx.lineWidth=.14*u;ctx.strokeStyle=SHIRT;ctx.stroke();
-    ctx.beginPath();ctx.arc(hx,hy,.058*u,0,7);ctx.fillStyle=SKIN;ctx.fill();
+    // holding the egg up: egg in the palm, fingers and thumb around its lower half
+    if(up&&o.egg){drawEgg(hx,hy-EGG_RY*.75*u,u,0);
+      ctx.beginPath();ctx.ellipse(hx,hy-.01*u,.075*u,.05*u,0,0,7);ctx.fillStyle=SKIN;ctx.fill();ctx.lineWidth=Math.max(1,.012*u);ctx.strokeStyle='#C99A86';ctx.stroke();
+      for(const s2 of[-1,1]){ctx.beginPath();ctx.ellipse(hx+s2*.075*u,hy-.07*u,.025*u,.055*u,s2*.25,0,7);ctx.fillStyle=SKIN;ctx.fill();ctx.stroke()}
+    }else{ctx.beginPath();ctx.arc(hx,hy,.058*u,0,7);ctx.fillStyle=SKIN;ctx.fill()}
     return{x:hx,y:hy};
   };
   arm(-f,false);
@@ -654,6 +662,8 @@ function drawUpper(u,f,o){
   ctx.save();shirt();ctx.clip();ctx.fillStyle=STRIPE;for(const y of[-.37,-.23,-.09])ctx.fillRect(-.3*u,y*u,.6*u,.055*u);
   ctx.fillStyle='rgba(120,60,90,.12)';ctx.fillRect(-f*.2*u-(f<0?0:.08*u),-.5*u,.08*u,.6*u);ctx.restore();
   if(o.straps){ctx.strokeStyle='#5E8E5C';ctx.lineWidth=.055*u;ctx.lineCap='round';for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(s*.12*u,-.48*u);ctx.lineTo(s*.1*u,-.05*u);ctx.stroke()}}
+  // near arm: in front of the body; when she stretches it up high it goes in front of her head too (drawn last)
+  if(!(o.armUp>0))arm(f,true);
   if(back){ctx.save();ctx.translate(0,.6*u);drawPack(u,0,0,true);ctx.restore()}
   // neck and head
   ctx.fillStyle=shade(SKIN,.93);ctx.fillRect(-.05*u,-.6*u,.1*u,.12*u);
@@ -684,6 +694,7 @@ function drawUpper(u,f,o){
   ctx.beginPath();ctx.arc(ex,hy+.08*u,.02*u,.2,Math.PI-.2);ctx.lineWidth=Math.max(1,.012*u);ctx.strokeStyle='#D9A88A';ctx.stroke();
   if(o.surprise){ctx.beginPath();ctx.ellipse(ex,hy+.17*u,.035*u,.045*u,0,0,7);ctx.fillStyle='#A65450';ctx.fill()}
   else{ctx.beginPath();ctx.moveTo(ex-.07*u,hy+.15*u);ctx.quadraticCurveTo(ex,hy+(o.sleep?.17:.21)*u,ex+.07*u,hy+.15*u);ctx.lineWidth=.02*u;ctx.lineCap='round';ctx.strokeStyle='#A65450';ctx.stroke()}
+  if(o.armUp>0)arm(f,true);
 }
 // standing / walking Lilly; x,y = her feet in px
 function drawLilly(x,y,u,f,ph,o={}){
@@ -713,7 +724,7 @@ function drawCamp(o){
   ctx.beginPath();ctx.ellipse(W_(CX-.18),W_(GY-.17),W_(.32),W_(.12),0,0,7);radFill(W_(CX-.25),W_(GY-.24),W_(.34),'#FFFFFF','#E3DDF0');
   const bag=()=>{ctx.beginPath();ctx.moveTo(W_(CX+.05),W_(GY-.06));ctx.lineTo(W_(CX+.05),W_(GY-.38));ctx.quadraticCurveTo(W_(CX+.9),W_(GY-.5),W_(CX+1.7),W_(GY-.36));
     ctx.quadraticCurveTo(W_(CX+1.95),W_(GY-.22),W_(CX+1.75),W_(GY-.06));ctx.closePath()};
-  const upper=()=>{ctx.save();ctx.translate(W_(PIV.x),W_(PIV.y));ctx.rotate(-(1-o.sit)*Math.PI/2);drawUpper(u,1,{sleep:o.sleep,armUp:o.arm,surprise:o.surprise,lookY:o.lookY,lookX:o.lookX});ctx.restore()};
+  const upper=()=>{ctx.save();ctx.translate(W_(PIV.x),W_(PIV.y));ctx.rotate(-(1-o.sit)*Math.PI/2);drawUpper(u,1,{sleep:o.sleep,armUp:o.arm,egg:o.egg,surprise:o.surprise,lookY:o.lookY,lookX:o.lookX});ctx.restore()};
   if(o.sit>.02){drawBag();upper()}else{upper();drawBag()}
   function drawBag(){
     bag();gradFill(W_(GY-.5),W_(GY),'#A6D3E4','#6FA9C4');
@@ -730,7 +741,7 @@ function drawCamp(o){
 }
 // where her raised hand is (world units), for the egg and the parrot
 function handWorld(sit,arm){
-  const a=lerp(.2,2.64,arm),lx=.17+Math.sin(a)*.42,ly=-.42+Math.cos(a)*.42,r=-(1-sit)*Math.PI/2;
+  const a=lerp(.2,2.85,arm),L=lerp(.42,.63,arm),lx=.17+Math.sin(a)*L,ly=-.42+Math.cos(a)*L,r=-(1-sit)*Math.PI/2;
   return{x:PIV.x+lx*Math.cos(r)-ly*Math.sin(r),y:PIV.y+lx*Math.sin(r)+ly*Math.cos(r)};
 }
 
@@ -916,26 +927,29 @@ function updIntro(dt){
 function askHand(){st.mode='egg';st.t=0;$('handBtn').hidden=false;$('cine').classList.add('ask');capIdx=-1;setTimeout(()=>{try{$('handBtn').focus({preventScroll:true})}catch(_){}},50)}
 function giveBack(){
   if(!st||st.mode!=='egg')return;
-  st.mode='give';st.t=0;$('handBtn').hidden=true;$('cine').classList.remove('ask');capIdx=-1;
+  st.mode='give';st.t=0;$('handBtn').hidden=true;$('cine').classList.remove('ask');capIdx=-9;
 }
 function bez(a,c,b,k){return{x:(1-k)*(1-k)*a.x+2*(1-k)*k*c.x+k*k*b.x,y:(1-k)*(1-k)*a.y+2*(1-k)*k*c.y+k*k*b.y}}
 function updGive(dt){
   const t=st.t,b=st.blue,e=st.egg;
-  st.sit=t<5.1?ease(t/.8):1-ease((t-5.1)/.9);
-  st.arm=t<4.4?ease((t-.8)/.8):1-ease((t-4.4)/.6);
-  const hand=handWorld(1,ease((t-.8)/.8)),grip={x:hand.x,y:hand.y-.1};
-  const up=handWorld(1,1),above={x:up.x+.05,y:up.y-.5},slot=SLOT(2),slotAbove={x:slot.x,y:slot.y-.45};
+  // she sits up, grabs the egg from her sleeping bag and stretches her arm up high; the parrot takes it from her hand
+  st.sit=t<5.4?ease(t/.8):1-ease((t-5.4)/.9);
+  st.arm=t<3.4?ease((t-1.1)/.8):1-ease((t-3.4)/.6);
+  const down=eggInHand(handWorld(1,0)),up=eggInHand(handWorld(1,1));
+  const above={x:up.x,y:up.y-.45},slot=SLOT(2),slotAbove={x:slot.x,y:slot.y-.45};
   if(t<.8){/* she sits up */}
-  else if(t<1.6){const k=ease((t-.8)/.8);e.x=lerp(REST.x,grip.x,k);e.y=lerp(REST.y,grip.y,k);e.rot=lerp(.4,0,k);e.state='hand'}
-  else if(t<2.9){e.x=up.x;e.y=up.y-.1}
-  if(t<1.6){b.x=PERCH.x;b.y=PERCH.y;b.sit=true;b.f=-1}
-  else if(t<2.9){const k=ease((t-1.6)/1.3),p=bez(PERCH,{x:(PERCH.x+above.x)/2+.8,y:above.y-.2},above,k);b.f=p.x<b.x?-1:1;b.x=p.x;b.y=p.y;b.sit=false}
-  else if(t<4.4){const k=ease((t-2.9)/1.5),p=bez(above,{x:(above.x+slot.x)/2-.6,y:slotAbove.y-1.3},slotAbove,k);b.f=p.x<b.x?-1:(p.x>b.x?1:b.f);b.x=p.x;b.y=p.y;b.sit=false;e.state='carry';e.x=b.x;e.y=b.y+.45}
-  else if(t<5.2){if(e.state!=='done'){e.state='done';st.eggs=3;hearts(NX,NY-.5,7);popText(NX+.2,NY-1.1,T.danke)}
-    const k=ease((t-4.4)/.8),p=bez(slotAbove,{x:(slotAbove.x+PERCH.x)/2,y:slotAbove.y-.6},PERCH,k);b.f=1;b.x=p.x;b.y=p.y;b.sit=k>=1;if(b.sit)b.f=-1}
-  if(t>6.1)st.awake=false;
-  if(t>7.6)morning();
+  else if(t<1.1){const k=ease((t-.8)/.3);e.x=lerp(REST.x,down.x,k);e.y=lerp(REST.y,down.y,k);e.rot=lerp(.4,0,k);e.state='grab'}
+  else if(t<3.1){e.state='hand';const h=eggInHand(handWorld(1,st.arm));e.x=h.x;e.y=h.y;e.rot=0}
+  if(t<1.9){b.x=PERCH.x;b.y=PERCH.y;b.sit=true;b.f=-1}
+  else if(t<3.1){const k=ease((t-1.9)/1.2),p=bez(PERCH,{x:(PERCH.x+above.x)/2+.8,y:above.y-.2},above,k);b.f=p.x<b.x?-1:1;b.x=p.x;b.y=p.y;b.sit=false}
+  else if(t<4.6){const k=ease((t-3.1)/1.5),p=bez(above,{x:(above.x+slot.x)/2-.6,y:slotAbove.y-1.3},slotAbove,k);b.f=p.x<b.x?-1:(p.x>b.x?1:b.f);b.x=p.x;b.y=p.y;b.sit=false;e.state='carry';e.x=b.x;e.y=b.y+.45}
+  else if(t<5.4){if(e.state!=='done'){e.state='done';st.eggs=3;hearts(NX,NY-.5,7);popText(NX+.2,NY-1.1,T.danke)}
+    const k=ease((t-4.6)/.8),p=bez(slotAbove,{x:(slotAbove.x+PERCH.x)/2,y:slotAbove.y-.6},PERCH,k);b.f=1;b.x=p.x;b.y=p.y;b.sit=k>=1;if(b.sit)b.f=-1}
+  if(t>6.4)st.awake=false;
+  if(t>7.9)morning();
 }
+// the egg sits in her palm: its centre just above the hand
+function eggInHand(h){return{x:h.x,y:h.y-EGG_RY*.75}}
 function morning(){
   if(st.leaving)return;st.leaving=true;
   const f=$('fade');f.classList.add('slow');
@@ -991,10 +1005,10 @@ function draw(){
   if(st.camp){
     const sit=st.mode==='give'?st.sit:0,arm=st.mode==='give'?st.arm:0;
     const surprised=st.awake&&(st.mode==='intro'||st.mode==='egg'||(st.mode==='give'&&st.t<.8));
-    drawCamp({sit,arm,sleep:!st.awake,zzz:!st.awake,surprise:surprised,lookY:-.4,lookX:.4});
+    drawCamp({sit,arm,egg:!!(egg&&egg.state==='hand'),sleep:!st.awake,zzz:!st.awake,surprise:surprised,lookY:-.4,lookX:.4});
   }else if(L.depth<=0)drawWalker(L);
   const b=st.blue;drawParrot(X(b.x),Y(b.y),S*.85,b.f,b.flap,{sit:b.sit,claws:egg&&egg.state==='carry',look:b.sit?.3:.5,lookY:b.sit?.4:.1});
-  if(egg&&egg.state!=='done')drawEgg(X(egg.x),Y(egg.y),S,egg.rot);
+  if(egg&&egg.state!=='done'&&egg.state!=='hand')drawEgg(X(egg.x),Y(egg.y),S,egg.rot);
   drawParts();
   drawFg();
   drawNight();
@@ -1019,7 +1033,7 @@ function captions(){
   let i=-1;
   if(st.mode==='intro')i=st.t<2.6?0:st.t<4.9?1:2;
   else if(st.mode==='egg')i=3;
-  else if(st.mode==='give')i=st.t<4.4?-1:st.t<6?4:5;
+  else if(st.mode==='give')i=st.t<4.6?-1:st.t<6.3?4:5;
   if(i!==capIdx){capIdx=i;c.style.opacity=0;setTimeout(()=>{c.textContent=i<0?'':T.cap[i];c.style.opacity=i<0?0:1},i===0?0:250)}
 }
 function setUI(mode){
