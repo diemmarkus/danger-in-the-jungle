@@ -485,17 +485,59 @@ function paintNear(x0,x1,R){
 let fgLeaves=[],motes=[],flies=[];
 const FGP=1.35;
 function setupFg(){
+  // foreground in front of the path, scrolling faster than the forest (FGP): clumps of bushes, sometimes sparse,
+  // sometimes dense, and now and then a big dark tree trunk (never in front of the camp or the gate)
   const R=mulberry(99);fgLeaves=[];
-  // plants standing in the world in front of the path; they scroll faster than the forest (FGP) for depth
-  for(let x=camMin()*FGP-1;x<camMax()*FGP+VW+2;x+=1.6+R()*2.4){const n=R()<.35?2:1;for(let k=0;k<n;k++)fgLeaves.push({x:x+k*.7,dy:1.05+R()*.5,s:.95+R()*.4,f:R()<.5?1:-1,a:(R()-.5)*.35,ph:R()*7})}
+  const x0=camMin()*FGP-2,x1=camMax()*FGP+VW+3;
+  const spots=[(CX+1.2-VW*.5)*FGP,(GX-VW*.5)*FGP];   // where the camera stands at the camp and at the gate
+  const free=x=>spots.every(c=>x<c+VW*.05-1||x>c+VW*.95+1);
+  for(let t=x0+2+R()*3;t<x1;t+=6+R()*4){if(!free(t))continue;fgLeaves.push({k:'trunk',x:t,w:.8+R()*.5,lean:(R()-.5)*.12,ph:R()*7});
+    for(let i=0;i<3;i++)fgLeaves.push({k:R()<.5?'plant':'fern',x:t+(R()-.5)*1.6,dy:1+R()*.4,s:.9+R()*.4,f:R()<.5?1:-1,a:(R()-.5)*.3,ph:R()*7,c:R()})}
+  let x=x0;
+  while(x<x1){
+    const r=R();
+    const dense=r>.35,n=dense?4+Math.floor(R()*4):1+Math.floor(R()*2),w=dense?1.6+R()*2:.6+R()*.6;
+    if(dense)fgLeaves.push({k:'mass',x:x+w/2,w,dy:.9,ph:R()*7,c:R()});
+    for(let i=0;i<n;i++){const k=R();fgLeaves.push({k:k<.55?'plant':k<.85?'fern':'grass',x:x+R()*w,dy:(dense?.95:1.1)+R()*(dense?.9:.5),s:(dense?1.1:.9)+R()*(dense?.7:.35),f:R()<.5?1:-1,a:(R()-.5)*.35,ph:R()*7,c:R()})}
+    x+=w+(dense?.4:1)+R()*(dense?1:2.2);
+  }
+  // trunks first, then the plants from back to front
+  fgLeaves.sort((p,q)=>(p.k==='trunk'?0:1)-(q.k==='trunk'?0:1)||(p.dy||0)-(q.dy||0));
   motes=Array.from({length:22},()=>({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*2.2,ph:Math.random()*7,v:4+Math.random()*10}));
   flies=Array.from({length:12},()=>({x:Math.random()*W,y:Math.random()*groundPx,ph:Math.random()*7,v:.4+Math.random()*.6}));
 }
+function drawFgTrunk(l,x){
+  const u=S,w=l.w*u,top=-20,bot=H+20,lean=l.lean*u*8;
+  ctx.beginPath();ctx.moveTo(x-w*.5+lean,top);ctx.lineTo(x+w*.5+lean,top);
+  ctx.quadraticCurveTo(x+w*.52,H*.6,x+w*.6,groundPx+u*.6);ctx.quadraticCurveTo(x+w*1.1,groundPx+u*1.1,x+w*1.6,bot);
+  ctx.lineTo(x-w*1.5,bot);ctx.quadraticCurveTo(x-w*1.05,groundPx+u*1.1,x-w*.6,groundPx+u*.6);ctx.quadraticCurveTo(x-w*.52,H*.6,x-w*.5+lean,top);ctx.closePath();
+  const g=ctx.createLinearGradient(x-w*.6,0,x+w*.6,0);g.addColorStop(0,'#4A4836');g.addColorStop(.35,'#3A3A2B');g.addColorStop(1,'#1F2219');ctx.fillStyle=g;ctx.fill();
+  ctx.save();ctx.clip();
+  ctx.strokeStyle='rgba(0,0,0,.22)';ctx.lineWidth=Math.max(1,u*.03);
+  for(let i=0;i<4;i++){const xx=x-w*.3+i*w*.2;ctx.beginPath();ctx.moveTo(xx+lean,top);ctx.bezierCurveTo(xx+w*.05,H*.4,xx-w*.05,H*.7,xx+(i-1.5)*w*.25,bot);ctx.stroke()}
+  ctx.fillStyle='rgba(95,140,70,.55)';for(let i=0;i<6;i++){const yy=H*(.1+i*.15)+Math.sin(l.ph+i)*u*.3;ctx.beginPath();ctx.ellipse(x-w*.38+lean*(1-yy/H),yy,w*.14,u*(.25+((i*37)%5)*.06),0,0,7);ctx.fill()}
+  ctx.fillStyle='rgba(220,255,200,.08)';ctx.fillRect(x-w*.5,top,w*.15,bot-top);
+  ctx.restore();
+}
 function drawFg(){
   const now=performance.now()/1000;
-  for(const l of fgLeaves){const x=(l.x-camX*FGP)*S,y=groundPx+S*l.dy;if(x<-S*2.5||x>W+S*2.5)continue;
+  for(const l of fgLeaves){
+    const x=(l.x-camX*FGP)*S;
+    if(l.k==='trunk'){if(x>-S*3&&x<W+S*3)drawFgTrunk(l,x);continue}
+    const y=groundPx+S*l.dy;if(x<-S*2.5||x>W+S*2.5)continue;
     ctx.save();ctx.translate(x,y);ctx.rotate(l.a+Math.sin(now*.8+l.ph)*.04);ctx.translate(-x,-y);
-    drawLeafPlant(x/S,y/S,l.s,l.f,'#2A5E3E');ctx.restore()}
+    const col=l.c<.5?'#2A5E3E':'#33704A';
+    if(l.k==='mass'){ctx.restore();const n=Math.max(3,Math.round(l.w*2.2));
+      for(let i=0;i<n;i++){const bx=x+(i/(n-1)-.5)*l.w*S,by=y+S*(.55+Math.sin(l.ph+i*2.1)*.12),r=S*(.45+Math.abs(Math.sin(l.ph*3+i))*.3);
+        ctx.beginPath();ctx.arc(bx,by,r,0,7);const g=ctx.createRadialGradient(bx-r*.3,by-r*.4,r*.1,bx,by,r);g.addColorStop(0,'#3C7E52');g.addColorStop(1,'#1F4A30');ctx.fillStyle=g;ctx.fill();
+        for(let j=0;j<4;j++){const a2=-2.6+j*.7;drawLeaf(bx+Math.cos(a2)*r*.7,by+Math.sin(a2)*r*.7,r*.7,a2,j%2?'#2F6A45':'#3B7C52',true)}}
+      for(let i=0;i<n+1;i++){const bx=x+(i/n-.5)*l.w*S*1.1,by=y+S*1.25,r=S*.6;ctx.beginPath();ctx.arc(bx,by,r,0,7);ctx.fillStyle='#21492F';ctx.fill()}
+      continue}
+    if(l.k==='plant')drawLeafPlant(x/S,y/S,l.s,l.f,col);
+    else if(l.k==='fern')drawFern(x/S,y/S,l.s*1.1,l.f,l.c<.5?'#2E6A45':'#3A7A50');
+    else{ctx.strokeStyle=col;ctx.lineCap='round';ctx.lineWidth=Math.max(1.5,S*.035);for(let k=-4;k<=4;k++){ctx.beginPath();ctx.moveTo(x+k*S*.04,y);ctx.quadraticCurveTo(x+k*S*.08,y-S*l.s*.5,x+k*S*.2+Math.sin(now+l.ph+k)*S*.03,y-S*l.s*(.75+Math.abs(Math.sin(k*1.7))*.3));ctx.stroke()}}
+    ctx.restore();
+  }
   const day=1-st.night;
   if(day>0){ctx.save();ctx.globalCompositeOperation='lighter';
     for(const m of motes){const y=(m.y-now*m.v)%H,yy=y<0?y+H:y,x=m.x+Math.sin(now*.7+m.ph)*12,a=(.2+.2*Math.sin(now*2+m.ph))*day;
