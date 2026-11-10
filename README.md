@@ -6,6 +6,7 @@ Our games page. The start page (`index.html`, glittering magenta) lets you pick 
 |---|---|---|
 | Danger in the Jungle | [`danger-in-the-jungle/`](danger-in-the-jungle/) | playable |
 | Danger in the Jungle 2 | [`danger-in-the-jungle-2/`](danger-in-the-jungle-2/) | playable |
+| Kobolde | [`kobolde/`](kobolde/) | level 1 playable |
 
 At the bottom, **Mehr Spiele** links to Jonas' start page ([Jonas' Spiele](https://diemmarkus.github.io/maze/)).
 
@@ -60,3 +61,18 @@ The parrot leaves the small clearing and flies through a huge, scrolling jungle 
 - **Ending:** the boss falls and runs away, all six animals come to the tree and cheer, the family cuddles in the nest.
 
 Single self-contained `danger-in-the-jungle-2/index.html` — the characters (parrots, workers, boss, thrown things) reuse the drawing code from part 1.
+
+---
+
+## Kobolde
+
+A soft, pastel fairytale-forest game (Hotel-Transylvania-style cartoon characters) in an old European forest. The main characters are **Lilly** (red hair with two buns, freckles, pink T-shirt with turquoise stripes, jeans, grey shoes, a green camping backpack with a sleeping mat on top and shoes hanging underneath) and, later, **Ria** (a faun girl). The kobolds show up later in the game — and they are not nice.
+
+- **Level 1**
+  - **Night:** Lilly sleeps alone in her sleeping bag deep in the forest. A blue and a purple parrot look after their three eggs in a nest above her. One egg wobbles, falls out and lands on her sleeping bag.
+  - **The hand:** a round button with a hand appears — tap it (or `Space`/`Enter`). Lilly sits up and holds the egg up, the blue parrot fetches it and puts it back in the nest. "Danke!" — and Lilly falls asleep again.
+  - **Morning:** walk through the forest with the same joystick as in Danger in the Jungle (keyboard: arrow keys / A, D).
+  - **The gate:** at the end of the path stands a gate with a big sign: **BETRETEN VERBOTEN**. Tap right on the gate (or `Space`/`Enter` when you're close) and it creaks open. Lilly walks through… and something with glowing eyes watches from behind it.
+- Languages: DE, EN (shares the language choice with the other games).
+
+Single self-contained `kobolde/index.html` — the parrots reuse the drawing code from Danger in the Jungle.
