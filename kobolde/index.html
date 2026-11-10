@@ -179,7 +179,7 @@ const SLOT=i=>({x:NX+(i-1)*.25,y:NY-.1});
 const REST={x:SLOT(2).x,y:GY-.5};      // where the falling egg lands on the sleeping bag
 const GX=30;                           // the gate
 const WW=34;
-const WALK=2.7;
+const WALK=2.3;
 
 // ---------- i18n ----------
 const I18N={
@@ -533,10 +533,10 @@ const PALS={
   hyacinth:{body:['#A88BFF','#5A3BC8'],head:['#B39AFF','#6346D2'],belly:['#9C7FF5','#5A3BC8'],crown:['#B39AFF','#6346D2'],wing:['#47309E','#5A3BC8','#7A5CE8'],tail:['#47309E','#6A4CD8','#5A3BC8'],rim:'#3A2588'},
 };
 function rimLight(path,col,w){ctx.save();path();ctx.clip();path();ctx.translate(w*.6,-w*.5);ctx.lineWidth=w*2;ctx.strokeStyle=col;ctx.stroke();ctx.restore()}
-function cEye(x,y,rx,ry,iris,lx,ly,blink){
+function cEye(x,y,rx,ry,iris,lx,ly,blink,soft){
   ry=blink?ry*.12:ry;
   ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,7);ctx.fillStyle='#FFFDF8';ctx.fill();
-  ctx.lineWidth=Math.max(.8,rx*.09);ctx.strokeStyle='rgba(60,35,30,.5)';ctx.stroke();
+  ctx.lineWidth=Math.max(.6,rx*(soft?.05:.09));ctx.strokeStyle=soft?'rgba(30,40,90,.25)':'rgba(60,35,30,.5)';ctx.stroke();
   if(blink)return;
   ctx.save();ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,7);ctx.clip();
   const ix=x+lx*rx*.38,iy=y+ly*ry*.32,ir=Math.min(rx,ry)*.64;
@@ -566,10 +566,9 @@ function drawParrot(x,y,u,f,flap,o={}){
   const hx=.2*u,hy=-.25*u,hr=.26*u,head=()=>{ctx.beginPath();ctx.arc(hx,hy,hr,0,7)};
   head();radFill(hx-.08*u,hy-.12*u,hr*1.25,P.head[0],P.head[1]);rimLight(head,'rgba(255,245,200,.5)',.025*u);
   for(let k=0;k<3;k++){ctx.save();ctx.translate(hx-.08*u+k*.07*u,hy-hr*.92);ctx.rotate(-.7+k*.35+Math.sin(now*3+k)*.05);ctx.beginPath();ctx.ellipse(0,-.07*u,.03*u,.09*u,0,0,7);ctx.fillStyle=k%2?P.crown[0]:P.crown[1];ctx.fill();ctx.restore()}
-  ctx.fillStyle='#FFFDF6';ctx.beginPath();ctx.ellipse(hx+.02*u,hy+.02*u,.13*u,.15*u,0,0,7);ctx.ellipse(hx+.19*u,hy+.01*u,.1*u,.13*u,0,0,7);ctx.fill();
   const blink=o.sleep||((now+(o.seed||0))%3.4)<.12,lx=o.look!=null?o.look:.45,ly=o.lookY||-.1;
-  cEye(hx+.02*u,hy-.02*u,.095*u,.12*u,['#FFE07A','#C9780A'],lx,ly,blink);
-  cEye(hx+.19*u,hy-.03*u,.08*u,.105*u,['#FFE07A','#C9780A'],lx,ly+.05,blink);
+  cEye(hx+.01*u,hy-.03*u,.12*u,.15*u,['#FFE07A','#C9780A'],lx,ly,blink,true);
+  cEye(hx+.21*u,hy-.04*u,.1*u,.13*u,['#FFE07A','#C9780A'],lx,ly+.05,blink,true);
   if(P===PALS.hyacinth){
     const lash=(ex,ey,rx,ry,sc)=>{
       ctx.strokeStyle='#1C1030';ctx.lineCap='round';
@@ -578,11 +577,11 @@ function drawParrot(x,y,u,f,flap,o={}){
       for(let k=0;k<3;k++){const a=-1.25+k*.42,x0=ex+Math.cos(a)*rx,y0=ey+Math.sin(a)*ry,l=(.07+k*.012)*u*sc;
         ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo(x0+Math.cos(a-.3)*l*.6,y0+Math.sin(a-.3)*l*.9,x0+Math.cos(a+.25)*l,y0+Math.sin(a+.25)*l-.02*u*sc);ctx.lineWidth=.016*u*sc;ctx.stroke()}
     };
-    lash(hx+.02*u,hy-.02*u,.095*u,.12*u,1);lash(hx+.19*u,hy-.03*u,.08*u,.105*u,.85);
+    lash(hx+.01*u,hy-.03*u,.12*u,.15*u,1);lash(hx+.21*u,hy-.04*u,.1*u,.13*u,.85);
   }
   const bc=shade(P.rim,.9);
-  brow(hx-.08*u,hy-.15*u,hx+.01*u,hy-.25*u,hx+.1*u,hy-.17*u,.035*u,bc);
-  brow(hx+.12*u,hy-.14*u,hx+.2*u,hy-.18*u,hx+.28*u,hy-.12*u,.03*u,bc);
+  brow(hx-.1*u,hy-.2*u,hx+.01*u,hy-.3*u,hx+.11*u,hy-.22*u,.035*u,bc);
+  brow(hx+.13*u,hy-.2*u,hx+.21*u,hy-.25*u,hx+.3*u,hy-.18*u,.03*u,bc);
   const beak=()=>{ctx.beginPath();ctx.moveTo(hx+.13*u,hy+.08*u);ctx.bezierCurveTo(hx+.3*u,hy-.02*u,hx+.47*u,hy+.08*u,hx+.41*u,hy+.27*u);ctx.bezierCurveTo(hx+.36*u,hy+.17*u,hx+.28*u,hy+.15*u,hx+.18*u,hy+.17*u);ctx.closePath()};
   beak();radFill(hx+.26*u,hy+.04*u,.25*u,'#5E5E6A','#141418');
   ctx.beginPath();ctx.moveTo(hx+.17*u,hy+.06*u);ctx.quadraticCurveTo(hx+.32*u,hy,hx+.4*u,hy+.12*u);ctx.lineWidth=.018*u;ctx.strokeStyle='rgba(255,255,255,.35)';ctx.stroke();
@@ -642,12 +641,18 @@ function drawUpper(u,f,o){
   const arm=(side,front)=>{
     const sx=side*.17*u,sy=-.42*u;
     const up=side===f&&o.armUp!=null;
-    let a=up?lerp(.2*side,2.85*side,o.armUp):(.12*side-sw*side*.5);const AL=(up?lerp(.42,.63,o.armUp):.42)*u;
+    let a=up?lerp(.2*side,2.85*side,o.armUp):side*.1,AL=(up?lerp(.42,.63,o.armUp):.42)*u;
     if(o.wave&&side===f)a=side*(2.5+Math.sin(now*10)*.25);
-    const hx=sx+Math.sin(a)*AL,hy=sy+Math.cos(a)*AL;
-    ctx.lineCap='round';
-    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(hx,hy);ctx.lineWidth=.09*u;ctx.strokeStyle=front?SKIN:shade(SKIN,.92);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.sin(a)*.14*u,sy+Math.cos(a)*.14*u);ctx.lineWidth=.14*u;ctx.strokeStyle=SHIRT;ctx.stroke();
+    let hx,hy,ex,ey;
+    if(up||o.wave){hx=sx+Math.sin(a)*AL;hy=sy+Math.cos(a)*AL;ex=sx+Math.sin(a)*AL*.5;ey=sy+Math.cos(a)*AL*.5}
+    else{
+      // walking: the arm swings with the opposite leg, the elbow bends more on the forward swing
+      const mv=o.mv||0,dir=back?0:f,swing=Math.sin((o.ph||0)+(side===f?Math.PI:0))*mv,ua=side*.08+dir*swing*.45,fa=ua+dir*(.15+Math.max(0,swing)*.55)*mv;
+      ex=sx+Math.sin(ua)*.22*u;ey=sy+Math.cos(ua)*.22*u;hx=ex+Math.sin(fa)*.2*u;hy=ey+Math.cos(fa)*.2*u;
+    }
+    ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.lineTo(hx,hy);ctx.lineWidth=.09*u;ctx.strokeStyle=front?SKIN:shade(SKIN,.92);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+(ex-sx)*.6,sy+(ey-sy)*.6);ctx.lineWidth=.14*u;ctx.strokeStyle=front?SHIRT:shade(SHIRT,.92);ctx.stroke();
     // holding the egg up: egg in the palm, fingers and thumb around its lower half
     if(up&&o.egg){drawEgg(hx,hy-EGG_RY*.75*u,u,0);
       ctx.beginPath();ctx.ellipse(hx,hy-.01*u,.075*u,.05*u,0,0,7);ctx.fillStyle=SKIN;ctx.fill();ctx.lineWidth=Math.max(1,.012*u);ctx.strokeStyle='#C99A86';ctx.stroke();
@@ -696,21 +701,38 @@ function drawUpper(u,f,o){
   else{ctx.beginPath();ctx.moveTo(ex-.07*u,hy+.15*u);ctx.quadraticCurveTo(ex,hy+(o.sleep?.17:.21)*u,ex+.07*u,hy+.15*u);ctx.lineWidth=.02*u;ctx.lineCap='round';ctx.strokeStyle='#A65450';ctx.stroke()}
   if(o.armUp>0)arm(f,true);
 }
-// standing / walking Lilly; x,y = her feet in px
+// standing / walking Lilly; x,y = her feet in px.
+// Walk cycle: each leg has a thigh and a shin; the knee bends while the leg swings forward, the stance leg stays
+// straight and flat on the ground, and the body dips a little when both feet are down and rises over the stance leg.
+function legPose(p,mv,dir){
+  const Lt=.31,Ls=.31,th=Math.sin(p)*.5*mv,kn=mv*(.08+.62*Math.max(0,Math.cos(p))),sh=th-kn;
+  const kx=dir*Math.sin(th)*Lt,ky=Math.cos(th)*Lt,fx=kx+dir*Math.sin(sh)*Ls,fy=ky+Math.cos(sh)*Ls;
+  return{kx,ky,fx,fy,sh};
+}
 function drawLilly(x,y,u,f,ph,o={}){
-  const mv=o.moving?1:0,sw=Math.sin(ph)*mv,bob=Math.abs(Math.cos(ph))*mv*.035*u,back=!!o.back;
-  ctx.save();ctx.translate(x,y-bob);ctx.lineJoin='round';
-  ctx.beginPath();ctx.ellipse(0,bob,.32*u,.06*u,0,0,7);ctx.fillStyle='rgba(60,70,50,.22)';ctx.fill();
+  const mv=o.moving?1:0,back=!!o.back,dir=back?0:f;
+  const legs=[{side:-f,p:ph+Math.PI},{side:f,p:ph}].map(l=>({...l,...legPose(l.p,mv,dir)}));
+  const low=Math.max(...legs.map(l=>l.fy)),drop=(.62-low)*u;     // lift the body so the lower foot touches the ground
+  ctx.save();ctx.translate(x,y);ctx.lineJoin='round';
+  ctx.beginPath();ctx.ellipse(0,0,.32*u,.06*u,0,0,7);ctx.fillStyle='rgba(60,70,50,.22)';ctx.fill();
+  ctx.translate(0,drop);
+  if(mv&&!back)ctx.rotate(f*.035);
   if(!back){ctx.save();ctx.translate(-f*.13*u,0);drawPack(u,ph,mv,true);ctx.restore()}
-  for(const side of[-f,f]){
-    const hx=side*.08*u,hy=-.62*u,a=back?0:sw*(side===f?1:-1)*.5,fx=hx+Math.sin(a)*.58*u,fy=hy+Math.cos(a)*.6*u;
-    ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(fx,fy-.03*u);ctx.lineWidth=.15*u;ctx.lineCap='round';ctx.strokeStyle=side===f?JEANS:shade(JEANS,.88);ctx.stroke();
-    ctx.beginPath();ctx.ellipse(fx+(back?0:f*.05*u),fy-.02*u,.11*u,.06*u,0,0,7);radFill(fx,fy-.05*u,.12*u,'#C2C4C9',SHOE);
-    ctx.beginPath();ctx.moveTo(fx-.09*u+(back?0:f*.05*u),fy+.02*u);ctx.lineTo(fx+.09*u+(back?0:f*.05*u),fy+.02*u);ctx.lineWidth=Math.max(1,.02*u);ctx.strokeStyle='#F2F2F2';ctx.stroke();
+  for(const l of legs){
+    const hx=l.side*.08*u*(back?1:.6),hy=-.62*u,kx=hx+l.kx*u,ky=hy+l.ky*u,fx=hx+l.fx*u,fy=hy+l.fy*u,near=l.side===f,col=near?JEANS:shade(JEANS,.86);
+    ctx.lineCap='round';ctx.strokeStyle=col;
+    ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(kx,ky);ctx.lineWidth=.16*u;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(fx,fy-.03*u);ctx.lineWidth=.135*u;ctx.stroke();
+    // shoe: flat while standing on the ground, tipped with the shin while the foot is in the air
+    const air=l.fy<low-.012,rot=air?clamp(l.sh*dir*.7,-.5,.5):0;
+    ctx.save();ctx.translate(fx,fy-.02*u);ctx.rotate(rot);
+    ctx.beginPath();ctx.ellipse(dir*.05*u,0,.11*u,.06*u,0,0,7);radFill(0,-.03*u,.12*u,near?'#C2C4C9':'#B3B5BA',SHOE);
+    ctx.beginPath();ctx.moveTo(-.09*u+dir*.05*u,.04*u);ctx.lineTo(.09*u+dir*.05*u,.04*u);ctx.lineWidth=Math.max(1,.02*u);ctx.strokeStyle='#F2F2F2';ctx.stroke();
+    ctx.restore();
   }
   rr(-.2*u,-.7*u,.4*u,.12*u,.03*u);ctx.fillStyle=JEANS;ctx.fill();
   ctx.translate(0,-.6*u);
-  drawUpper(u,f,{...o,sw,straps:!back});
+  drawUpper(u,f,{...o,ph,mv,straps:!back});
   ctx.restore();
 }
 // the camp: sleeping mat, the backpack, the sleeping bag; Lilly lies in it or sits up (o.sit 0..1)
@@ -961,7 +983,7 @@ function morning(){
 function updPlay(dt){
   const L=st.lilly,dx=dirX();
   L.moving=dx!==0;if(dx)L.f=dx>0?1:-1;
-  L.x=clamp(L.x+dx*WALK*dt,-.6,GX);L.ph+=dt*9*Math.abs(dx);
+  L.x=clamp(L.x+dx*WALK*dt,-.6,GX);L.ph+=dt*11.5*Math.abs(dx);
   st.runT+=dt;
   hint(nearGate()?T.hintGate:T.hintWalk,nearGate());
 }
