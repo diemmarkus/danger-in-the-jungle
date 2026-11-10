@@ -432,14 +432,27 @@ function paintFar(x0,x1,R){
 }
 function paintMid(x0,x1,R){
   const u=S;
-  for(let x=x0;x<x1;x+=1.3+R()*1.5)drawJTree(x,.32+R()*.15,1.2+R()*1.6,1.7+R()*.6,R,PAL_MID);
-  for(let x=x0;x<x1;x+=2.2+R()*2)drawHang(x,1+R()*2,3+R()*3,'#6E8E72','#7FAE85',R);
+  for(let x=x0;x<x1;x+=.35+expo(R,1.35))drawJTree(x,.22+R()*.3,.8+R()*2.4,1.3+R()*1.1,R,PAL_MID);
+  for(let x=x0;x<x1;x+=.8+expo(R,2.6))drawHang(x,1+R()*2,3+R()*3,'#6E8E72','#7FAE85',R);
   ctx.beginPath();ctx.moveTo(x0*u,LBOT*u);for(let x=x0;x<=x1+.5;x+=.35)ctx.lineTo(x*u,(GY-.75+Math.sin(x*1.3)*.2+Math.sin(x*3.7)*.08)*u);ctx.lineTo(x1*u,LBOT*u);ctx.closePath();ctx.fillStyle='#7EAA80';ctx.fill();
-  for(let x=x0;x<x1;x+=.5+R()*.6)drawLeafPlant(x,GY-.6,.7+R()*.5,R()<.5?1:-1,'#6FA27A');
+  for(let x=x0;x<x1;x+=.15+expo(R,.6))drawLeafPlant(x,GY-.6+R()*.15,.5+R()*.8,R()<.5?1:-1,R()<.5?'#6FA27A':'#7BAE84');
   ctx.globalCompositeOperation='source-atop';ctx.fillStyle='rgba(185,222,200,.5)';ctx.fillRect(x0*u,LTOP*u,(x1-x0)*u,(LBOT-LTOP)*u);ctx.globalCompositeOperation='source-over';
 }
-const NEAR_TREES=[-1.6,.7,9.6,12.4,15.2,17.9,20.6,23.4,26.2,34.8];
-const FLOOR=[];{const R=mulberry(5);for(let x=-3;x<WW+3;x+=.6+R()*.9){const k=R();FLOOR.push({x,k:k<.34?'plant':k<.58?'fern':k<.68?'mush':k<.76?'stone':k<.84?'flower':'tuft',s:.7+R()*.5,f:R()<.5?-1:1,c:R()})}}
+// spacing like in nature: mostly close-ish, sometimes a clearing (exponential gaps)
+function expo(R,mean){return-Math.log(1-R()*.999)*mean}
+const NEAR_TREES=[];{const R=mulberry(23);let x=-3.5;
+  while(x<WW+3){x+=.7+expo(R,2.1);if(Math.abs(x-GX)<2.5||Math.abs(x-TX)<1.4)continue;
+    NEAR_TREES.push({x,w:.38+R()*.42,crown:.1+R()*2,R:1.5+R()*1.3});
+    if(R()<.25)NEAR_TREES.push({x:x+(R()<.5?-1:1)*(.45+R()*.5),w:.22+R()*.18,crown:1.2+R()*1.6,R:1.1+R()*.6})}
+  NEAR_TREES.sort((a,b)=>a.x-b.x)}
+const FLOOR=[];{const R=mulberry(5);let x=-3;
+  while(x<WW+3){
+    // a clump: a few plants close together, sometimes around a bush; then a gap
+    const n=1+Math.floor(expo(R,1.6)),w=.3+n*.35*R();
+    if(n>2&&R()<.6)FLOOR.push({x:x+w/2,k:'bush',s:.7+R()*.8,f:1,c:R()});
+    for(let i=0;i<n;i++){const k=R();FLOOR.push({x:x+R()*w,k:k<.36?'plant':k<.6?'fern':k<.7?'mush':k<.78?'stone':k<.86?'flower':'tuft',s:.55+R()*.8,f:R()<.5?-1:1,c:R()})}
+    x+=w+.2+expo(R,1.1)}
+  FLOOR.sort((a,b)=>(a.k==='bush'?0:1)-(b.k==='bush'?0:1))}
 function paintNear(x0,x1,R){
   const u=S;
   // behind the gate: a wall of jungle bushes left and right of it, and a thicket to the end of the world
@@ -448,8 +461,8 @@ function paintNear(x0,x1,R){
   gradFill((GY-3.4)*u,GY*u,'#3F7E55','#2C5C3E');
   for(let x=GX-4.4;x<WW+3;x+=.28)drawLeaf(x*u,(top(x)+.25)*u,(.35+R()*.25)*u,-1.2-R()*.8,R()<.5?'#4E9462':'#5DA36C',true);
   // trees, lianas between them
-  const trees=NEAR_TREES.map(x=>({x,crown:.6+R()*1.2,R:2+R()*.6}));
-  for(const t of trees)drawJTree(t.x,.55+R()*.18,t.crown,t.R,R,PAL_NEAR);
+  const trees=NEAR_TREES;
+  for(const t of trees)drawJTree(t.x,t.w,t.crown,t.R,R,PAL_NEAR);
   drawJTree(TX,.7,.6,2.5,R,PAL_NEAR);
   for(let i=0;i<trees.length-1;i++)if(R()<.7){const a=trees[i],b=trees[i+1];if(Math.abs(b.x-GX)<2||Math.abs(a.x-GX)<2)continue;drawLiana(a.x+.25,a.crown+1.2,b.x-.25,b.crown+1.4,1.6+R()*1.6,'#5E6E45','#4F9560',R)}
   for(const t of trees)if(R()<.8)drawHang(t.x+(R()<.5?-.9:.9),t.crown+1,2+R()*3,'#5E6E45','#4F9560',R);
@@ -471,6 +484,10 @@ function paintNear(x0,x1,R){
   for(const o of FLOOR){
     if(Math.abs(o.x-CX-.9)<1.4||Math.abs(o.x-GX)<1.6)continue;
     const y=GY+.02;
+    if(o.k==='bush'){const n=4;for(let i=0;i<n;i++){const bx=o.x+(i/(n-1)-.5)*o.s*1.1,by=y-o.s*(.25+Math.abs(Math.sin(o.c*9+i))*.2),r=o.s*(.32+((i*7+o.c*10)%3)*.06);
+        ctx.beginPath();ctx.arc(bx*u,by*u,r*u,0,7);const g=ctx.createRadialGradient((bx-r*.3)*u,(by-r*.4)*u,r*.1*u,bx*u,by*u,r*u);g.addColorStop(0,'#4E9462');g.addColorStop(1,'#2F6544');ctx.fillStyle=g;ctx.fill();
+        for(let j=0;j<3;j++){const a2=-2.5+j*.9;drawLeaf((bx+Math.cos(a2)*r*.75)*u,(by+Math.sin(a2)*r*.75)*u,r*.6*u,a2,j%2?'#3F8A58':'#5DA36C',true)}}
+      ctx.fillStyle='#2F6544';ctx.fillRect((o.x-o.s*.6)*u,(y-o.s*.25)*u,o.s*1.2*u,(o.s*.25+.05)*u);continue}
     if(o.k==='plant')drawLeafPlant(o.x,y,o.s*1.1,o.f,o.c<.5?'#3F8A58':'#4E9A62');
     else if(o.k==='fern')drawFern(o.x,y,o.s,o.f,o.c<.5?'#4E9460':'#5FA46A');
     else if(o.k==='mush'){drawMushroom(o.x,y,o.s*.42,o.c<.6);if(o.c<.4)drawMushroom(o.x+.22,y,o.s*.28,o.c<.6)}
@@ -491,15 +508,15 @@ function setupFg(){
   const x0=camMin()*FGP-2,x1=camMax()*FGP+VW+3;
   const spots=[(CX+1.2-VW*.5)*FGP,(GX-VW*.5)*FGP];   // where the camera stands at the camp and at the gate
   const free=x=>spots.every(c=>x<c+VW*.05-1||x>c+VW*.95+1);
-  for(let t=x0+2+R()*3;t<x1;t+=6+R()*4){if(!free(t))continue;fgLeaves.push({k:'trunk',x:t,w:.8+R()*.5,lean:(R()-.5)*.12,ph:R()*7});
+  for(let t=x0+1+expo(R,3);t<x1;t+=4+expo(R,7)){if(!free(t))continue;fgLeaves.push({k:'trunk',x:t,w:R()<.3?.35+R()*.25:.75+R()*.7,lean:(R()-.5)*.14,ph:R()*7});
     for(let i=0;i<3;i++)fgLeaves.push({k:R()<.5?'plant':'fern',x:t+(R()-.5)*1.6,dy:1+R()*.4,s:.9+R()*.4,f:R()<.5?1:-1,a:(R()-.5)*.3,ph:R()*7,c:R()})}
   let x=x0;
   while(x<x1){
     const r=R();
-    const dense=r>.35,n=dense?4+Math.floor(R()*4):1+Math.floor(R()*2),w=dense?1.6+R()*2:.6+R()*.6;
+    const dense=r>.4,n=dense?3+Math.floor(expo(R,2.5)):1+Math.floor(R()*2),w=dense?.9+n*.3*(.6+R()*.8):.4+R()*.8;
     if(dense)fgLeaves.push({k:'mass',x:x+w/2,w,dy:.9,ph:R()*7,c:R()});
     for(let i=0;i<n;i++){const k=R();fgLeaves.push({k:k<.55?'plant':k<.85?'fern':'grass',x:x+R()*w,dy:(dense?.95:1.1)+R()*(dense?.9:.5),s:(dense?1.1:.9)+R()*(dense?.7:.35),f:R()<.5?1:-1,a:(R()-.5)*.35,ph:R()*7,c:R()})}
-    x+=w+(dense?.4:1)+R()*(dense?1:2.2);
+    x+=w+.2+expo(R,dense?1.1:1.6);
   }
   // trunks first, then the plants from back to front
   fgLeaves.sort((p,q)=>(p.k==='trunk'?0:1)-(q.k==='trunk'?0:1)||(p.dy||0)-(q.dy||0));
