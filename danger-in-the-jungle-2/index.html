@@ -467,7 +467,7 @@ function catchParrot(type){
   popText(p.x,p.y,T.caughtPop,C.white);burst(p.x,p.y,10,'feather',2.5);
 }
 const trapPos=i=>{const m=MIS[i];return m.hang?{x:m.tx,y:m.ty+.25}:{x:m.tx,y:m.ty-.55}};
-const hipPos=w=>({x:w.x-w.f*.2,y:GY-.5});
+const hipPos=w=>w.down?{x:w.x-.55,y:GY-.3}:{x:w.x-w.f*.2,y:GY-.5};
 function update(dt){
   if(!st)return;
   for(const p of st.parts){p.t+=dt;if(p.type!=='pop'){p.vy+=(p.type==='heart'?-1:3)*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=p.vr*dt}}
@@ -512,11 +512,11 @@ function updDrops(dt){
   const D=DIFFS[st.diff],tol=.4+D.aim,cur=st.m<MISSIONS?st.mis[st.m]:null;
   for(const q of st.drops){q.vy+=GF*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.rot+=q.spin*dt;
     if(cur&&st.mode==='play')for(const w of cur.workers){
-      if(w.flee||q.gone)continue;
+      if(w.flee||w.down||q.gone)continue;
       if(Math.abs(q.x-w.x)<tol&&q.y>GY-1.85&&q.y<GY-.7&&q.vy>0){
         q.gone=true;burst(q.x,q.y,8,'spark',3);
         if(w.hp>1&&!w.stun){w.hp--;w.hurt=.7;w.wind=0;popText(w.x,GY-2.2,T.ouch,C.white)}
-        else{w.stun=1;w.daze=MIS[st.m].stun*D.stun;w.wind=0;w.saw=false;popText(w.x,GY-2.2,T.bonk,C.white)}
+        else{w.stun=1;w.daze=Infinity;w.down=true;w.fallT=0;w.wind=0;w.saw=false;w.walking=false;popText(w.x,GY-2.2,T.bonk,C.white);burst(w.x-.8,GY-.1,8,'leaf',2)}   // knocked over for good
       }
     }
     const b=st.boss;
@@ -547,7 +547,7 @@ function updMission(dt){
   let busy=st.projs.filter(q=>!q.landed&&!q.dud).length+ms.workers.filter(w=>w.wind>0).length;
   for(const w of ms.workers){
     if(w.flee)continue;
-    if(w.stun){w.daze-=dt;w.walking=false;if(w.daze<=0){w.stun=0;w.cd=rnd(1.5,3)*D.cd;popText(w.x,GY-2.2,T.huh,C.white)}continue}
+    if(w.stun){if(w.down)w.fallT=Math.min(1,(w.fallT||0)+dt*3);w.daze-=dt;w.walking=false;if(w.daze<=0){w.stun=0;w.cd=rnd(1.5,3)*D.cd;popText(w.x,GY-2.2,T.huh,C.white)}continue}
     if(w.hurt>0){w.hurt-=dt;w.walking=false;continue}
     if(st.mode!=='play'){w.walking=false;continue}
     if(w.reload>0)w.reload-=dt;
@@ -559,7 +559,7 @@ function updMission(dt){
     if(!w.carrier){
       // throwers don't walk through the trap or into each other
       const z=M.hang?0:ZONE[M.trap];if(z&&Math.abs(w.x-M.tx)<z)w.x=M.tx+(w.post<M.tx?-z:z);
-      for(const o of ms.workers)if(o!==w&&!o.flee&&Math.abs(w.x-o.x)<.62)w.x=o.x+(w.post<o.x?-.62:.62);
+      for(const o of ms.workers)if(o!==w&&!o.flee&&!o.down&&Math.abs(w.x-o.x)<.62)w.x=o.x+(w.post<o.x?-.62:.62);
     }
     if(w.item){w.cd-=dt;
       if(w.cd<=0&&w.reload<=0){if(busy<M.max&&Math.abs(p.x-w.x)<6.5){w.wind=M.wind*D.wind;busy++}else w.cd=.3+Math.random()*.4}}
@@ -576,7 +576,7 @@ function rescue(){
   const i=st.m,ms=st.mis[i],tp=trapPos(i),p=st.parrot;
   st.mode='rescue';st.rescueT=0;ms.done=true;ms.anim.free=.001;p.carry=null;
   popText(tp.x,tp.y-.4,MIS[i].tool==='key'?T.click:T.cut,C.white);burst(tp.x,tp.y,12,'spark',3);
-  for(const w of ms.workers){w.flee=true;w.wind=0;w.stun=0}
+  for(const w of ms.workers)if(!w.down){w.flee=true;w.wind=0;w.stun=0}   // the ones lying on the ground stay there
   for(const q of st.projs)q.dud=true;
   st.banner={text:T.free,sub:T.count(T.animal[i],i+1),t:2.6,max:2.6};
   setReached(i+2);
@@ -1367,7 +1367,8 @@ function drawWorkers(i){
   const ms=st.mis[i],now=performance.now()/1000,cur=i===st.m&&st.mode!=='menu';
   for(const w of ms.workers){
     if(!vis(w.x))continue;
-    drawWorker(w,false);
+    if(w.down){const k=w.fallT||0,a=-1.45*k*k,fx=X(w.x),fy=Y(GY);ctx.save();ctx.translate(fx,fy);ctx.rotate(a);ctx.translate(-fx,-fy);drawWorker(w,false);ctx.restore()}
+    else drawWorker(w,false);
     // the tool at the hip, glowing when he's dizzy
     if(w.tool){const h=hipPos(w),hx=X(h.x),hy=Y(h.y);
       if(w.stun&&cur){const gl=.5+.5*Math.sin(now*8),g=ctx.createRadialGradient(hx,hy,0,hx,hy,S*.5);g.addColorStop(0,`rgba(255,240,150,${.9*gl})`);g.addColorStop(1,'rgba(255,240,150,0)');ctx.fillStyle=g;ctx.fillRect(hx-S*.5,hy-S*.5,S,S)}
@@ -1419,7 +1420,7 @@ function drawParade(){
 function drawAim(){
   const p=st.parrot;if(!p||!p.carry||!DROPPABLE[p.carry]||(st.mode!=='play'&&st.mode!=='boss')){$('dropBtn').classList.remove('hot');return}
   const D=DIFFS[st.diff],tol=.4+D.aim;let hit=false;
-  if(st.m<MISSIONS&&st.mode==='play')for(const w of st.mis[st.m].workers)if(!w.flee&&Math.abs(p.x+.3*p.f-w.x)<tol&&p.y<GY-1.6)hit=true;
+  if(st.m<MISSIONS&&st.mode==='play')for(const w of st.mis[st.m].workers)if(!w.flee&&!w.down&&Math.abs(p.x+.3*p.f-w.x)<tol&&p.y<GY-1.6)hit=true;
   const b=st.boss;if(st.mode==='boss'&&b&&Math.abs(p.x+.3*p.f-b.x)<tol+.12&&p.y<b.y-2)hit=true;
   const x=X(p.x+.3*p.f),y0=Y(p.y+.45),y1=Y(GY);
   ctx.save();ctx.setLineDash([S*.08,S*.12]);ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.lineWidth=Math.max(2,S*.035);ctx.strokeStyle=hit?'rgba(255,229,138,.95)':'rgba(255,255,255,.4)';ctx.stroke();ctx.restore();

@@ -45,8 +45,8 @@ The parrot leaves the small clearing and flies through a huge, scrolling jungle 
 - **Intro:** the family in the nest, then the camera pans to the monkey in the net (“HILFE!”).
 - **Six missions**, far apart: between two animals there's a long flight through the jungle (past plain jungle trees). Each mission is the same idea and gets harder:
   1. fly to the right tree and **pick** a nut, mango or coconut with your beak,
-  2. fly above the worker who carries the tool and **drop** it on his head with the round button (a dotted line shows where it falls; it turns yellow when you're on target) — **BONK!**, he sees stars,
-  3. while he's dizzy, **snatch the tool** from his hip (knife, key or scissors),
+  2. fly above the worker who carries the tool and **drop** it on his head with the round button (a dotted line shows where it falls; it turns yellow when you're on target) — **BONK!**, he falls over and stays down for the rest of the mission (throwers too),
+  3. **snatch the tool** from his hip (knife, key or scissors),
   4. fly to the animal and **free it**.
 - | # | Animal | Trap | Tool | Fruit | Crew |
   |---|---|---|---|---|---|
