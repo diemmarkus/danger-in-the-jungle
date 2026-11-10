@@ -295,6 +295,10 @@ function drawLayers(){
   for(const L of LAYERS){
     if(!L.c)continue;
     ctx.drawImage(L.c,(L.x0-camX*L.p)*S,(LTOP-camY)*S,L.c.width/dpr,L.c.height/dpr);
+    // mist between the layers: the far ones fade into the green haze
+    if(L.p<1){const y0=Y(GY-(L.p<.4?6:3.2)),y1=Y(GY+.3),g=ctx.createLinearGradient(0,y0,0,y1);
+      g.addColorStop(0,'rgba(212,238,220,0)');g.addColorStop(.7,`rgba(212,238,220,${L.p<.4?.55:.5})`);g.addColorStop(1,`rgba(212,238,220,${L.p<.4?.6:.35})`);
+      ctx.fillStyle=g;ctx.fillRect(0,y0,W,y1-y0+2)}
   }
 }
 function swapCtx(g,fn){const o=ctx;ctx=g;try{fn()}finally{ctx=o}}
@@ -363,92 +367,149 @@ function drawMushroom(x,y,s,kind){
 function drawStone(x,y,w,h){const u=S;ctx.beginPath();ctx.ellipse(x*u,y*u,w*u,h*u,0,Math.PI,0);ctx.closePath();gradFill((y-h)*u,y*u,'#D2CFC8','#A9A59D');ctx.beginPath();ctx.ellipse((x-w*.25)*u,(y-h*.62)*u,w*.35*u,h*.2*u,-.2,0,7);ctx.fillStyle='rgba(160,200,130,.55)';ctx.fill()}
 function drawFlower(x,y,s,c){const u=S;ctx.beginPath();ctx.moveTo(x*u,y*u);ctx.lineTo(x*u,(y-s)*u);ctx.lineWidth=Math.max(1,u*.02);ctx.strokeStyle='#7FAE79';ctx.stroke();ctx.fillStyle=c;for(let i=0;i<5;i++){const a=i/5*Math.PI*2;ctx.beginPath();ctx.arc((x+Math.cos(a)*s*.18)*u,(y-s+Math.sin(a)*s*.18)*u,s*.13*u,0,7);ctx.fill()}ctx.fillStyle='#FFE28A';ctx.beginPath();ctx.arc(x*u,(y-s)*u,s*.09*u,0,7);ctx.fill()}
 
+// ---------- the old forest: lush, misty jungle (tall trunks with buttress roots, moss, lianas, big leaves, fog) ----------
+function drawLeaf(x,y,len,ang,col,vein){
+  ctx.save();ctx.translate(x,y);ctx.rotate(ang);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(len*.3,-len*.3,len,0);ctx.quadraticCurveTo(len*.3,len*.3,0,0);
+  const g=ctx.createLinearGradient(0,-len*.3,0,len*.3);g.addColorStop(0,shade(col,1.18));g.addColorStop(1,shade(col,.82));ctx.fillStyle=g;ctx.fill();
+  if(vein){ctx.beginPath();ctx.moveTo(len*.02,0);ctx.lineTo(len*.92,0);ctx.lineWidth=Math.max(.8,len*.025);ctx.strokeStyle=shade(col,1.35);ctx.stroke();
+    ctx.lineWidth=Math.max(.6,len*.012);for(let k=1;k<5;k++){const t=k/5;for(const s of[-1,1]){ctx.beginPath();ctx.moveTo(len*t*.9,0);ctx.lineTo(len*(t*.9+.1),s*len*.13*(1-t*.6));ctx.stroke()}}}
+  ctx.restore();
+}
+// a clump of big jungle leaves on stems, fanned upward
+function drawLeafPlant(x,y,s,f,col){
+  const u=S;ctx.lineCap='round';
+  for(const[a,l]of[[-2.75,.8],[-2.3,1],[-1.75,1.05],[-1.2,.95],[-.6,.8]]){
+    const ang=f>0?a:-Math.PI-a,sx=x*u,sy=y*u,ex=sx+Math.cos(ang)*s*l*.45*u,ey=sy+Math.sin(ang)*s*l*.45*u;
+    ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo((sx+ex)/2,ey,ex,ey);ctx.lineWidth=Math.max(1,u*.03*s);ctx.strokeStyle=shade(col,.75);ctx.stroke();
+    drawLeaf(ex,ey,s*l*.62*u,ang+(f>0?.35:-.35),col,true);
+  }
+}
+function drawLiana(x0,y0,x1,y1,sag,col,leafCol,R){
+  const u=S,cx=(x0+x1)/2,cy=Math.max(y0,y1)+sag;
+  ctx.beginPath();ctx.moveTo(x0*u,y0*u);ctx.quadraticCurveTo(cx*u,cy*u,x1*u,y1*u);ctx.lineWidth=Math.max(1,u*.035);ctx.strokeStyle=col;ctx.lineCap='round';ctx.stroke();
+  for(let i=1;i<9;i++){const t=i/9,px=(1-t)*(1-t)*x0+2*(1-t)*t*cx+t*t*x1,py=(1-t)*(1-t)*y0+2*(1-t)*t*cy+t*t*y1;drawLeaf(px*u,py*u,(.14+R()*.08)*u,1.2+R()*1.6,leafCol,false)}
+}
+// a hanging liana straight down from a branch
+function drawHang(x,y0,len,col,leafCol,R){
+  const u=S;ctx.beginPath();ctx.moveTo(x*u,y0*u);ctx.bezierCurveTo((x+.15)*u,(y0+len*.4)*u,(x-.15)*u,(y0+len*.7)*u,(x+.05)*u,(y0+len)*u);
+  ctx.lineWidth=Math.max(1,u*.025);ctx.strokeStyle=col;ctx.lineCap='round';ctx.stroke();
+  for(let i=1;i<8;i++){const t=i/8;drawLeaf((x+Math.sin(t*5)*.06)*u,(y0+len*t)*u,(.12+R()*.06)*u,(i%2?.6:2.5)+R()*.4,leafCol,false)}
+}
+// a jungle tree: buttress roots, tall trunk with moss and grooves, dense crown
+function drawJTree(x,w,crown,R2,rand,P){
+  const u=S,lean=(rand()-.5)*.35,tx=x+lean;
+  for(const s of[-1,1])for(const k of[.55,1]){ctx.beginPath();ctx.moveTo((x+s*w*.35)*u,(GY-1.5*k)*u);ctx.quadraticCurveTo((x+s*w*.5)*u,(GY-.35)*u,(x+s*w*(.8+k*.9))*u,(GY+.06)*u);ctx.lineTo((x+s*w*.1)*u,(GY+.06)*u);ctx.closePath();hGradFill((x-w*1.5)*u,(x+w*1.5)*u,P.trunk[0],P.trunk[1])}
+  const tr=()=>{ctx.beginPath();ctx.moveTo((x-w*.5)*u,(GY+.05)*u);ctx.quadraticCurveTo((x-w*.45+lean*.3)*u,((GY+crown)/2)*u,(tx-w*.36)*u,(crown+R2*.3)*u);ctx.lineTo((tx+w*.36)*u,(crown+R2*.3)*u);ctx.quadraticCurveTo((x+w*.45+lean*.3)*u,((GY+crown)/2)*u,(x+w*.5)*u,(GY+.05)*u);ctx.closePath()};
+  tr();hGradFill((x-w*.55)*u,(x+w*.55)*u,P.trunk[0],P.trunk[1]);
+  if(P.detail){
+    ctx.save();tr();ctx.clip();
+    ctx.strokeStyle='rgba(40,35,25,.28)';ctx.lineWidth=Math.max(1,u*.02);
+    for(let i=0;i<5;i++){const xx=x-w*.35+i*w*.18;ctx.beginPath();ctx.moveTo(xx*u,GY*u);ctx.bezierCurveTo((xx+.05)*u,(GY-3)*u,(xx-.05+lean*.5)*u,(crown+2)*u,(xx+lean)*u,crown*u);ctx.stroke()}
+    // moss on the lit side
+    for(let i=0;i<14;i++){const yy=GY-.2-rand()*(GY-crown-1),k=(GY-yy)/(GY-crown);ctx.beginPath();ctx.ellipse((x-w*.38+lean*k)*u,yy*u,(.08+rand()*.12)*u,(.18+rand()*.3)*u,0,0,7);ctx.fillStyle=rand()<.5?P.moss:shade(P.moss,1.15);ctx.fill()}
+    ctx.fillStyle='rgba(230,255,220,.12)';ctx.fillRect((x-w*.45)*u,crown*u,w*.18*u,(GY-crown)*u);
+    ctx.restore();
+  }
+  // branches
+  ctx.strokeStyle=P.trunk[1];ctx.lineCap='round';
+  for(const[s,l,a]of[[-1,1.1,.3],[1,1.3,.1],[-1,.7,.9],[1,.6,1.1]]){ctx.beginPath();ctx.moveTo(tx*u,(crown+R2*.45)*u);ctx.quadraticCurveTo((tx+s*l*.5)*u,(crown+R2*.35)*u,(tx+s*l)*u,(crown+R2*.1-a*.3)*u);ctx.lineWidth=w*.2*u;ctx.stroke()}
+  // crown: dark underside, mid, light top, leaf texture
+  const blobs=[];for(let i=0;i<(P.detail?22:12);i++){const a=rand()*Math.PI*2,d=Math.sqrt(rand());blobs.push({x:tx+Math.cos(a)*R2*d*1.3,y:crown+Math.sin(a)*R2*d*.62-R2*.1,r:R2*(.3+rand()*.24)})}
+  for(const[k,c,dx,dy]of[[1,P.g[0],.03,.1],[.8,P.g[1],-.02,0],[.52,P.g[2],-.07,-.08]])
+    for(const b of blobs){ctx.beginPath();ctx.arc((b.x+dx*R2)*u,(b.y+dy*R2)*u,b.r*k*u,0,7);ctx.fillStyle=c;ctx.fill()}
+  if(P.detail){for(let i=0;i<40;i++){const b=blobs[i%blobs.length];drawLeaf((b.x+(rand()-.5)*b.r*1.4)*u,(b.y+(rand()-.3)*b.r)*u,(.16+rand()*.12)*u,rand()*6.3,rand()<.5?P.g[2]:P.g[1],false)}
+    // leaves dangling under the crown
+    for(let i=0;i<10;i++){const xx=tx+(rand()-.5)*R2*2.2,yy=crown+R2*(.35+rand()*.25);drawLeaf(xx*u,yy*u,(.18+rand()*.1)*u,1.2+rand()*.8,P.g[1],false)}}
+}
+const PAL_NEAR={trunk:['#9A8B6C','#5C523F'],moss:'#7DA85E',g:['#2E6A48','#3F8A58','#68AE6E'],detail:true};
+const PAL_MID={trunk:['#93A58E','#6E8471'],moss:'#8DB07E',g:['#5E9373','#74A783','#8FBD94'],detail:false};
 function paintFar(x0,x1,R){
   const u=S;
-  ctx.beginPath();ctx.moveTo(x0*u,LBOT*u);for(let x=x0;x<=x1+.5;x+=.5)ctx.lineTo(x*u,(GY-2.6+Math.sin(x*.35)*.5+Math.sin(x*.9)*.18)*u);ctx.lineTo(x1*u,LBOT*u);ctx.closePath();
-  ctx.fillStyle='#CFDCD0';ctx.fill();
-  for(let x=x0;x<x1;x+=.55+R()*.8)drawFir(x,GY-2.1+R()*.8,2.6+R()*2.2,1+R()*.6,R()<.5?'#BBCFC2':'#C3D5C6',false);
-  const g=ctx.createLinearGradient(0,(GY-3)*u,0,GY*u);g.addColorStop(0,'rgba(236,240,232,0)');g.addColorStop(1,'rgba(236,240,232,.85)');ctx.fillStyle=g;ctx.fillRect(x0*u,(GY-3)*u,(x1-x0)*u,(LBOT-GY+3)*u);
+  for(let x=x0;x<x1;x+=.7+R()*.9){const w=.18+R()*.15;ctx.fillStyle=R()<.5?'#A9CDB8':'#B4D4C0';ctx.fillRect((x-w/2)*u,(LTOP)*u,w*u,(GY-LTOP)*u)}
+  for(let x=x0;x<x1;x+=.6+R()*.6){ctx.beginPath();ctx.arc(x*u,(LTOP+2+R()*2.5)*u,(1+R()*.8)*u,0,7);ctx.fillStyle=R()<.5?'#A3C9B2':'#B0D2BC';ctx.fill()}
+  ctx.beginPath();ctx.moveTo(x0*u,LBOT*u);for(let x=x0;x<=x1+.5;x+=.4)ctx.lineTo(x*u,(GY-1.6+Math.sin(x*.7)*.35+Math.sin(x*2.1)*.15)*u);ctx.lineTo(x1*u,LBOT*u);ctx.closePath();ctx.fillStyle='#A6CBB2';ctx.fill();
 }
 function paintMid(x0,x1,R){
   const u=S;
-  for(let x=x0;x<x1;x+=1.2+R()*1.6){
-    if(R()<.45)drawFir(x,GY-.7,4.5+R()*2.5,1.5+R()*.6,R()<.5?'#9DBDA9':'#A8C5B0',false);
-    else drawBeech(x,GY-5.5-R()*1.5,.3+R()*.12,1.5+R()*.6,['#AFC99C','#BED5A8','#CDE0B8'],false,R);
-  }
-  ctx.globalCompositeOperation='source-atop';ctx.fillStyle='rgba(232,238,228,.42)';ctx.fillRect(x0*u,LTOP*u,(x1-x0)*u,(LBOT-LTOP)*u);ctx.globalCompositeOperation='source-over';
-  ctx.beginPath();ctx.moveTo(x0*u,LBOT*u);for(let x=x0;x<=x1+.5;x+=.5)ctx.lineTo(x*u,(GY-.55+Math.sin(x*.6)*.12)*u);ctx.lineTo(x1*u,LBOT*u);ctx.closePath();ctx.fillStyle='#BCD3B0';ctx.fill();
+  for(let x=x0;x<x1;x+=1.3+R()*1.5)drawJTree(x,.32+R()*.15,1.2+R()*1.6,1.7+R()*.6,R,PAL_MID);
+  for(let x=x0;x<x1;x+=2.2+R()*2)drawHang(x,1+R()*2,3+R()*3,'#6E8E72','#7FAE85',R);
+  ctx.beginPath();ctx.moveTo(x0*u,LBOT*u);for(let x=x0;x<=x1+.5;x+=.35)ctx.lineTo(x*u,(GY-.75+Math.sin(x*1.3)*.2+Math.sin(x*3.7)*.08)*u);ctx.lineTo(x1*u,LBOT*u);ctx.closePath();ctx.fillStyle='#7EAA80';ctx.fill();
+  for(let x=x0;x<x1;x+=.5+R()*.6)drawLeafPlant(x,GY-.6,.7+R()*.5,R()<.5?1:-1,'#6FA27A');
+  ctx.globalCompositeOperation='source-atop';ctx.fillStyle='rgba(185,222,200,.5)';ctx.fillRect(x0*u,LTOP*u,(x1-x0)*u,(LBOT-LTOP)*u);ctx.globalCompositeOperation='source-over';
 }
-const NEAR_TREES=[{t:'b',x:-1.6},{t:'f',x:.6},{t:'b',x:9.4},{t:'f',x:11.6},{t:'b',x:13.6},{t:'b',x:17.2},{t:'f',x:19.4},{t:'b',x:21.8},{t:'f',x:24.1},{t:'b',x:26.4},{t:'b',x:34.6},{t:'f',x:36.4}];
-const FLOOR=[];{const R=mulberry(5);for(let x=-3;x<WW+3;x+=.7+R()*1.1){const k=R();FLOOR.push({x,k:k<.38?'fern':k<.52?'mush':k<.62?'stone':k<.8?'flower':'tuft',s:.7+R()*.5,f:R()<.5?-1:1,c:R()})}}
+const NEAR_TREES=[-1.6,.7,9.6,12.4,15.2,17.9,20.6,23.4,26.2,34.8];
+const FLOOR=[];{const R=mulberry(5);for(let x=-3;x<WW+3;x+=.6+R()*.9){const k=R();FLOOR.push({x,k:k<.34?'plant':k<.58?'fern':k<.68?'mush':k<.76?'stone':k<.84?'flower':'tuft',s:.7+R()*.5,f:R()<.5?-1:1,c:R()})}}
 function paintNear(x0,x1,R){
   const u=S;
-  // behind the gate: a thick hedge left and right of it, and a thicket to the end of the world
-  ctx.beginPath();ctx.moveTo((GX-4.5)*u,GY*u);for(let x=GX-4.5;x<=WW+3;x+=.35)ctx.lineTo(x*u,(GY-2.4-Math.sin(x*3.1)*.18-Math.sin(x*1.3)*.25-(x>GX+3?.8:0))*u);ctx.lineTo((WW+3)*u,GY*u);ctx.closePath();
-  gradFill((GY-3.4)*u,GY*u,'#7EA67E','#5F8A66');
-  ctx.fillStyle='rgba(170,205,150,.5)';for(let x=GX-4.3;x<WW+3;x+=.32){ctx.beginPath();ctx.ellipse(x*u,(GY-2.3-Math.sin(x*3.1)*.18-Math.sin(x*1.3)*.25-(x>GX+3?.8:0)+.18)*u,.17*u,.09*u,.4,0,7);ctx.fill()}
-  // trees
-  for(const t of NEAR_TREES){
-    if(t.t==='b')drawBeech(t.x,1.2-R()*1.0,.5+R()*.12,2.1+R()*.5,['#8DB178','#A5C68C','#C4DDA6'],true,R);
-    else drawFir(t.x,GY+.05,7.5+R()*1.5,2.4+R()*.4,'#7FA790',true);
-  }
-  // the parrots' tree with a branch out to the nest
-  drawBeech(TX,.8,.62,2.4,['#8DB178','#A5C68C','#C4DDA6'],true,R);
+  // behind the gate: a wall of jungle bushes left and right of it, and a thicket to the end of the world
+  const top=x=>GY-2.4-Math.sin(x*3.1)*.18-Math.sin(x*1.3)*.25-(x>GX+3?.8:0);
+  ctx.beginPath();ctx.moveTo((GX-4.5)*u,GY*u);for(let x=GX-4.5;x<=WW+3;x+=.35)ctx.lineTo(x*u,top(x)*u);ctx.lineTo((WW+3)*u,GY*u);ctx.closePath();
+  gradFill((GY-3.4)*u,GY*u,'#3F7E55','#2C5C3E');
+  for(let x=GX-4.4;x<WW+3;x+=.28)drawLeaf(x*u,(top(x)+.25)*u,(.35+R()*.25)*u,-1.2-R()*.8,R()<.5?'#4E9462':'#5DA36C',true);
+  // trees, lianas between them
+  const trees=NEAR_TREES.map(x=>({x,crown:.6+R()*1.2,R:2+R()*.6}));
+  for(const t of trees)drawJTree(t.x,.55+R()*.18,t.crown,t.R,R,PAL_NEAR);
+  drawJTree(TX,.7,.6,2.5,R,PAL_NEAR);
+  for(let i=0;i<trees.length-1;i++)if(R()<.7){const a=trees[i],b=trees[i+1];if(Math.abs(b.x-GX)<2||Math.abs(a.x-GX)<2)continue;drawLiana(a.x+.25,a.crown+1.2,b.x-.25,b.crown+1.4,1.6+R()*1.6,'#5E6E45','#4F9560',R)}
+  for(const t of trees)if(R()<.8)drawHang(t.x+(R()<.5?-.9:.9),t.crown+1,2+R()*3,'#5E6E45','#4F9560',R);
+  // the branch out to the nest
   ctx.beginPath();ctx.moveTo((TX-.2)*u,(NY+.55)*u);ctx.quadraticCurveTo((TX-.9)*u,(NY+.35)*u,(NX-.2)*u,(NY+.12)*u);ctx.lineTo((NX-.25)*u,(NY+.28)*u);ctx.quadraticCurveTo((TX-.9)*u,(NY+.6)*u,(TX-.2)*u,(NY+.95)*u);ctx.closePath();
-  gradFill(NY*u,(NY+1)*u,'#D3CBBF','#A79D91');
-  ctx.beginPath();ctx.moveTo((NX+.4)*u,(NY+.2)*u);ctx.quadraticCurveTo((NX+.2)*u,(NY-.2)*u,(NX+.05)*u,(NY-.5)*u);ctx.lineWidth=.06*u;ctx.strokeStyle='#B5AA9C';ctx.lineCap='round';ctx.stroke();
-  for(const[dx,dy,a]of[[.05,-.55,-.5],[.25,-.25,.6],[-.1,-.4,-1.3]]){ctx.beginPath();ctx.ellipse((NX+dx)*u,(NY+dy)*u,.14*u,.07*u,a,0,7);ctx.fillStyle='#A5C68C';ctx.fill()}
-  // the forest floor
-  ctx.beginPath();ctx.moveTo(x0*u,LBOT*u);for(let x=x0;x<=x1+.4;x+=.4)ctx.lineTo(x*u,(GY-.08+Math.sin(x*1.7)*.04)*u);ctx.lineTo(x1*u,LBOT*u);ctx.closePath();
-  gradFill(GY*u,(GY+3)*u,'#B0D09F','#8FB687');
+  gradFill(NY*u,(NY+1)*u,'#9A8B6C','#5C523F');
+  ctx.fillStyle=PAL_NEAR.moss;ctx.beginPath();ctx.ellipse((TX-.8)*u,(NY+.42)*u,.3*u,.07*u,-.2,0,7);ctx.fill();
+  ctx.beginPath();ctx.moveTo((NX+.4)*u,(NY+.2)*u);ctx.quadraticCurveTo((NX+.2)*u,(NY-.2)*u,(NX+.05)*u,(NY-.5)*u);ctx.lineWidth=.06*u;ctx.strokeStyle='#6E6250';ctx.lineCap='round';ctx.stroke();
+  for(const[dx,dy,a]of[[.05,-.55,-.5],[.25,-.25,.6],[-.1,-.4,-1.3]])drawLeaf((NX+dx)*u,(NY+dy)*u,.28*u,a-1,'#4F9560',true);
+  // the forest floor: moss and dark earth
+  ctx.beginPath();ctx.moveTo(x0*u,LBOT*u);for(let x=x0;x<=x1+.4;x+=.4)ctx.lineTo(x*u,(GY-.1+Math.sin(x*1.7)*.05)*u);ctx.lineTo(x1*u,LBOT*u);ctx.closePath();
+  gradFill(GY*u,(GY+3)*u,'#6F9E62','#3F6B48');
   // the path Lilly walks on
   ctx.beginPath();ctx.moveTo(x0*u,(GY+.08)*u);for(let x=x0;x<=x1+.4;x+=.4)ctx.lineTo(x*u,(GY+.02+Math.sin(x*.8)*.04)*u);for(let x=x1+.4;x>=x0;x-=.4)ctx.lineTo(x*u,(GY+.62+Math.sin(x*.55)*.06)*u);ctx.closePath();
-  gradFill(GY*u,(GY+.7)*u,'#E3D6B8','#CDBB98');
-  ctx.fillStyle='rgba(150,130,100,.35)';for(let x=x0;x<x1;x+=.3+R()*.5){ctx.beginPath();ctx.ellipse(x*u,(GY+.15+R()*.4)*u,(.03+R()*.04)*u,.02*u,0,0,7);ctx.fill()}
-  ctx.fillStyle='rgba(205,150,110,.6)';for(let x=x0;x<x1;x+=.6+R()*1.2){ctx.beginPath();ctx.ellipse(x*u,(GY+.1+R()*.45)*u,.06*u,.03*u,R()*3,0,7);ctx.fill()}
-  // grass tufts at the edge of the path, ferns, mushrooms, stones and flowers behind it
+  gradFill(GY*u,(GY+.7)*u,'#C9B48C','#9C8462');
+  ctx.fillStyle='rgba(80,60,40,.3)';for(let x=x0;x<x1;x+=.3+R()*.5){ctx.beginPath();ctx.ellipse(x*u,(GY+.15+R()*.4)*u,(.03+R()*.04)*u,.02*u,0,0,7);ctx.fill()}
+  for(let x=x0;x<x1;x+=.5+R()*1)drawLeaf(x*u,(GY+.12+R()*.4)*u,.12*u,R()*6,R()<.5?'#C99A5E':'#8FAE5E',false);
+  // big leaves, ferns, mushrooms, stones and flowers behind the path
   for(const o of FLOOR){
     if(Math.abs(o.x-CX-.9)<1.4||Math.abs(o.x-GX)<1.6)continue;
     const y=GY+.02;
-    if(o.k==='fern')drawFern(o.x,y,o.s*.9,o.f,o.c<.5?'#8DBC86':'#9CC792');
+    if(o.k==='plant')drawLeafPlant(o.x,y,o.s*1.1,o.f,o.c<.5?'#3F8A58':'#4E9A62');
+    else if(o.k==='fern')drawFern(o.x,y,o.s,o.f,o.c<.5?'#4E9460':'#5FA46A');
     else if(o.k==='mush'){drawMushroom(o.x,y,o.s*.42,o.c<.6);if(o.c<.4)drawMushroom(o.x+.22,y,o.s*.28,o.c<.6)}
     else if(o.k==='stone')drawStone(o.x,y+.04,o.s*.28,o.s*.2);
-    else if(o.k==='flower'){drawFlower(o.x,y,o.s*.32,o.c<.33?'#F4C2D7':o.c<.66?'#C9B8F0':'#FFF4D6');drawFlower(o.x+.14,y,o.s*.24,'#FFF4D6')}
-    ctx.strokeStyle='#8FBF83';ctx.lineWidth=Math.max(1,u*.022);ctx.lineCap='round';
-    for(let k=-2;k<=2;k++){ctx.beginPath();ctx.moveTo((o.x+.3+k*.05)*u,(y+.02)*u);ctx.quadraticCurveTo((o.x+.3+k*.07)*u,(y-.1)*u,(o.x+.3+k*.12)*u,(y-.18-Math.abs(k)*-.02)*u);ctx.stroke()}
+    else if(o.k==='flower'){drawFlower(o.x,y,o.s*.32,o.c<.5?'#F4A7C4':'#FFE08A');drawFlower(o.x+.14,y,o.s*.24,'#FFF4D6')}
+    ctx.strokeStyle='#5E9A58';ctx.lineWidth=Math.max(1,u*.022);ctx.lineCap='round';
+    for(let k=-2;k<=2;k++){ctx.beginPath();ctx.moveTo((o.x+.3+k*.05)*u,(y+.02)*u);ctx.quadraticCurveTo((o.x+.3+k*.07)*u,(y-.1)*u,(o.x+.3+k*.12)*u,(y-.18)*u);ctx.stroke()}
   }
 }
 
-// screen-space foreground: big fern fronds in the corners, light motes
+// screen-space foreground: big dark leaves in the corners, light motes
 let fgLeaves=[],motes=[],flies=[];
 function setupFg(){
   const R=mulberry(99);fgLeaves=[];
-  for(const side of[-1,1])for(let i=0;i<3;i++)fgLeaves.push({x:side<0?R()*W*.1:W-R()*W*.1,y:groundPx+S*(.9+R()*.6),s:1.3+R()*.6,f:side<0?1:-1,a:(side<0?.25:-.25)+R()*.3*side,ph:R()*7});
+  for(const side of[-1,1])for(let i=0;i<3;i++)fgLeaves.push({x:side<0?R()*W*.08:W-R()*W*.08,y:groundPx+S*(.8+R()*.7),s:1.5+R()*.7,f:side<0?1:-1,a:(side<0?.2:-.2)+R()*.25*side,ph:R()*7});
   motes=Array.from({length:22},()=>({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*2.2,ph:Math.random()*7,v:4+Math.random()*10}));
   flies=Array.from({length:12},()=>({x:Math.random()*W,y:Math.random()*groundPx,ph:Math.random()*7,v:.4+Math.random()*.6}));
 }
 function drawFg(){
   const now=performance.now()/1000;
   for(const l of fgLeaves){ctx.save();ctx.translate(l.x,l.y);ctx.rotate(l.a+Math.sin(now*.8+l.ph)*.04);ctx.translate(-l.x,-l.y);
-    // drawFern works in world units; place it in screen units by faking the camera
-    const ox=l.x/S,oy=l.y/S;ctx.save();ctx.globalAlpha=.95;drawFern(ox,oy,l.s,l.f,'#78A874');ctx.restore();ctx.restore()}
+    drawLeafPlant(l.x/S,l.y/S,l.s,l.f,'#2A5E3E');ctx.restore()}
   const day=1-st.night;
   if(day>0){ctx.save();ctx.globalCompositeOperation='lighter';
     for(const m of motes){const y=(m.y-now*m.v)%H,yy=y<0?y+H:y,x=m.x+Math.sin(now*.7+m.ph)*12,a=(.2+.2*Math.sin(now*2+m.ph))*day;
-      const g=ctx.createRadialGradient(x,yy,0,x,yy,m.r*4);g.addColorStop(0,`rgba(255,248,210,${a})`);g.addColorStop(1,'rgba(255,248,210,0)');ctx.fillStyle=g;ctx.fillRect(x-m.r*4,yy-m.r*4,m.r*8,m.r*8)}
+      const g=ctx.createRadialGradient(x,yy,0,x,yy,m.r*4);g.addColorStop(0,`rgba(245,255,215,${a})`);g.addColorStop(1,'rgba(245,255,215,0)');ctx.fillStyle=g;ctx.fillRect(x-m.r*4,yy-m.r*4,m.r*8,m.r*8)}
     ctx.restore()}
 }
 function drawRays(){
-  const a=(1-st.night)*.22;if(a<=0)return;
+  const a=(1-st.night)*.32;if(a<=0)return;
   ctx.save();ctx.globalCompositeOperation='lighter';
-  for(const[k,w]of[[.62,.09],[.78,.05],[.3,.06]]){const x=W*k-camX*S*.08%W;
-    const g=ctx.createLinearGradient(0,0,0,groundPx);g.addColorStop(0,`rgba(255,246,215,${a})`);g.addColorStop(1,'rgba(255,246,215,0)');
+  for(const[k,w]of[[.62,.09],[.78,.05],[.3,.06],[.05,.04]]){const x=W*k-(camX*S*.08)%W;
+    const g=ctx.createLinearGradient(0,0,0,groundPx);g.addColorStop(0,`rgba(240,255,215,${a})`);g.addColorStop(1,'rgba(240,255,215,0)');
     ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+W*w,0);ctx.lineTo(x-W*.25+W*w*2,groundPx);ctx.lineTo(x-W*.3,groundPx);ctx.closePath();ctx.fillStyle=g;ctx.fill()}
   ctx.restore();
 }
 function drawNight(){
   const n=st.night;if(n<=0)return;
-  ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=n;ctx.fillStyle='#ADA8DC';ctx.fillRect(0,0,W,H);ctx.restore();
+  ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=n;ctx.fillStyle='#93AFC8';ctx.fillRect(0,0,W,H);ctx.restore();
   // a big soft moon and fireflies
   ctx.save();ctx.globalAlpha=n;
   const mx=W*.82,my=safe.t+H*.1,mr=Math.min(W,H)*.06;
@@ -460,7 +521,7 @@ function drawNight(){
   ctx.restore();
 }
 function drawSky(){
-  const g=ctx.createLinearGradient(0,0,0,groundPx);g.addColorStop(0,'#F7E8D8');g.addColorStop(1,'#DFEBE2');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const g=ctx.createLinearGradient(0,0,0,groundPx);g.addColorStop(0,'#E4F3E2');g.addColorStop(1,'#B9DCC4');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
 }
 
 // ---------- characters ----------

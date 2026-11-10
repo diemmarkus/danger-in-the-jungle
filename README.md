@@ -66,7 +66,7 @@ Single self-contained `danger-in-the-jungle-2/index.html` — the characters (pa
 
 ## Kobolde
 
-A soft, pastel fairytale-forest game (Hotel-Transylvania-style cartoon characters) in an old European forest. The main characters are **Lilly** (red hair with two buns, freckles, pink T-shirt with turquoise stripes, jeans, grey shoes, a green camping backpack with a sleeping mat on top and shoes hanging underneath) and, later, **Ria** (a faun girl). The kobolds show up later in the game — and they are not nice.
+A cartoon adventure (Hotel-Transylvania-style characters in soft colours) set in a lush, misty jungle — tall mossy trunks with buttress roots, lianas, big leaves and green fog. The main characters are **Lilly** (red hair with two buns, freckles, pink T-shirt with turquoise stripes, jeans, grey shoes, a green camping backpack with a sleeping mat on top and shoes hanging underneath) and, later, **Ria** (a faun girl). The kobolds show up later in the game — and they are not nice.
 
 - **Chapter 1 – Im Urwald**
   - **Night:** Lilly sleeps alone in her sleeping bag deep in the forest. A blue and a purple parrot look after their three eggs in a nest above her. One egg wobbles, falls out and lands on her sleeping bag.
