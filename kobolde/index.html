@@ -130,7 +130,7 @@ a.round{color:inherit;text-decoration:none}
       <button type="button" id="howBtn" class="glass round" aria-label="So geht’s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9a3 3 0 1 1 4.2 2.8c-.8.4-1.2 1-1.2 1.9V15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="18.6" r="1.6" fill="currentColor"/></svg></button>
     </div>
     <div class="mbottom">
-      <span class="lbl" id="lvlLbl">Level 1</span>
+      <span class="lbl" id="lvlLbl">Kapitel 1 · Im Urwald</span>
       <button type="button" class="play" id="playBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span id="playLbl">LOS GEHT’S</span></button>
     </div>
   </div>
@@ -183,22 +183,22 @@ const WALK=2.7;
 
 // ---------- i18n ----------
 const I18N={
-  de:{name:'DE',play:'LOS GEHT’S',how:'So geht’s',ok:'ALLES KLAR',lvl:'Level 1',skip:'Überspringen',pause:'Pause',resume:'Weiter',restartL:'Neu starten',menu:'Menü',retry:'Nochmal',hand:'Ei zurückgeben',
+  de:{name:'DE',play:'LOS GEHT’S',how:'So geht’s',ok:'ALLES KLAR',lvl:'Kapitel 1 · Im Urwald',skip:'Überspringen',pause:'Pause',resume:'Weiter',restartL:'Neu starten',menu:'Menü',retry:'Nochmal',hand:'Ei zurückgeben',
     rules:['Lilly schläft mitten im Urwald. Fällt ein Ei aus dem Nest, tipp auf die Hand und gib es den Papageien zurück.',
       'Am Morgen gehst du mit dem Joystick unten durch den Wald – nach links und nach rechts.',
       'Wenn du beim Tor bist, tipp direkt auf das Tor. Dann geht es auf.'],
     cap:['Mitten im Urwald schläft Lilly …','Über ihr passen zwei Papageien auf ihre drei Eier auf.','Oh nein! Ein Ei fällt aus dem Nest!','Tipp auf die Hand und gib das Ei zurück!','Die Papageien sagen Danke!','Lilly schläft wieder ein …'],
     huch:'HUCH!',danke:'DANKE!',knarr:'KNARR!',closer:'Geh näher hin!',
-    lvlT:'LEVEL 1',lvlSub:'GEH DURCH DEN WALD!',hintWalk:'Geh durch den Wald →',hintGate:'Tipp auf das Tor!',
-    sign:['BETRETEN','VERBOTEN'],winT:'LEVEL 1 GESCHAFFT!',winP:'Lilly ist durch das verbotene Tor gegangen. Was wartet wohl dahinter? Level 2 kommt bald!'},
-  en:{name:'EN',play:'PLAY',how:'How to play',ok:'GOT IT',lvl:'Level 1',skip:'Skip',pause:'Paused',resume:'Resume',restartL:'Restart',menu:'Menu',retry:'Again',hand:'Give the egg back',
+    lvlT:'KAPITEL 1',lvlSub:'IM URWALD',hintWalk:'Geh durch den Wald →',hintGate:'Tipp auf das Tor!',
+    sign:['BETRETEN','VERBOTEN'],winT:'KAPITEL 1 GESCHAFFT!',winP:'Lilly ist durch das verbotene Tor gegangen. Was wartet wohl dahinter? Kapitel 2 kommt bald!'},
+  en:{name:'EN',play:'PLAY',how:'How to play',ok:'GOT IT',lvl:'Chapter 1 · The Old Forest',skip:'Skip',pause:'Paused',resume:'Resume',restartL:'Restart',menu:'Menu',retry:'Again',hand:'Give the egg back',
     rules:['Lilly is asleep deep in the old forest. When an egg falls out of the nest, tap the hand and give it back to the parrots.',
       'In the morning, walk through the forest with the joystick at the bottom – left and right.',
       'When you reach the gate, tap right on the gate. Then it opens.'],
     cap:['Deep in the old forest, Lilly is asleep…','Above her, two parrots are looking after their three eggs.','Oh no! An egg falls out of the nest!','Tap the hand and give the egg back!','The parrots say thank you!','Lilly falls asleep again…'],
     huch:'WHOA!',danke:'THANKS!',knarr:'CREAK!',closer:'Walk closer!',
-    lvlT:'LEVEL 1',lvlSub:'WALK THROUGH THE FOREST!',hintWalk:'Walk through the forest →',hintGate:'Tap the gate!',
-    sign:['KEEP','OUT'],winT:'LEVEL 1 DONE!',winP:'Lilly went through the forbidden gate. What could be behind it? Level 2 is coming soon!'},
+    lvlT:'CHAPTER 1',lvlSub:'THE OLD FOREST',hintWalk:'Walk through the forest →',hintGate:'Tap the gate!',
+    sign:['KEEP','OUT'],winT:'CHAPTER 1 DONE!',winP:'Lilly went through the forbidden gate. What could be behind it? Chapter 2 is coming soon!'},
 };
 const ICON={
   home:'<svg viewBox="0 0 24 24"><path d="M4 11.5 12 4.5l8 7M6.5 10v9h4v-5h3v5h4v-9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
