@@ -75,9 +75,9 @@ A cartoon adventure (Hotel-Transylvania-style characters in soft colours) set in
   - **The gate:** at the end of the path stands a gate with a big sign: **BETRETEN VERBOTEN**. Tap right on the gate (or `Space`/`Enter` when you're close) and it creaks open. Lilly walks through… and something with glowing eyes watches from behind it.
 - **Chapter 2 – Hinter dem Tor**
   - **The path:** behind the gate, glowing eyes open in the dark bushes and follow Lilly. At a big, perfectly normal tree she stops and wonders out loud why it said *Betreten verboten*.
-  - **The clearing:** cotton-candy clouds, a long friendly snake wound around a tree, pink and red butterflies, blue flowers, a dwarf with an umbrella under a little honey-rain cloud, and a giant tree whose leaves are turquoise hearts, purple stars, blue squares, pink triangles and yellow strokes. Up in a cloud Ria peeks out — Lilly doesn't notice.
+  - **The clearing:** cotton-candy clouds, pink and red butterflies, blue flowers, a dwarf with an umbrella under a little honey-rain cloud, and a giant tree (with a long friendly snake coiled up its trunk) whose leaves are turquoise hearts, purple stars, blue squares, pink triangles and yellow strokes. Up in a cloud Ria peeks out — Lilly doesn't notice.
   - **Ria:** Lilly puts her backpack down by the giant tree, and Ria comes surfing in on a cloud. Walk over to her: they talk (spoken out loud with the device's speech voice, with subtitles) and become friends. Then Ria pushes Lilly onto a cloud.
-  - **The flight:** steer Lilly's cloud with the joystick (any direction) and follow Ria — over the forest, low over the sea, into the evening. Lilly asks to sleep at Ria's. Ria's small spiky palace has a shield that only lets you in right behind Ria; her mum, dad, big sister and little brother wait at the door.
+  - **The flight:** steer Lilly's cloud with the joystick (any direction) and follow Ria — first straight up out of the clearing, past the tree tops, then over the misty forest, low over the sea, into the evening. Lilly asks to sleep at Ria's. Ria's small spiky palace has a shield that only lets you in right behind Ria; her mum, dad, big sister and little brother wait at the door.
 - The title screen lets you pick chapter 1 or 2.
 - Languages: DE, EN (shares the language choice with the other games).
 
