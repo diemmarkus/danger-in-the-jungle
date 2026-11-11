@@ -6,7 +6,7 @@ Our games page. The start page (`index.html`, glittering magenta) lets you pick 
 |---|---|---|
 | Danger in the Jungle | [`danger-in-the-jungle/`](danger-in-the-jungle/) | playable |
 | Danger in the Jungle 2 | [`danger-in-the-jungle-2/`](danger-in-the-jungle-2/) | playable |
-| Kobolde | [`kobolde/`](kobolde/) | chapter 1 playable |
+| Kobolde | [`kobolde/`](kobolde/) | chapters 1–2 playable |
 
 At the bottom, **Mehr Spiele** links to Jonas' start page ([Jonas' Spiele](https://diemmarkus.github.io/maze/)).
 
@@ -73,6 +73,12 @@ A cartoon adventure (Hotel-Transylvania-style characters in soft colours) set in
   - **The hand:** a round button with a hand appears — tap it (or `Space`/`Enter`). Lilly sits up and holds the egg up, the blue parrot fetches it and puts it back in the nest. "Danke!" — and Lilly falls asleep again.
   - **Morning:** walk through the forest with the same joystick as in Danger in the Jungle (keyboard: arrow keys / A, D).
   - **The gate:** at the end of the path stands a gate with a big sign: **BETRETEN VERBOTEN**. Tap right on the gate (or `Space`/`Enter` when you're close) and it creaks open. Lilly walks through… and something with glowing eyes watches from behind it.
+- **Chapter 2 – Hinter dem Tor**
+  - **The path:** behind the gate, glowing eyes open in the dark bushes and follow Lilly. At a big, perfectly normal tree she stops and wonders out loud why it said *Betreten verboten*.
+  - **The clearing:** cotton-candy clouds, a long friendly snake wound around a tree, pink and red butterflies, blue flowers, a dwarf with an umbrella under a little honey-rain cloud, and a giant tree whose leaves are turquoise hearts, purple stars, blue squares, pink triangles and yellow strokes. Up in a cloud Ria peeks out — Lilly doesn't notice.
+  - **Ria:** Lilly puts her backpack down by the giant tree, and Ria comes surfing in on a cloud. Walk over to her: they talk (spoken out loud with the device's speech voice, with subtitles) and become friends. Then Ria pushes Lilly onto a cloud.
+  - **The flight:** steer Lilly's cloud with the joystick (any direction) and follow Ria — over the forest, low over the sea, into the evening. Lilly asks to sleep at Ria's. Ria's small spiky palace has a shield that only lets you in right behind Ria; her mum, dad, big sister and little brother wait at the door.
+- The title screen lets you pick chapter 1 or 2.
 - Languages: DE, EN (shares the language choice with the other games).
 
 Single self-contained `kobolde/index.html` — the parrots reuse the drawing code from Danger in the Jungle.

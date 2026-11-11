@@ -53,6 +53,12 @@ a.round{color:inherit;text-decoration:none}
 
 /* hint at the top while walking */
 #hint{position:absolute;top:calc(var(--st) + 14px);left:50%;transform:translateX(-50%);max-width:calc(100% - 140px);border-radius:999px;padding:9px 18px;font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.02em;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;transition:background .3s}
+/* what the characters say (they also speak it out loud) */
+#say{position:absolute;left:18px;right:18px;top:calc(var(--st) + 66px);margin:0;text-align:center;font-family:var(--display);font-weight:600;font-size:19px;line-height:1.3;pointer-events:none;text-shadow:0 2px 6px rgba(0,0,0,.75),0 0 2px rgba(0,0,0,.9);z-index:2;animation:fade .25s ease}
+#say.lilly{color:#FFD3E2}#say.ria{color:#FFE88A}
+.medals{display:flex;gap:10px;justify-content:center}
+.medal{width:48px;height:48px;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;padding:0}
+.medal[aria-pressed="true"]{background:linear-gradient(180deg,#F7B5CF,#D9709D);border-color:#FFD6E6;box-shadow:0 0 0 4px rgba(247,181,207,.35),0 8px 22px rgba(30,20,50,.35)}
 #hint.hot{background:linear-gradient(180deg,#FFE58A,#FFC53D);color:#5A3B00;border-color:#FFF2C0}
 
 #menu{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--st) + 12px) calc(var(--sr) + 14px) calc(var(--sb) + 18px) calc(var(--sl) + 14px);pointer-events:none}
@@ -119,6 +125,7 @@ a.round{color:inherit;text-decoration:none}
   </div>
 
   <div id="hint" class="glass" hidden></div>
+  <p id="say" hidden></p>
   <button type="button" id="pauseBtn" class="glass round" hidden aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor"/></svg></button>
 
   <div id="menu">
@@ -131,6 +138,7 @@ a.round{color:inherit;text-decoration:none}
     </div>
     <div class="mbottom">
       <span class="lbl" id="lvlLbl">Kapitel 1 · Im Urwald</span>
+      <div class="medals" id="chs" role="group" aria-label="Kapitel"></div>
       <button type="button" class="play" id="playBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span id="playLbl">LOS GEHT’S</span></button>
     </div>
   </div>
@@ -186,19 +194,21 @@ const I18N={
   de:{name:'DE',play:'LOS GEHT’S',how:'So geht’s',ok:'ALLES KLAR',lvl:'Kapitel 1 · Im Urwald',skip:'Überspringen',pause:'Pause',resume:'Weiter',restartL:'Neu starten',menu:'Menü',retry:'Nochmal',hand:'Ei zurückgeben',
     rules:['Lilly schläft mitten im Urwald. Fällt ein Ei aus dem Nest, tipp auf die Hand und gib es den Papageien zurück.',
       'Am Morgen gehst du mit dem Joystick unten durch den Wald – nach links und nach rechts.',
-      'Wenn du beim Tor bist, tipp direkt auf das Tor. Dann geht es auf.'],
+      'Wenn du beim Tor bist, tipp direkt auf das Tor. Dann geht es auf.',
+      'Kapitel 2: Folge dem Pfad hinter dem Tor. Später steuerst du Lillys Zuckerwattewolke mit dem Joystick und fliegst Ria hinterher.'],
     cap:['Mitten im Urwald schläft Lilly …','Über ihr passen zwei Papageien auf ihre drei Eier auf.','Oh nein! Ein Ei fällt aus dem Nest!','Tipp auf die Hand und gib das Ei zurück!','Die Papageien sagen Danke!','Lilly schläft wieder ein …'],
     huch:'HUCH!',danke:'DANKE!',knarr:'KNARR!',closer:'Geh näher hin!',
     lvlT:'KAPITEL 1',lvlSub:'IM URWALD',hintWalk:'Geh durch den Wald →',hintGate:'Tipp auf das Tor!',
-    sign:['BETRETEN','VERBOTEN'],winT:'KAPITEL 1 GESCHAFFT!',winP:'Lilly ist durch das verbotene Tor gegangen. Was wartet wohl dahinter? Kapitel 2 kommt bald!'},
+    sign:['BETRETEN','VERBOTEN'],c2T:"KAPITEL 2",c2Sub:"HINTER DEM TOR",next:"Weiter",chName:["Kapitel 1 · Im Urwald", "Kapitel 2 · Hinter dem Tor"],c2cap:["Doch als sie auf die Lichtung kommt, sieht sie es …", "Zuckerwattewolken, eine riesige Schlange, ein Zwerg im Honigregen …", "Doch wer beobachtet sie da oben?", "Plötzlich kommt jemand auf einer Wolke angesurft!"],l2think:"Warum stand da Betreten verboten? Das ist doch nur ein ganz normaler Wald.",l2wow:"Wooow!",l2ooh:"So ein merkwürdiger Baum! Herzen, Sterne und Dreiecke als Blätter!",l2a:"Wer bist du, und was machst du hier?",r2a:"Ich bin Ria.",l2b:"Ich bin Lilly.",r2b:"Du bist durch das verbotene Tor gekommen? Das traut sich sonst niemand!",l2c:"Hier ist alles so wunderschön. Und es regnet sogar Honig!",r2c:"Willst du meine Freundin sein?",l2d:"Ja, sehr gern!",r2d:"Dann komm mit! Hopp, auf die Wolke!",hopp:"HOPP!",r2fly:"Halt dich gut fest und flieg mir nach!",komm:"KOMM!",r2skim:"Juhuu! Übers Meer!",r2dusk:"Oh, es wird schon dunkel. Ich muss nach Hause.",l2sleep:"Darf ich heute bei dir schlafen?",r2yes:"Na klar! Komm mit!",r2house:"Da vorne ist unser Haus! Bleib dicht hinter mir, sonst lässt dich der Schutzschild nicht rein.",bzz:"BZZZ!",r2family:"Mama, Papa! Das ist Lilly. Sie schläft heute bei uns!",l2hello:"Hallo! Danke, dass ich bei euch schlafen darf!",h2Walk:"Geh weiter den Pfad entlang →",h2Tree:"Schau dir den riesigen Baum an →",h2Ria:"Geh zu dem Mädchen auf der Wolke →",h2fly:"Flieg Ria hinterher!",h2shield:"Bleib dicht hinter Ria!",win2T:"KAPITEL 2 GESCHAFFT!",win2P:"Lilly und Ria sind Freundinnen und bei Rias Haus angekommen. Kapitel 3 kommt bald!",winT:'KAPITEL 1 GESCHAFFT!',winP:'Lilly ist durch das verbotene Tor gegangen. Was wartet wohl dahinter? Kapitel 2 kommt bald!'},
   en:{name:'EN',play:'PLAY',how:'How to play',ok:'GOT IT',lvl:'Chapter 1 · The Old Forest',skip:'Skip',pause:'Paused',resume:'Resume',restartL:'Restart',menu:'Menu',retry:'Again',hand:'Give the egg back',
     rules:['Lilly is asleep deep in the old forest. When an egg falls out of the nest, tap the hand and give it back to the parrots.',
       'In the morning, walk through the forest with the joystick at the bottom – left and right.',
-      'When you reach the gate, tap right on the gate. Then it opens.'],
+      'When you reach the gate, tap right on the gate. Then it opens.',
+      'Chapter 2: follow the path behind the gate. Later you steer Lilly’s cotton-candy cloud with the joystick and follow Ria.'],
     cap:['Deep in the old forest, Lilly is asleep…','Above her, two parrots are looking after their three eggs.','Oh no! An egg falls out of the nest!','Tap the hand and give the egg back!','The parrots say thank you!','Lilly falls asleep again…'],
     huch:'WHOA!',danke:'THANKS!',knarr:'CREAK!',closer:'Walk closer!',
     lvlT:'CHAPTER 1',lvlSub:'THE OLD FOREST',hintWalk:'Walk through the forest →',hintGate:'Tap the gate!',
-    sign:['KEEP','OUT'],winT:'CHAPTER 1 DONE!',winP:'Lilly went through the forbidden gate. What could be behind it? Chapter 2 is coming soon!'},
+    sign:['KEEP','OUT'],c2T:"CHAPTER 2",c2Sub:"BEHIND THE GATE",next:"Next",chName:["Chapter 1 · The Old Forest", "Chapter 2 · Behind the Gate"],c2cap:["But when she reaches the clearing, she sees it…", "Cotton-candy clouds, a giant snake, a dwarf in the honey rain…", "But who is watching her from up there?", "Suddenly someone comes surfing in on a cloud!"],l2think:"Why did it say keep out? This is just a perfectly normal forest.",l2wow:"Wooow!",l2ooh:"What a strange tree! Its leaves are hearts, stars and triangles!",l2a:"Who are you, and what are you doing here?",r2a:"I'm Ria.",l2b:"I'm Lilly.",r2b:"You came through the forbidden gate? Nobody ever dares to!",l2c:"Everything here is so beautiful. And it's even raining honey!",r2c:"Do you want to be my friend?",l2d:"Yes, I would love to!",r2d:"Then come along! Hop, onto the cloud!",hopp:"HOP!",r2fly:"Hold on tight and follow me!",komm:"COME ON!",r2skim:"Wheee! Over the sea!",r2dusk:"Oh, it's getting dark. I have to go home.",l2sleep:"Can I sleep at your place tonight?",r2yes:"Of course! Come with me!",r2house:"That's our house up ahead! Stay right behind me, or the shield won't let you in.",bzz:"BZZZ!",r2family:"Mum, Dad! This is Lilly. She's sleeping over tonight!",l2hello:"Hello! Thank you for letting me stay!",h2Walk:"Keep following the path →",h2Tree:"Have a look at the giant tree →",h2Ria:"Walk over to the girl on the cloud →",h2fly:"Follow Ria!",h2shield:"Stay right behind Ria!",win2T:"CHAPTER 2 DONE!",win2P:"Lilly and Ria are friends now and have reached Ria's house. Chapter 3 is coming soon!",winT:'CHAPTER 1 DONE!',winP:'Lilly went through the forbidden gate. What could be behind it? Chapter 2 is coming soon!'},
 };
 const ICON={
   home:'<svg viewBox="0 0 24 24"><path d="M4 11.5 12 4.5l8 7M6.5 10v9h4v-5h3v5h4v-9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -222,12 +232,14 @@ function applyLang(k,save){
   $('rules').replaceChildren(...T.rules.map((r,i)=>{const li=document.createElement('li'),b=document.createElement('b'),s=document.createElement('span');b.textContent=i+1;s.textContent=r;li.append(b,s);return li}));
   if(card)showCard(card.kind);
   capIdx=-1;
+  if($('chs').children.length)paintChapters();
 }
 $('langBtn').addEventListener('click',()=>{const ks=Object.keys(I18N);applyLang(ks[(ks.indexOf(lang)+1)%ks.length],true)});
 
 // ---------- canvas & camera ----------
 let land=false,groundPx=600,W=0,H=0,dpr=1,S=40,VW=10,camX=0,camY=0,ctrlH=150,safe={t:0,r:0,b:0,l:0};
-const camMin=()=>-2,camMax=()=>Math.max(camMin(),WW-VW+.5);
+let CH=1;
+const camMin=()=>-2,camMax=()=>Math.max(camMin(),(st&&st.fly?FW:CH===2?C2W:WW)-VW+.5);
 function resize(){
   const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);
   W=r.width;H=r.height;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -244,11 +256,12 @@ let rzT=0;addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(resize
 const X=x=>(x-camX)*S,Y=y=>(y-camY)*S;
 function camTarget(){
   if(!st)return 0;
+  if(st.ch===2){if(st.fly){const L=st.lilly;return L.x-VW*.4+L.vx*.3}if(st.mode==='reveal')return revealCam();if(st.mode==='talk'||st.mode==='push')return (st.lilly.x+RIAX)/2-VW*.5;const L=st.lilly;return L.x+L.f*.6-VW*.5}
   if(st.mode==='play'||st.mode==='gate'){const L=st.lilly;return(st.mode==='gate'?GX:L.x+L.f*.6)-VW*.5}
   return (CX+1.2)-VW*.5+(land&&st.mode==='menu'?-VW*.15:0);
 }
 // in landscape the intro lifts the forest floor above the letterbox bar and the subtitles
-function camYTarget(){const cine=st&&(st.mode==='intro'||st.mode==='egg'||st.mode==='give');return GY+.3-(land&&cine?Math.min(groundPx,H*.88-70):groundPx)/S}
+function camYTarget(){if(st&&st.fly){const vh=groundPx/S;return clamp(st.lilly.y-vh*.5,-2.5,GY+1-vh)}const cine=st&&(st.mode==='intro'||st.mode==='egg'||st.mode==='give');return GY+.3-(land&&cine?Math.min(groundPx,H*.88-70):groundPx)/S}
 function moveCam(dt,snap){const k=snap?1:Math.min(1,dt*3.5);camX+=(camTarget()-camX)*k;camX=clamp(camX,camMin(),camMax());camY+=(camYTarget()-camY)*(snap?1:Math.min(1,dt*2.5))}
 
 // ---------- helpers ----------
@@ -284,6 +297,7 @@ const LAYERS=[{p:.25,paint:paintFar},{p:.55,paint:paintMid},{p:1,paint:paintNear
 const LTOP=-5,LBOT=GY+5;
 function buildLayers(){
   for(const L of LAYERS){
+    L.paint=L.p===1?(CH===2?paintNear2:paintNear):L.paint;
     const x0=camMin()*L.p-1,x1=camMax()*L.p+VW+1;
     const c=L.c||(L.c=document.createElement('canvas'));
     c.width=Math.ceil((x1-x0)*S*dpr);c.height=Math.ceil((LBOT-LTOP)*S*dpr);
@@ -299,6 +313,8 @@ function drawLayers(){
     if(L.p<1){const y0=Y(GY-(L.p<.4?6:3.2)),y1=Y(GY+.3),g=ctx.createLinearGradient(0,y0,0,y1);
       g.addColorStop(0,'rgba(212,238,220,0)');g.addColorStop(.7,`rgba(212,238,220,${L.p<.4?.55:.5})`);g.addColorStop(1,`rgba(212,238,220,${L.p<.4?.6:.35})`);
       ctx.fillStyle=g;ctx.fillRect(0,y0,W,y1-y0+2)}
+    // chapter 2: behind the clearing the forest fades into a bright, magic haze
+    if(CH===2&&L.p<1){const m=clamp((camX+VW/2-CL0+3)/6,0,1)*.3;if(m>0){ctx.fillStyle=`rgba(255,226,240,${m})`;ctx.fillRect(0,0,W,Y(GY+.3))}}
   }
 }
 function swapCtx(g,fn){const o=ctx;ctx=g;try{fn()}finally{ctx=o}}
@@ -507,7 +523,7 @@ function setupFg(){
   const R=mulberry(99);fgLeaves=[];
   const x0=camMin()*FGP-2,x1=camMax()*FGP+VW+3;
   const spots=[(CX+1.2-VW*.5)*FGP,(GX-VW*.5)*FGP];   // where the camera stands at the camp and at the gate
-  const free=x=>spots.every(c=>x<c+VW*.05-1||x>c+VW*.95+1);
+  const free=CH===2?(x=>x<(NT-1.5-VW*.5)*FGP-1):(x=>spots.every(c=>x<c+VW*.05-1||x>c+VW*.95+1));
   for(let t=x0+1+expo(R,3);t<x1;t+=4+expo(R,7)){if(!free(t))continue;fgLeaves.push({k:'trunk',x:t,w:R()<.3?.35+R()*.25:.75+R()*.7,lean:(R()-.5)*.14,ph:R()*7});
     for(let i=0;i<3;i++)fgLeaves.push({k:R()<.5?'plant':'fern',x:t+(R()-.5)*1.6,dy:1+R()*.4,s:.9+R()*.4,f:R()<.5?1:-1,a:(R()-.5)*.3,ph:R()*7,c:R()})}
   let x=x0;
@@ -706,7 +722,8 @@ function drawUpper(u,f,o){
     if(up||o.wave){hx=sx+Math.sin(a)*AL;hy=sy+Math.cos(a)*AL;ex=sx+Math.sin(a)*AL*.5;ey=sy+Math.cos(a)*AL*.5}
     else{
       // walking: the arm swings with the opposite leg, the elbow bends more on the forward swing
-      const mv=o.mv||0,dir=back?0:f,swing=Math.sin((o.ph||0)+(side===f?Math.PI:0))*mv,ua=side*.08+dir*swing*.45,fa=ua+dir*(.15+Math.max(0,swing)*.55)*mv;
+      const mv=o.mv||0,dir=back?0:f,swing=Math.sin((o.ph||0)+(side===f?Math.PI:0))*mv;let ua=side*.08+dir*swing*.45,fa=ua+dir*(.15+Math.max(0,swing)*.55)*mv;
+      if(o.armsOut){ua=side*(1.25+Math.sin(now*2+side)*.08);fa=ua+side*.25}
       ex=sx+Math.sin(ua)*.22*u;ey=sy+Math.cos(ua)*.22*u;hx=ex+Math.sin(fa)*.2*u;hy=ey+Math.cos(fa)*.2*u;
     }
     ctx.lineCap='round';ctx.lineJoin='round';
@@ -756,7 +773,7 @@ function drawUpper(u,f,o){
   ctx.fillStyle='#D9906E';for(const[dx,dy]of[[-.17,.1],[-.13,.13],[-.2,.14],[.13,.13],[.17,.1],[.2,.14],[-.03,.09],[.03,.09]]){ctx.beginPath();ctx.arc(ex+dx*u,hy+dy*u,.011*u,0,7);ctx.fill()}
   ctx.fillStyle='rgba(239,150,150,.4)';for(const s of[-1,1]){ctx.beginPath();ctx.ellipse(ex+s*.18*u,hy+.1*u,.045*u,.03*u,0,0,7);ctx.fill()}
   ctx.beginPath();ctx.arc(ex,hy+.08*u,.02*u,.2,Math.PI-.2);ctx.lineWidth=Math.max(1,.012*u);ctx.strokeStyle='#D9A88A';ctx.stroke();
-  if(o.surprise){ctx.beginPath();ctx.ellipse(ex,hy+.17*u,.035*u,.045*u,0,0,7);ctx.fillStyle='#A65450';ctx.fill()}
+  if(o.surprise||(o.talk&&((now*7)%2)<1)){ctx.beginPath();ctx.ellipse(ex,hy+.17*u,.035*u,.045*u,0,0,7);ctx.fillStyle='#A65450';ctx.fill()}
   else{ctx.beginPath();ctx.moveTo(ex-.07*u,hy+.15*u);ctx.quadraticCurveTo(ex,hy+(o.sleep?.17:.21)*u,ex+.07*u,hy+.15*u);ctx.lineWidth=.02*u;ctx.lineCap='round';ctx.strokeStyle='#A65450';ctx.stroke()}
   if(o.armUp>0)arm(f,true);
 }
@@ -776,7 +793,7 @@ function drawLilly(x,y,u,f,ph,o={}){
   ctx.beginPath();ctx.ellipse(0,0,.32*u,.06*u,0,0,7);ctx.fillStyle='rgba(60,70,50,.22)';ctx.fill();
   ctx.translate(0,drop);
   if(mv&&!back)ctx.rotate(f*.035);
-  if(!back){ctx.save();ctx.translate(-f*.13*u,0);drawPack(u,ph,mv,true);ctx.restore()}
+  if(!back&&!o.noPack){ctx.save();ctx.translate(-f*.13*u,0);drawPack(u,ph,mv,true);ctx.restore()}
   for(const l of legs){
     const hx=l.side*.08*u*(back?1:.6),hy=-.62*u,kx=hx+l.kx*u,ky=hy+l.ky*u,fx=hx+l.fx*u,fy=hy+l.fy*u,near=l.side===f,col=near?JEANS:shade(JEANS,.86);
     ctx.lineCap='round';ctx.strokeStyle=col;
@@ -791,7 +808,7 @@ function drawLilly(x,y,u,f,ph,o={}){
   }
   rr(-.2*u,-.7*u,.4*u,.12*u,.03*u);ctx.fillStyle=JEANS;ctx.fill();
   ctx.translate(0,-.6*u);
-  drawUpper(u,f,{...o,ph,mv,straps:!back});
+  drawUpper(u,f,{...o,ph,mv,straps:!back&&!o.noPack});
   ctx.restore();
 }
 // the camp: sleeping mat, the backpack, the sleeping bag; Lilly lies in it or sits up (o.sit 0..1)
@@ -934,6 +951,465 @@ function drawTitle(){
   ctx.restore();
 }
 
+// =====================================================================================================
+// ---------- CHAPTER 2: behind the gate — the path with the eyes, the magic clearing, Ria, the cloud flight ----------
+// =====================================================================================================
+const C2W=48,NT=19.5,CL0=23,SNK=27.6,BIG=35.6,PACKX=BIG-2.1,RIAX=BIG+3.7;
+const FW=94,HOUSEX=88;                 // the flight: world length and where Ria's house stands
+// eyes watching from the bushes along the dark path
+const EYES=[];{const R=mulberry(41);let x=1.5;while(x<CL0-1.5){x+=.5+expo(R,1.4);if(Math.abs(x-NT)<1.3)continue;EYES.push({x,y:GY-.45-R()*1.5,s:.75+R()*.5,ph:R()*20,col:R()<.5?'#E8F25A':'#FFB86B'})}}
+const C2TREES=[];{const R=mulberry(57);let x=-3;while(x<CL0-.8){x+=.6+expo(R,1.5);if(Math.abs(x-NT)<1.6)continue;C2TREES.push({x,w:.35+R()*.4,crown:-.2+R()*2,R:1.6+R()*1.3})}
+  C2TREES.push({x:C2W+1.2,w:.7,crown:.4,R:2.6},{x:C2W-1.3,w:.4,crown:1.2,R:1.8})}
+function paintNear2(x0,x1,R){
+  const u=S;
+  for(const t of C2TREES)drawJTree(t.x,t.w,t.crown,t.R,R,PAL_NEAR);
+  for(let i=0;i<C2TREES.length-1;i++)if(R()<.6&&C2TREES[i+1].x<CL0){const a=C2TREES[i],b=C2TREES[i+1];drawLiana(a.x+.25,a.crown+1.2,b.x-.25,b.crown+1.4,1.4+R()*1.8,'#5E6E45','#4F9560',R)}
+  for(const t of C2TREES)if(t.x<CL0&&R()<.7)drawHang(t.x+(R()<.5?-.9:.9),t.crown+1,2+R()*3,'#5E6E45','#4F9560',R);
+  // the big, perfectly normal tree where Lilly stops
+  drawJTree(NT,.95,-.2,3,R,PAL_NEAR);
+  // ground
+  ctx.beginPath();ctx.moveTo(x0*u,LBOT*u);for(let x=x0;x<=x1+.4;x+=.4)ctx.lineTo(x*u,(GY-.1+Math.sin(x*1.7)*.05)*u);ctx.lineTo(x1*u,LBOT*u);ctx.closePath();
+  const g=ctx.createLinearGradient(x0*u,0,x1*u,0),k0=(CL0-1-x0)/(x1-x0),k1=(CL0+2-x0)/(x1-x0);
+  g.addColorStop(0,'#5E8E58');g.addColorStop(clamp(k0,0,1),'#5E8E58');g.addColorStop(clamp(k1,0,1),'#8CCB7A');g.addColorStop(1,'#8CCB7A');ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();ctx.moveTo(x0*u,(GY+.08)*u);for(let x=x0;x<=x1+.4;x+=.4)ctx.lineTo(x*u,(GY+.02+Math.sin(x*.8)*.04)*u);for(let x=x1+.4;x>=x0;x-=.4)ctx.lineTo(x*u,(GY+.62+Math.sin(x*.55)*.06)*u);ctx.closePath();
+  gradFill(GY*u,(GY+.7)*u,'#C9B48C','#9C8462');
+  // dark bushes along the path (the eyes sit in them)
+  for(const e of EYES){const s2=(GY-e.y)+.55;for(let i=0;i<4;i++){const bx=e.x+(i/3-.5)*s2*1.3,by=GY-s2*(.45+Math.abs(Math.sin(e.ph+i))*.25),r=s2*(.4+((i*5+e.ph)%3)*.07);
+    ctx.beginPath();ctx.arc(bx*u,by*u,r*u,0,7);const gg=ctx.createRadialGradient((bx-r*.3)*u,(by-r*.4)*u,r*.1*u,bx*u,by*u,r*u);gg.addColorStop(0,'#3C7550');gg.addColorStop(1,'#1E4430');ctx.fillStyle=gg;ctx.fill();
+    for(let j=0;j<3;j++){const a2=-2.5+j*.9;drawLeaf((bx+Math.cos(a2)*r*.75)*u,(by+Math.sin(a2)*r*.75)*u,r*.6*u,a2,j%2?'#2F6A45':'#3F7E55',true)}}
+    ctx.fillStyle='#1E4430';ctx.fillRect((e.x-s2*.7)*u,(GY-s2*.3)*u,s2*1.4*u,(s2*.3+.05)*u)}
+  // path-side plants
+  for(const o of FLOOR){if(o.x>CL0-1||Math.abs(o.x-NT)<1.2)continue;const y=GY+.02;
+    if(o.k==='plant')drawLeafPlant(o.x,y,o.s*1.1,o.f,'#3F8A58');else if(o.k==='fern')drawFern(o.x,y,o.s,o.f,'#4E9460');else if(o.k==='mush')drawMushroom(o.x,y,o.s*.42,o.c<.6);else if(o.k==='stone')drawStone(o.x,y+.04,o.s*.28,o.s*.2)}
+  // the clearing: soft grass, lots of blue flowers, a few pink ones
+  for(let x=CL0-.5;x<C2W+2;x+=.12+R()*.25){const y=GY+.02;
+    ctx.strokeStyle=R()<.5?'#79BD6A':'#9AD486';ctx.lineWidth=Math.max(1,u*.022);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x*u,y*u);ctx.quadraticCurveTo((x+.03)*u,(y-.12)*u,(x+.08*(R()-.5))*u,(y-.18-R()*.12)*u);ctx.stroke();
+    if(R()<.42)drawFlower(x+.05,y,.2+R()*.18,R()<.82?(R()<.5?'#6FA8F0':'#8FC0FF'):'#F7A8D0')}
+}
+// a fluffy cotton-candy cloud (world units); top surface at y-.32*w
+function drawCandy(x,y,w,c0,c1,o={}){candyPx(X(x),Y(y),w*S,c0,c1,o.alpha,x)}
+function candyPx(cx,cy,r,c0,c1,alpha,seed=0){
+  const now=performance.now()/1000,x=seed;
+  ctx.save();
+  if(alpha!=null)ctx.globalAlpha=alpha;
+  const puffs=[[-.38,.05,.3],[-.15,-.12,.38],[.15,-.15,.36],[.4,.02,.28],[0,.08,.34]];
+  ctx.beginPath();for(const[dx,dy,rr2]of puffs){ctx.moveTo(cx+dx*r+rr2*r,cy+dy*r);ctx.arc(cx+dx*r,cy+dy*r,rr2*r,0,7)}
+  const g=ctx.createLinearGradient(0,cy-r*.5,0,cy+r*.4);g.addColorStop(0,'#FFFFFF');g.addColorStop(.35,c0);g.addColorStop(1,c1);ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(1,r*.025);ctx.lineCap='round';
+  for(const[dx,dy,rr2]of[[-.15,-.1,.18],[.2,-.08,.15]]){ctx.beginPath();ctx.arc(cx+dx*r,cy+dy*r,rr2*r,Math.PI*1.1+Math.sin(now*.6+x)*.1,Math.PI*1.9);ctx.stroke()}
+  ctx.restore();
+}
+// ---------- fauns: Ria and her family ----------
+const FAUNS={
+  ria:{sc:1,skin:'#E9C2A0',hair:'#8A5A3C',hair2:'#A06C48',top:'#F6D86B',dots:'#F0A04B',shorts:'#A88BD0',sdots:'#7FA2E0',fur:'#A57B5A',shoe:'#2E2B33',glasses:'#EE86AE',long:true,iris:['#C99A6A','#6E4628']},
+  mama:{sc:1.22,skin:'#E3B896',hair:'#5E3A28',hair2:'#7A4C34',top:'#C9A8E8',dots:null,shorts:'#7FA6D6',sdots:null,fur:'#8A6248',shoe:'#3A2E36',long:true,iris:['#8FC0A0','#3E6E50']},
+  papa:{sc:1.34,skin:'#DDB08E',hair:'#6E4630',hair2:'#86583C',top:'#8CC79A',dots:null,shorts:'#8A6A4E',sdots:null,fur:'#7A5640',shoe:'#2E2B33',beard:true,iris:['#C99A6A','#6E4628'],bigHorns:true},
+  sis:{sc:1.1,skin:'#E9C2A0',hair:'#B5653E',hair2:'#CC7A50',top:'#7FD3D0',dots:'#FFFFFF',shorts:'#F2A8C0',sdots:null,fur:'#A57B5A',shoe:'#5A3E5A',long:true,iris:['#9FC7E8','#3E6E9E']},
+  bro:{sc:.78,skin:'#EDC6A4',hair:'#7A4E32',hair2:'#92603E',top:'#F5A35C',dots:'#FFE3B0',shorts:'#6E93C6',sdots:null,fur:'#B08462',shoe:'#2E2B33',iris:['#C99A6A','#6E4628']},
+};
+// x,y = feet in px; o.pose: 'surf' arms out, 'wave', 'push'; o.moving walking
+function drawFaun(x,y,u0,f,ph,P,o={}){
+  const u=u0*P.sc,now=performance.now()/1000,mv=o.moving?1:0,dir=f;
+  ctx.save();ctx.translate(x,y);ctx.lineJoin='round';ctx.lineCap='round';
+  if(!o.noShadow){ctx.beginPath();ctx.ellipse(0,0,.28*u,.05*u,0,0,7);ctx.fillStyle='rgba(60,70,50,.2)';ctx.fill()}
+  const crouch=o.pose==='surf'?.06*u:0;ctx.translate(0,crouch);
+  // tail
+  ctx.beginPath();ctx.ellipse(-dir*.2*u,-.62*u,.07*u,.05*u,-dir*.6,0,7);ctx.fillStyle=P.fur;ctx.fill();
+  // goat legs: thigh forward, the backward-bending hock, a little black shoe
+  for(const side of[-f,f]){
+    const s=Math.sin(ph+(side===f?0:Math.PI))*mv,lift=Math.max(0,Math.cos(ph+(side===f?0:Math.PI)))*mv*.08*u;
+    const hx=side*.07*u*.7,hy=-.6*u,kx=hx+dir*(.1+s*.12)*u,ky=-.33*u-lift,ax=kx-dir*.12*u+dir*s*.04*u,ay=-.13*u-lift,fx=ax+dir*(.04+s*.06)*u,fy=-.02*u-lift*.6;
+    const col=side===f?P.fur:shade(P.fur,.85);
+    ctx.strokeStyle=col;ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(kx,ky);ctx.lineWidth=.16*u;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(ax,ay);ctx.lineTo(fx,fy);ctx.lineWidth=.1*u;ctx.stroke();
+    ctx.fillStyle=shade(col,1.15);for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(kx-dir*.05*u+i*.02*u,ky+.02*u+i*.03*u,.03*u,.015*u,dir*.6,0,7);ctx.fill()}
+    ctx.beginPath();ctx.ellipse(fx+dir*.03*u,fy,.08*u,.05*u,0,0,7);radFill(fx,fy-.02*u,.09*u,'#5A5560',P.shoe);
+  }
+  // shorts with dots
+  ctx.beginPath();ctx.moveTo(-.19*u,-.72*u);ctx.lineTo(.19*u,-.72*u);ctx.lineTo(.21*u,-.5*u);ctx.lineTo(.03*u,-.5*u);ctx.lineTo(0,-.56*u);ctx.lineTo(-.03*u,-.5*u);ctx.lineTo(-.21*u,-.5*u);ctx.closePath();
+  gradFill(-.72*u,-.5*u,shade(P.shorts,1.1),P.shorts);
+  if(P.sdots){ctx.fillStyle=P.sdots;for(const[dx,dy]of[[-.12,-.65],[.08,-.6],[-.02,-.68],[.14,-.55],[-.15,-.55]]){ctx.beginPath();ctx.arc(dx*u,dy*u,.018*u,0,7);ctx.fill()}}
+  // belly, crop top
+  rr(-.16*u,-.84*u,.32*u,.14*u,.04*u);ctx.fillStyle=P.skin;ctx.fill();
+  ctx.beginPath();ctx.moveTo(-.18*u,-1.06*u);ctx.quadraticCurveTo(0,-1.11*u,.18*u,-1.06*u);ctx.lineTo(.18*u,-.82*u);ctx.quadraticCurveTo(0,-.79*u,-.18*u,-.82*u);ctx.closePath();
+  gradFill(-1.1*u,-.8*u,shade(P.top,1.12),P.top);
+  if(P.dots){ctx.fillStyle=P.dots;for(const[dx,dy]of[[-.1,-.98],[.04,-1.02],[.12,-.9],[-.04,-.88],[-.14,-.88],[.1,-1.0]]){ctx.beginPath();ctx.arc(dx*u,dy*u,.022*u,0,7);ctx.fill()}}
+  // arms
+  for(const side of[-f,f]){
+    const sx=side*.17*u,sy=-1.02*u;let ua,fa;
+    if(o.pose==='surf'){ua=side*(1.25+Math.sin(now*2+side)*.08);fa=ua+side*.25}
+    else if(o.pose==='push'){ua=dir*1.35;fa=dir*1.45}
+    else if(o.pose==='wave'&&side===f){ua=side*2.4;fa=side*(2.9+Math.sin(now*9)*.3)}
+    else{const sw=Math.sin(ph+(side===f?Math.PI:0))*mv;ua=side*.1+dir*sw*.45;fa=ua+dir*(.15+Math.max(0,sw)*.55)*mv}
+    const ex=sx+Math.sin(ua)*.21*u,ey=sy+Math.cos(ua)*.21*u,hx=ex+Math.sin(fa)*.19*u,hy=ey+Math.cos(fa)*.19*u;
+    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.lineTo(hx,hy);ctx.lineWidth=.085*u;ctx.strokeStyle=side===f?P.skin:shade(P.skin,.92);ctx.stroke();
+    ctx.beginPath();ctx.arc(hx,hy,.05*u,0,7);ctx.fillStyle=P.skin;ctx.fill();
+  }
+  // head
+  const hy=-1.36*u,fx=dir*.025*u;
+  ctx.fillStyle=shade(P.skin,.93);ctx.fillRect(-.045*u,-1.16*u,.09*u,.1*u);
+  // hair behind
+  ctx.beginPath();ctx.ellipse(0,hy,.32*u,.32*u,0,0,7);
+  if(P.long){ctx.moveTo(-.3*u,hy);ctx.quadraticCurveTo(-.36*u,hy+.4*u,-.26*u,hy+.52*u);ctx.lineTo(.26*u,hy+.52*u);ctx.quadraticCurveTo(.36*u,hy+.4*u,.3*u,hy)}
+  radFill(-.08*u,hy-.12*u,.5*u,P.hair2,P.hair);
+  // goat ears and little horns
+  for(const s of[-1,1]){ctx.save();ctx.translate(s*.3*u,hy-.02*u);ctx.rotate(s*.5);ctx.beginPath();ctx.ellipse(s*.06*u,0,.11*u,.045*u,0,0,7);ctx.fillStyle=shade(P.skin,.95);ctx.fill();ctx.beginPath();ctx.ellipse(s*.07*u,0,.07*u,.022*u,0,0,7);ctx.fillStyle='#E9A99B';ctx.fill();ctx.restore()}
+  const hl=P.bigHorns?1.5:1;
+  for(const s of[-1,1]){ctx.beginPath();ctx.moveTo((s*.12-.03)*u,hy-.27*u);ctx.quadraticCurveTo(s*.2*u,hy-(.4*hl+.05)*u,s*(.1+.06*hl)*u,hy-(.48*hl)*u);ctx.quadraticCurveTo(s*.16*u,hy-.36*u,(s*.12+.04)*u,hy-.25*u);ctx.closePath();gradFill(hy-.5*hl*u,hy-.25*u,'#FFF6E6','#D9C8A8')}
+  // face
+  ctx.beginPath();ctx.ellipse(fx,hy+.02*u,.27*u,.28*u,0,0,7);radFill(fx-.06*u,hy-.06*u,.34*u,shade(P.skin,1.08),P.skin);
+  ctx.beginPath();ctx.moveTo(fx-.29*u,hy);ctx.quadraticCurveTo(fx-.26*u,hy-.3*u,fx+.02*u,hy-.29*u);ctx.quadraticCurveTo(fx+.3*u,hy-.28*u,fx+.29*u,hy-.02*u);ctx.quadraticCurveTo(fx+.16*u,hy-.18*u,fx+.02*u,hy-.13*u);ctx.quadraticCurveTo(fx-.14*u,hy-.2*u,fx-.29*u,hy);ctx.closePath();radFill(fx-.1*u,hy-.25*u,.35*u,P.hair2,P.hair);
+  const blink=((now+P.sc*3)%3.7)<.13,ex=fx+dir*.03*u;
+  cEye(ex-.1*u,hy+.03*u,.065*u,.08*u,P.iris,o.lookX!=null?o.lookX:dir*.4,o.lookY||0,blink);
+  cEye(ex+.1*u,hy+.03*u,.065*u,.08*u,P.iris,o.lookX!=null?o.lookX:dir*.4,o.lookY||0,blink);
+  if(P.glasses){ctx.strokeStyle=P.glasses;ctx.lineWidth=.028*u;for(const s of[-1,1]){ctx.beginPath();ctx.arc(ex+s*.1*u,hy+.03*u,.095*u,0,7);ctx.stroke()}ctx.beginPath();ctx.moveTo(ex-.01*u,hy+.01*u);ctx.quadraticCurveTo(ex,hy-.01*u,ex+.01*u,hy+.01*u);ctx.stroke()}
+  brow(ex-.15*u,hy-.1*u,ex-.1*u,hy-.13*u,ex-.04*u,hy-.1*u,.018*u,shade(P.hair,.8));brow(ex+.04*u,hy-.1*u,ex+.1*u,hy-.13*u,ex+.15*u,hy-.1*u,.018*u,shade(P.hair,.8));
+  ctx.beginPath();ctx.arc(ex,hy+.1*u,.02*u,.2,Math.PI-.2);ctx.lineWidth=Math.max(1,.012*u);ctx.strokeStyle=shade(P.skin,.8);ctx.stroke();
+  ctx.fillStyle='rgba(239,150,150,.4)';for(const s of[-1,1]){ctx.beginPath();ctx.ellipse(ex+s*.17*u,hy+.12*u,.04*u,.028*u,0,0,7);ctx.fill()}
+  if(P.beard){ctx.beginPath();ctx.moveTo(ex-.2*u,hy+.08*u);ctx.quadraticCurveTo(ex-.18*u,hy+.36*u,ex,hy+.4*u);ctx.quadraticCurveTo(ex+.18*u,hy+.36*u,ex+.2*u,hy+.08*u);ctx.quadraticCurveTo(ex,hy+.2*u,ex-.2*u,hy+.08*u);radFill(ex,hy+.15*u,.3*u,P.hair2,P.hair)}
+  if(o.talk&&((now*7)%2)<1){ctx.beginPath();ctx.ellipse(ex,hy+.18*u,.035*u,.03*u,0,0,7);ctx.fillStyle='#8A3E3E';ctx.fill()}
+  else{ctx.beginPath();ctx.moveTo(ex-.07*u,hy+.16*u);ctx.quadraticCurveTo(ex,hy+.22*u,ex+.07*u,hy+.16*u);ctx.lineWidth=.02*u;ctx.strokeStyle='#A65450';ctx.stroke()}
+  ctx.restore();
+}
+// ---------- the dwarf with his umbrella, under a little honey cloud ----------
+function drawDwarf(x,y,u,f,ph){
+  const now=performance.now()/1000;
+  ctx.save();ctx.translate(x,y);ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();ctx.ellipse(0,0,.26*u,.05*u,0,0,7);ctx.fillStyle='rgba(60,70,50,.2)';ctx.fill();
+  for(const side of[-f,f]){const s=Math.sin(ph+(side===f?0:Math.PI));ctx.beginPath();ctx.moveTo(side*.06*u,-.32*u);ctx.lineTo(side*.06*u+f*s*.08*u,-.06*u);ctx.lineWidth=.1*u;ctx.strokeStyle=side===f?'#6B5A8A':'#5A4A78';ctx.stroke();
+    ctx.beginPath();ctx.ellipse(side*.06*u+f*s*.08*u+f*.04*u,-.04*u,.08*u,.045*u,0,0,7);ctx.fillStyle='#5A3E2A';ctx.fill()}
+  // round coat
+  ctx.beginPath();ctx.ellipse(0,-.48*u,.25*u,.24*u,0,0,7);radFill(-.06*u,-.56*u,.3*u,'#C98A5A','#8E5A34');
+  ctx.fillStyle='#4A3A2A';ctx.fillRect(-.25*u,-.42*u,.5*u,.06*u);ctx.fillStyle='#E4C27A';ctx.fillRect(-.04*u,-.43*u,.08*u,.08*u);
+  // head, big nose, white beard
+  const hy=-.86*u;
+  ctx.beginPath();ctx.ellipse(0,hy,.2*u,.2*u,0,0,7);ctx.fillStyle='#F1C9A9';ctx.fill();
+  ctx.beginPath();ctx.moveTo(-.2*u,hy);ctx.quadraticCurveTo(-.24*u,hy+.32*u,f*.02*u,hy+.42*u);ctx.quadraticCurveTo(.24*u,hy+.32*u,.2*u,hy);ctx.quadraticCurveTo(0,hy+.1*u,-.2*u,hy);radFill(0,hy+.1*u,.3*u,'#FFFFFF','#DCD8D2');
+  ctx.beginPath();ctx.ellipse(f*.07*u,hy+.04*u,.07*u,.06*u,0,0,7);radFill(f*.05*u,hy+.02*u,.08*u,'#F4B3A0','#D9846E');
+  for(const s of[-1,1]){ctx.beginPath();ctx.arc(f*.02*u+s*.07*u,hy-.04*u,.025*u,0,7);ctx.fillStyle='#2B2730';ctx.fill()}
+  brow(f*.02*u-.12*u,hy-.09*u,f*.02*u-.07*u,hy-.12*u,f*.02*u-.02*u,hy-.09*u,.03*u,'#EDEAE4');brow(f*.02*u+.02*u,hy-.09*u,f*.02*u+.07*u,hy-.12*u,f*.02*u+.12*u,hy-.09*u,.03*u,'#EDEAE4');
+  // pointed hat
+  ctx.beginPath();ctx.moveTo(-.22*u,hy-.08*u);ctx.quadraticCurveTo(-.05*u,hy-.55*u,-f*.18*u,hy-.62*u);ctx.quadraticCurveTo(.1*u,hy-.4*u,.22*u,hy-.08*u);ctx.closePath();gradFill(hy-.6*u,hy,'#6FB07A','#3E7E50');
+  // umbrella held up
+  const ux=f*.2*u,uy=-.5*u;
+  ctx.beginPath();ctx.moveTo(ux,uy);ctx.lineTo(ux,-1.45*u);ctx.lineWidth=.03*u;ctx.strokeStyle='#5A4636';ctx.stroke();
+  ctx.beginPath();ctx.arc(ux,uy,.05*u,0,7);ctx.fillStyle='#F1C9A9';ctx.fill();
+  const tw=Math.sin(now*1.3)*.04;ctx.save();ctx.translate(ux,-1.45*u);ctx.rotate(tw);
+  ctx.beginPath();ctx.moveTo(-.55*u,.12*u);ctx.quadraticCurveTo(0,-.42*u,.55*u,.12*u);for(let i=4;i>=0;i--){const xx=-.55*u+i*.275*u;ctx.quadraticCurveTo(xx+.137*u,.02*u,xx,.12*u)}ctx.closePath();
+  const g=ctx.createLinearGradient(-.55*u,0,.55*u,0);for(let i=0;i<=6;i++)g.addColorStop(i/6,i%2?'#FFE3A3':'#F49AB8');ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();ctx.arc(0,-.16*u,.03*u,0,7);ctx.fillStyle='#5A4636';ctx.fill();
+  ctx.restore();
+  ctx.restore();
+}
+// ---------- the snake tree: a long friendly snake winding around a trunk ----------
+function drawSnakeTree(){
+  const u=S,now=performance.now()/1000,tx=SNK,w=.75,top=GY-6.6;
+  const seg=[];for(let i=0;i<=140;i++){const s=i/140,th=s*Math.PI*2*3.6+.4,yy=GY-.25-s*5.8,rr2=w*.62;seg.push({x:tx+Math.cos(th)*rr2,y:yy+Math.sin(th)*.12,z:Math.sin(th),r:(.11+.06*Math.sin(Math.min(1,s*1.4)*Math.PI*.9))*(s>.96?.9:1)})}
+  const body=(front)=>{for(let i=1;i<seg.length;i++){const a=seg[i-1],b=seg[i];if((b.z>0)!==front)continue;
+    ctx.beginPath();ctx.moveTo(X(a.x),Y(a.y));ctx.lineTo(X(b.x),Y(b.y));ctx.lineWidth=b.r*2*u;ctx.lineCap='round';ctx.strokeStyle=front?(i%9<5?'#8ED48A':'#A6E09A'):'#5E9E62';ctx.stroke();
+    if(front&&i%9===0){ctx.beginPath();ctx.arc(X(b.x),Y(b.y),b.r*.45*u,0,7);ctx.fillStyle='#F7B5CF';ctx.fill()}}};
+  body(false);
+  ctx.save();ctx.translate(-camX*u,-camY*u);drawJTree(tx,w,top+.6,2.4,mulberry(77),PAL_NEAR);ctx.restore();
+  body(true);
+  // head resting on a branch, looking around, tongue flicking
+  const h=seg[seg.length-1],hx=X(h.x+.35),hy=Y(h.y-.15),look=Math.sin(now*.5)*.4;
+  ctx.beginPath();ctx.moveTo(X(h.x),Y(h.y));ctx.quadraticCurveTo(X(h.x+.2),Y(h.y-.25),hx,hy);ctx.lineWidth=.2*u;ctx.strokeStyle='#8ED48A';ctx.stroke();
+  ctx.save();ctx.translate(hx,hy);ctx.rotate(look*.3);
+  ctx.beginPath();ctx.ellipse(.08*u,0,.22*u,.15*u,0,0,7);radFill(0,-.05*u,.26*u,'#B4EAA8','#7CC47A');
+  if((now%1.6)<.35){ctx.beginPath();ctx.moveTo(.28*u,.03*u);ctx.lineTo(.42*u,.05*u);ctx.lineTo(.47*u,0);ctx.moveTo(.42*u,.05*u);ctx.lineTo(.47*u,.09*u);ctx.lineWidth=.02*u;ctx.strokeStyle='#E8506A';ctx.stroke()}
+  cEye(.04*u,-.08*u,.075*u,.085*u,['#FFE07A','#C9780A'],.5+look,.2,(now%4.1)<.15,true);cEye(.17*u,-.09*u,.065*u,.075*u,['#FFE07A','#C9780A'],.5+look,.2,(now%4.1)<.15,true);
+  ctx.beginPath();ctx.arc(.2*u,.05*u,.06*u,.2,Math.PI-.6);ctx.lineWidth=.015*u;ctx.strokeStyle='#4E8A50';ctx.stroke();
+  ctx.restore();
+}
+// ---------- the giant tree with strange leaves: hearts, stars, squares, triangles, strokes ----------
+const BIGLEAF=[{shape:'heart',col:'#4FD1C5'},{shape:'star',col:'#A97BE8'},{shape:'square',col:'#5E8FF0'},{shape:'tri',col:'#F48FB8'},{shape:'line',col:'#FFD54A'}];
+const BIGBR=[{a:-2.55,l:2.9,y:3.2},{a:-2.0,l:2.6,y:2.4},{a:-1.55,l:2.2,y:1.6},{a:-1.1,l:2.6,y:2.4},{a:-.6,l:2.9,y:3.2}];
+function leafShape(shape,s){
+  ctx.beginPath();
+  if(shape==='heart'){ctx.moveTo(0,s*.35);ctx.bezierCurveTo(-s*1.1,-s*.35,-s*.5,-s*1.1,0,-s*.42);ctx.bezierCurveTo(s*.5,-s*1.1,s*1.1,-s*.35,0,s*.35)}
+  else if(shape==='star'){for(let i=0;i<10;i++){const a=i/10*Math.PI*2-Math.PI/2,r=i%2?s*.42:s;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r)}ctx.closePath()}
+  else if(shape==='square'){ctx.rect(-s*.6,-s*.6,s*1.2,s*1.2)}
+  else if(shape==='tri'){ctx.moveTo(0,-s*.8);ctx.lineTo(s*.75,s*.55);ctx.lineTo(-s*.75,s*.55);ctx.closePath()}
+  else{ctx.rect(-s*.12,-s*.75,s*.24,s*1.5)}
+}
+function drawBigTree(){
+  const u=S,now=performance.now()/1000,x=BIG,top=GY-6.2,w=1.3,R=mulberry(91);
+  // roots and trunk
+  for(const s of[-1,1])for(const k of[.6,1]){ctx.beginPath();ctx.moveTo(X(x+s*w*.35),Y(GY-1.6*k));ctx.quadraticCurveTo(X(x+s*w*.5),Y(GY-.35),X(x+s*w*(.8+k*.9)),Y(GY+.06));ctx.lineTo(X(x+s*w*.1),Y(GY+.06));ctx.closePath();hGradFill(X(x-w*1.5),X(x+w*1.5),'#B49A7A','#6E5640')}
+  ctx.beginPath();ctx.moveTo(X(x-w*.5),Y(GY+.05));ctx.quadraticCurveTo(X(x-w*.4),Y(GY-3),X(x-w*.32),Y(top+.6));ctx.lineTo(X(x+w*.32),Y(top+.6));ctx.quadraticCurveTo(X(x+w*.4),Y(GY-3),X(x+w*.5),Y(GY+.05));ctx.closePath();
+  hGradFill(X(x-w*.55),X(x+w*.55),'#C4A98A','#6E5640');
+  ctx.strokeStyle='rgba(60,40,30,.3)';ctx.lineWidth=Math.max(1,u*.025);for(let i=0;i<5;i++){const xx=x-w*.32+i*w*.16;ctx.beginPath();ctx.moveTo(X(xx),Y(GY));ctx.bezierCurveTo(X(xx+.1),Y(GY-2),X(xx-.1),Y(GY-4),X(xx*.7+x*.3),Y(top+.7));ctx.stroke()}
+  // a friendly knot hole
+  ctx.beginPath();ctx.ellipse(X(x+.15),Y(GY-2.3),.16*u,.24*u,0,0,7);ctx.fillStyle='#4A3628';ctx.fill();
+  // five branches, each with its own kind of leaf
+  BIGBR.forEach((b,i)=>{
+    const L=BIGLEAF[i],bx0=x,by0=top+.8,ex=bx0+Math.cos(b.a)*b.l,ey=by0+Math.sin(b.a)*b.l*.75;
+    ctx.beginPath();ctx.moveTo(X(bx0),Y(by0));ctx.quadraticCurveTo(X((bx0+ex)/2),Y(by0-.1),X(ex),Y(ey));ctx.lineWidth=(.26-i%2*.05)*u;ctx.strokeStyle='#7E6248';ctx.lineCap='round';ctx.stroke();
+    for(let k=0;k<22;k++){const t=.25+R()*.85,px=bx0+(ex-bx0)*t+(R()-.5)*1.1,py=by0+(ey-by0)*t+(R()-.5)*.9-.15,s=(.13+R()*.07)*u,sw=Math.sin(now*1.5+k+i)*.15;
+      ctx.save();ctx.translate(X(px),Y(py));ctx.rotate(R()*.8-.4+sw);leafShape(L.shape,s);
+      const g=ctx.createLinearGradient(0,-s,0,s);g.addColorStop(0,shade(L.col,1.25));g.addColorStop(1,shade(L.col,.85));ctx.fillStyle=g;ctx.fill();ctx.lineWidth=Math.max(1,s*.08);ctx.strokeStyle=shade(L.col,.7);ctx.stroke();ctx.restore()}
+  });
+}
+// ---------- dialogue with real voices (the browser's speech synthesis) and subtitles ----------
+const VOICE={lilly:{pitch:1.35,rate:1},ria:{pitch:1.75,rate:1.06}};
+let voices=[];function loadVoices(){try{voices=speechSynthesis.getVoices()||[]}catch(_){voices=[]}}
+try{loadVoices();speechSynthesis.onvoiceschanged=loadVoices}catch(_){}
+function pickVoice(){const want=lang==='de'?'de':'en';const vs=voices.filter(v=>(v.lang||'').toLowerCase().startsWith(want));
+  return vs.find(v=>/female|frau|anna|petra|helena|katja|marlene|vicki|samantha|karen|google/i.test(v.name))||vs[0]||null}
+function unlockSpeech(){try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}catch(_){}}
+function stopSpeech(){try{speechSynthesis.cancel()}catch(_){}}
+let sayTok=0;
+function say(who,text,cb){
+  const tok=++sayTok,el=$('say');el.className=who;el.textContent=text;el.hidden=false;
+  st.speaker=who;let done=false;
+  const fin=()=>{if(done||tok!==sayTok)return;done=true;st.speaker=null;setTimeout(()=>{if(tok===sayTok){el.hidden=true;cb&&cb()}},280)};
+  const est=1200+text.length*62;
+  try{
+    if(window.speechSynthesis&&!muted()){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text.replace(/[„“"]/g,''));u.lang=lang==='de'?'de-DE':'en-US';
+      const v=pickVoice();if(v)u.voice=v;const V2=VOICE[who]||VOICE.lilly;u.pitch=V2.pitch;u.rate=V2.rate;
+      u.onend=fin;u.onerror=fin;speechSynthesis.speak(u);setTimeout(fin,est+4000);return}
+  }catch(_){}
+  setTimeout(fin,est);
+}
+const MUTE=/[?&]mute\b/.test(location.search);function muted(){return MUTE}
+// a list of [who, text] lines, one after another
+function talk(lines,cb){let i=0;const next=()=>{if(i>=lines.length){cb&&cb();return}const[w,t]=lines[i++];say(w,t,next)};next()}
+
+// ---------- chapter 2 state ----------
+function fresh2(){
+  return{ch:2,mode:'w2',t:0,night:0,parts:[],banner:{text:T.c2T,sub:T.c2Sub,t:2.6,max:2.6},runT:0,paused:false,camp:false,eggs:3,egg:null,eyes:0,gate:0,
+    blue:{x:-99,y:0,f:1,flap:0,sit:true},lilly:{x:1,f:1,ph:0,moving:false,depth:0,pack:true},
+    flags:{},limit:NT-.6,dwarf:{x:43.5,f:1,ph:0},ria:null,pack:null,cap:null,
+    honey:[]};
+}
+function c2Hint(){const F=st.flags;if(st.mode!=='w2')return;if(!F.reveal)hint(T.h2Walk);else if(!F.arrive)hint(T.h2Tree);else hint(T.h2Ria,Math.abs(st.lilly.x-RIAX)<3)}
+function cap2(txt){st.cap=txt}
+function updW2(dt){
+  const L=st.lilly,F=st.flags,dx=dirX();
+  L.moving=dx!==0;if(dx)L.f=dx>0?1:-1;
+  L.x=clamp(L.x+dx*WALK*dt,.2,st.limit);L.ph+=dt*11.5*Math.abs(dx);
+  st.runT+=dt;
+  if(!F.think&&L.x>=NT-.65){F.think=true;st.mode='think';st.t=0;setUI('cine2');L.moving=false;L.f=1;
+    talk([['lilly',T.l2think]],()=>{st.mode='w2';st.limit=CL0+.4;setUI('play');c2Hint()})}
+  else if(!F.reveal&&L.x>=CL0){F.reveal=true;st.mode='reveal';st.t=0;st.panFrom=camX;setUI('cine2');L.moving=false}
+  else if(F.reveal&&!F.arrive&&L.x>=PACKX+.35){F.arrive=true;st.mode='arrive';st.t=0;setUI('cine2');L.moving=false;L.f=1}
+  else if(F.riaHere&&Math.abs(L.x-RIAX)<1.75){st.mode='talk';st.t=0;setUI('cine2');L.moving=false;L.f=1;st.ria.f=-1;
+    talk([['lilly',T.l2a],['ria',T.r2a],['lilly',T.l2b],['ria',T.r2b],['lilly',T.l2c],['ria',T.r2c],['lilly',T.l2d],['ria',T.r2d]],()=>{st.mode='push';st.t=0})}
+  c2Hint();
+}
+function updReveal(dt){
+  const t=st.t;
+  // the camera glides over the clearing and back; Ria peeks out of a cloud (Lilly doesn't notice)
+  if(t<.1)cap2(T.c2cap[0]);
+  if(t>1&&!st.flags.wow){st.flags.wow=true;say('lilly',T.l2wow)}
+  if(t>3.2)cap2(T.c2cap[1]);
+  if(t>6.2)cap2(T.c2cap[2]);
+  if(t>9.2){st.cap=null;st.mode='w2';st.limit=PACKX+.4;setUI('play');c2Hint()}
+}
+function revealCam(){const t=st.t,far=BIG+2-VW*.5,k=t<4.6?ease(t/4):1-ease((t-6.6)/2.4);return lerp(st.panFrom,far,k)}
+function peek(){if(st.mode!=='reveal')return 0;const t=st.t;return t>5.4&&t<7.4?Math.sin(clamp((t-5.4)/2,0,1)*Math.PI):0}
+function updArrive(dt){
+  const t=st.t,L=st.lilly;
+  if(t<.1)cap2(null);
+  // she puts her backpack down and looks up at the strange tree
+  if(t>.4&&L.pack){L.pack=false;st.pack={x:PACKX-.35,y:GY+.38,rot:-.1}}
+  if(t>.9&&!st.flags.ooh){st.flags.ooh=true;say('lilly',T.l2ooh)}
+  // Ria surfs in on her cloud
+  if(t>3.2&&!st.ria){st.ria={x:C2W+3,y:1.2,f:-1,cloud:true,t:0};cap2(T.c2cap[3])}
+  if(st.ria&&!st.flags.riaHere){const r=st.ria;r.t+=dt;const k=ease(r.t/3.2),p=bez({x:C2W+3,y:1.2},{x:BIG+2,y:1},{x:RIAX+.4,y:GY-.55},k);r.x=p.x;r.y=p.y;
+    if(k>=1){st.flags.riaHere=true;cap2(null);st.mode='w2';st.limit=RIAX-1.2;setUI('play');c2Hint()}}
+}
+function updPush(dt){
+  const t=st.t,L=st.lilly,r=st.ria;
+  // Ria hops off her cloud and gives Lilly a push onto a second cloud; her backpack flies after her
+  if(!st.cloud2)st.cloud2={x:L.x+1.6,y:GY-.5};
+  if(t<.6){r.cloud=true}else if(t<1.2){r.cloud=false;r.y=GY+.38;r.x=lerp(RIAX+.4,L.x+.55,ease((t-.6)/.6));r.pose='push'}
+  if(t>1.2&&!st.flags.pushed){st.flags.pushed=true;popText(L.x,GY-2,T.hopp);st.fall={x0:L.x,t:0}}
+  if(st.fall){const k=clamp((t-1.2)/.8,0,1);L.x=lerp(st.fall.x0,st.cloud2.x,k);L.air=-Math.sin(k*Math.PI)*1.2-k*.35;L.spin=k<1?k*Math.PI*2:0}
+  if(t>1.5&&st.pack&&!st.pack.fly)st.pack.fly={x0:st.pack.x,t:0};
+  if(st.pack&&st.pack.fly){const k=clamp((t-1.5)/.9,0,1);st.pack.x=lerp(st.pack.fly.x0,st.cloud2.x,k);st.pack.y=GY+.38-Math.sin(k*Math.PI)*1.6-k*.85;if(k>=1){st.pack=null;L.pack=true}}
+  if(t>2.6&&!st.flags.toFly){st.flags.toFly=true;fadeTo(startFly,500)}
+}
+// ---------- the cloud flight ----------
+function groundY(x){if(x<31)return GY-1.2+Math.sin(x*1.3)*.25+Math.sin(x*3.1)*.12;if(x<33)return GY-.4;if(x<60)return GY-.15;if(x<62)return GY-.4;return GY-.5-Math.sin((x-62)*.35)*.35}
+const RIAPATH=[[4,5.6],[11,4.2],[18,5.4],[25,4.6],[31,6.8],[35,GY-.75],[43,GY-.75],[47,6.4],[53,4.6],[60,5.4],[67,4.4],[74,5.2],[80,6.2],[HOUSEX-1.4,GY-1.25]];
+function startFly(){
+  st.mode='fly';st.t=0;st.cap=null;st.fly=true;
+  st.lilly={x:2,y:5.4,vx:0,vy:0,f:1,ph:0,pack:true};st.ria={x:4.5,y:5,f:1,wp:1,cloud:true,pose:'surf'};st.flags.flyStart=false;
+  st.shield=1;st.family=true;
+  setUI('play');st.banner=null;moveCam(0,true);
+  setTimeout(()=>{if(st&&st.mode==='fly')say('ria',T.r2fly)},700);
+}
+function updFly(dt){
+  const L=st.lilly,r=st.ria,F=st.flags;
+  let ix=(keys.r?1:0)-(keys.l?1:0)+joy.x,iy=(keys.d?1:0)-(keys.u?1:0)+joy.y;const n=Math.hypot(ix,iy);if(n>1){ix/=n;iy/=n}if(n<.12){ix=iy=0}
+  const SP=3.4;L.vx+=(ix*SP-L.vx)*Math.min(1,dt*3);L.vy+=(iy*SP-L.vy)*Math.min(1,dt*3);
+  L.x+=L.vx*dt;L.y+=L.vy*dt;if(Math.abs(L.vx)>.2)L.f=L.vx>0?1:-1;
+  L.x=clamp(L.x,0,FW-1);L.y=clamp(L.y,.4,groundY(L.x)-.55);
+  if(L.x>32&&L.x<60&&L.y>groundY(L.x)-.62&&Math.random()<dt*14)splash(L.x,GY-.1);
+  // Ria flies her route ahead and waits if you fall behind
+  const wp=RIAPATH[Math.min(r.wp,RIAPATH.length-1)],dx=wp[0]-r.x,dy=wp[1]-r.y,d=Math.hypot(dx,dy),gap=r.x-L.x;
+  const sp=gap>4.2?.3:gap>2.6?2.2:3.1;
+  if(d<.25){if(r.wp<RIAPATH.length-1)r.wp++}else{r.x+=dx/d*sp*dt;r.y+=dy/d*sp*dt*1.1;r.f=dx>=0?1:-1}
+  if(gap>4.2&&!F.wait){F.wait=true;popText(r.x,r.y-2,T.komm,'#FFFFFF','#B4428A')}if(gap<3)F.wait=false;
+  if(r.x>34&&r.x<44&&r.y>GY-.9&&Math.random()<dt*18)splash(r.x,GY-.1);
+  if(r.x>35&&!F.skim){F.skim=true;say('ria',T.r2skim)}
+  st.dusk=clamp((r.x-48)/26,0,1);
+  if(r.x>50&&!F.dusk){F.dusk=true;talk([['ria',T.r2dusk],['lilly',T.l2sleep],['ria',T.r2yes]])}
+  if(r.x>76&&!F.near&&F.dusk){F.near=true;say('ria',T.r2house)}
+  // the shield: only lets you in right behind Ria
+  const sc={x:HOUSEX,y:GY-1.6},sr=3.9,ds=Math.hypot(L.x-sc.x,L.y-sc.y),close=Math.hypot(L.x-r.x,L.y-r.y)<2.3;
+  if(st.shield>0&&ds<sr&&!(close&&r.wp>=RIAPATH.length-1)){const a=Math.atan2(L.y-sc.y,L.x-sc.x);L.x=sc.x+Math.cos(a)*sr;L.y=sc.y+Math.sin(a)*sr;L.vx=Math.cos(a)*3;L.vy=Math.sin(a)*3;
+    if(!F.bzz||st.t-F.bzz>1.2){F.bzz=st.t;popText(L.x,L.y-1.6,T.bzz,'#FFFFFF','#5E7FB0');st.shieldHit=1}}
+  if(st.shieldHit)st.shieldHit=Math.max(0,st.shieldHit-dt*2);
+  const atDoor=r.wp>=RIAPATH.length-1&&Math.hypot(r.x-RIAPATH[RIAPATH.length-1][0],r.y-RIAPATH[RIAPATH.length-1][1])<.4;
+  if(atDoor&&close&&!F.home){F.home=true;st.mode='home';st.t=0;setUI('cine2')}
+  hint(st.shieldHit?T.h2shield:T.h2fly,!!st.shieldHit);
+  st.runT+=dt;
+}
+function updHome(dt){
+  const t=st.t,L=st.lilly,r=st.ria;
+  st.shield=Math.max(0,1-t/1.2);
+  // both clouds glide down in front of the house; the family waves
+  const tx=HOUSEX-2.2,ty=GY-.85;L.x+=(tx-L.x)*Math.min(1,dt*1.5);L.y+=(ty-L.y)*Math.min(1,dt*1.5);L.f=1;
+  r.x+=(HOUSEX-.9-r.x)*Math.min(1,dt*1.5);r.y+=(ty-r.y)*Math.min(1,dt*1.5);r.f=-1;
+  if(t>1.4&&!st.flags.hello){st.flags.hello=true;talk([['ria',T.r2family],['lilly',T.l2hello]],()=>{st.flags.done=true;st.doneT=st.t})}
+  if(st.flags.done&&t-st.doneT>1.2&&!st.won){st.won=true;showCard('win2')}
+}
+function splash(x,y){for(let i=0;i<2;i++)st.parts.push({type:'drop',x:x+rnd(-.2,.2),y,vx:rnd(-1,1),vy:rnd(-3,-1.5),t:0,life:.6,c:'#BFE8FF'})}
+function update2(dt){
+  const D=st.dwarf;D.x=43.5+Math.sin(st.runT*.22+st.t*.0)*1.9;const dv=Math.cos(st.runT*.22);D.f=dv>=0?1:-1;D.ph+=dt*7;
+  if(!st.fly){if(Math.random()<dt*22)st.honey.push({x:D.x+D.f*.2+rnd(-.75,.75),y:GY-3.1,vy:rnd(2.5,3.4)});
+    for(const h of st.honey){h.y+=h.vy*dt;h.vy+=6*dt}st.honey=st.honey.filter(h=>{const ux=D.x+D.f*.2;const hitU=Math.abs(h.x-ux)<.5&&h.y>GY-1.62&&h.y<GY-1.4;if(hitU||h.y>GY+.1){st.parts.push({type:'drop',x:h.x,y:Math.min(h.y,GY),vx:rnd(-.6,.6),vy:-1,t:0,life:.35,c:'#F7B733'});return false}return true})}
+  if(st.mode!=='reveal')st.runT+=0;
+  if(st.mode==='w2')updW2(dt);
+  else if(st.mode==='reveal')updReveal(dt);
+  else if(st.mode==='arrive')updArrive(dt);
+  else if(st.mode==='push')updPush(dt);
+  else if(st.mode==='fly')updFly(dt);
+  else if(st.mode==='home')updHome(dt);
+  st.runT+=dt*.5;
+}
+// ---------- drawing chapter 2 ----------
+const SKYCLOUDS=[{x:24,y:1.8,w:2.4,c:['#FFD6E8','#F7A8CC']},{x:31,y:2.6,w:2,c:['#D6E8FF','#A8C8F7'],peek:true},{x:38,y:1.4,w:2.8,c:['#F3DDFF','#C9A8F0']},{x:45,y:2.2,w:2.2,c:['#FFD6E8','#F7A8CC']},{x:43.5,y:GY-3.4,w:1.3,c:['#FFE9B0','#F5C04A'],honey:true}];
+const C2BF=[{x:26,y:GY-1.6,c:'#F7A8CC'},{x:30,y:GY-2.4,c:'#E8506A'},{x:33,y:GY-1.2,c:'#F7A8CC'},{x:38,y:GY-2.1,c:'#E8506A'},{x:41,y:GY-1.4,c:'#FF8FB8'},{x:36,y:GY-3.2,c:'#E8506A'},{x:29,y:GY-1,c:'#FF8FB8'}];
+function drawSky2(){
+  const cx=camX+VW/2,mag=clamp((cx-CL0+3)/6,0,1);
+  let g=ctx.createLinearGradient(0,0,0,groundPx);g.addColorStop(0,'#DCEBDD');g.addColorStop(1,'#A9CDB6');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  if(mag>0){ctx.save();ctx.globalAlpha=mag;g=ctx.createLinearGradient(0,0,0,groundPx);g.addColorStop(0,'#FFE1F0');g.addColorStop(.6,'#E3EEFF');g.addColorStop(1,'#D8F2E2');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore()}
+}
+function draw2(){
+  if(st.fly){drawFly();return}
+  const cx=camX+VW/2,mag=clamp((cx-CL0+3)/6,0,1);
+  drawSky2();
+  drawRays();drawLayers();
+  // cotton-candy clouds high above the clearing
+  for(const c of SKYCLOUDS){if(c.honey)continue;
+    if(c.peek&&peek()>0){const p=peek(),P=FAUNS.ria;drawFaun(X(c.x+.1),Y(c.y-.05+(1-p)*.55),S*.9,-1,0,P,{noShadow:true,lookY:.6,lookX:-.4})}
+    drawCandy(c.x,c.y,c.w,c.c[0],c.c[1],{alpha:mag})}
+  drawSnakeTree();drawBigTree();
+  // the dwarf under his honey cloud
+  const D=st.dwarf;drawDwarf(X(D.x),Y(GY+.3),S*1.2,D.f,D.ph);
+  const hc=SKYCLOUDS[4];drawCandy(D.x+D.f*.2,hc.y,hc.w,hc.c[0],hc.c[1]);
+  ctx.fillStyle='#F5B230';for(const h of st.honey){ctx.beginPath();ctx.ellipse(X(h.x),Y(h.y),.035*S,.06*S,0,0,7);ctx.fill()}
+  // the eyes along the path: they open when Lilly comes near and follow her
+  const L=st.lilly,now=performance.now()/1000;
+  for(const e of EYES){const d=Math.abs(e.x-L.x),op=clamp((6-d)/2,0,1);if(op<=0)continue;const bl=((now+e.ph)%(2.6+e.ph%2))<.16;if(bl)continue;
+    const lx=clamp((L.x-e.x)/4,-1,1),s=e.s;
+    for(const k of[-1,1]){const x=X(e.x+k*.09*s),y=Y(e.y);ctx.save();ctx.globalAlpha=op;
+      const g=ctx.createRadialGradient(x,y,0,x,y,.14*S*s);g.addColorStop(0,'rgba(255,250,200,.6)');g.addColorStop(1,'rgba(255,250,200,0)');ctx.fillStyle=g;ctx.fillRect(x-.14*S*s,y-.14*S*s,.28*S*s,.28*S*s);
+      ctx.beginPath();ctx.ellipse(x,y,.065*S*s,.045*S*s,k*.2,0,7);ctx.fillStyle=e.col;ctx.fill();
+      ctx.beginPath();ctx.ellipse(x+lx*.03*S*s,y,.018*S*s,.035*S*s,0,0,7);ctx.fillStyle='#1A1410';ctx.fill();ctx.restore()}}
+  // butterflies (pink and red) in the clearing
+  for(const [i,b]of C2BF.entries()){const x=X(b.x+Math.sin(now*.6+i)*1.2),y=Y(b.y+Math.sin(now*1.4+i*2)*.4),fl=Math.abs(Math.sin(now*13+i)),u=S*1.2;
+    ctx.save();ctx.translate(x,y);ctx.rotate(Math.cos(now*.6+i)*.3);
+    for(const s of[-1,1]){ctx.save();ctx.scale(s*(.25+fl*.75),1);ctx.beginPath();ctx.ellipse(.07*u,-.05*u,.08*u,.06*u,-.5,0,7);ctx.fillStyle=b.c;ctx.fill();ctx.beginPath();ctx.ellipse(.06*u,.04*u,.05*u,.04*u,.4,0,7);ctx.fillStyle=shade(b.c,.85);ctx.fill();ctx.restore()}
+    ctx.fillStyle='#4A3A4A';ctx.fillRect(-.008*u,-.06*u,.016*u,.12*u);ctx.restore()}
+  // the backpack on the ground (or flying onto the cloud)
+  if(st.pack){ctx.save();ctx.translate(X(st.pack.x),Y(st.pack.y));ctx.rotate(st.pack.rot||0);drawPack(S,0,0,true);ctx.restore()}
+  // Ria on her cloud / standing
+  const r=st.ria;
+  if(r){if(r.cloud){drawCandy(r.x,r.y,1.7,'#FFD6E8','#F7A8CC')}
+    const fy=r.cloud?r.y-.38:r.y;drawFaun(X(r.x),Y(fy),S,r.f,st.t*8,FAUNS.ria,{pose:r.cloud?'surf':(r.pose||null),talk:st.speaker==='ria'})}
+  if(st.cloud2)drawCandy(st.cloud2.x,st.cloud2.y+Math.sin(now*2)*.05,1.9,'#D6E8FF','#A8C8F7');
+  // Lilly
+  ctx.save();
+  if(L.spin){ctx.translate(X(L.x),Y(GY+.38+(L.air||0))-S*.8);ctx.rotate(L.spin);ctx.translate(-X(L.x),-(Y(GY+.38+(L.air||0))-S*.8))}
+  drawLilly(X(L.x),Y(GY+.38+(L.air||0)),S,L.f,L.ph,{moving:L.moving,noPack:!L.pack,lookY:st.mode==='arrive'?-.7:0,talk:st.speaker==='lilly'});
+  ctx.restore();
+  drawParts();
+  drawFg();
+  // the dark path: dimmer and a bit eerie until the clearing
+  const dk=clamp((CL0+1-cx)/5,0,1)*.42;
+  if(dk>0){ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=dk;ctx.fillStyle='#5E6E86';ctx.fillRect(0,0,W,H);ctx.restore()}
+  if(st.banner)drawBanner();
+}
+function drawHouse(){
+  const u=S,x=HOUSEX,base=GY-.5,now=performance.now()/1000,dusk=st.dusk||0;
+  const hx=X(x),hy=Y(base);
+  // body with a jagged crown, three towers with pointed spires
+  const body=()=>{ctx.beginPath();ctx.moveTo(hx-1.6*u,hy);ctx.lineTo(hx-1.6*u,hy-1.9*u);for(let i=0;i<=8;i++)ctx.lineTo(hx-1.6*u+i*.4*u,hy-(i%2?2.25:1.9)*u);ctx.lineTo(hx+1.6*u,hy);ctx.closePath()};
+  body();gradFill(hy-2.3*u,hy,'#E7D2F7','#B79AD8');
+  for(const[dx,w,h]of[[-1.75,.62,3.2],[0,.85,4.1],[1.75,.62,3.2]]){
+    const tx=hx+dx*u;rr(tx-w/2*u,hy-h*u,w*u,h*u,.06*u);hGradFill(tx-w/2*u,tx+w/2*u,'#F1E2FA','#B79AD8');
+    ctx.beginPath();ctx.moveTo(tx-w*.62*u,hy-h*u);ctx.lineTo(tx,hy-(h+1.1+(dx===0?.4:0))*u);ctx.lineTo(tx+w*.62*u,hy-h*u);ctx.closePath();hGradFill(tx-w*.6*u,tx+w*.6*u,'#FFB3D4','#D9709D');
+    ctx.beginPath();ctx.arc(tx,hy-(h+1.12+(dx===0?.4:0))*u,.07*u,0,7);ctx.fillStyle='#FFD54A';ctx.fill();
+    for(let k=0;k<4;k++){ctx.beginPath();ctx.moveTo(tx-w*.5*u+k*w*.33*u,hy-h*u);ctx.lineTo(tx-w*.34*u+k*w*.33*u,hy-(h+.22)*u);ctx.lineTo(tx-w*.18*u+k*w*.33*u,hy-h*u);ctx.fillStyle='#D9709D';ctx.fill()}
+    const wy=hy-h*.62*u;ctx.beginPath();ctx.arc(tx,wy,.15*u,0,7);ctx.fillStyle=dusk>.3?'#FFE28A':'#BFE3F7';ctx.fill();ctx.lineWidth=.04*u;ctx.strokeStyle='#8E6EB8';ctx.stroke();
+    if(dusk>.3){ctx.save();ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(tx,wy,0,tx,wy,.6*u);g.addColorStop(0,`rgba(255,220,120,${.5*dusk})`);g.addColorStop(1,'rgba(255,220,120,0)');ctx.fillStyle=g;ctx.fillRect(tx-.6*u,wy-.6*u,1.2*u,1.2*u);ctx.restore()}
+  }
+  // door
+  ctx.beginPath();ctx.moveTo(hx-.38*u,hy);ctx.lineTo(hx-.38*u,hy-.8*u);ctx.arc(hx,hy-.8*u,.38*u,Math.PI,0);ctx.lineTo(hx+.38*u,hy);ctx.closePath();gradFill(hy-1.2*u,hy,'#A0704E','#6E4A30');
+  ctx.beginPath();ctx.arc(hx+.22*u,hy-.5*u,.04*u,0,7);ctx.fillStyle='#FFD54A';ctx.fill();
+  // the family in front of the door, waving
+  if(st.family){const fam=[['papa',-2.5],['mama',-1.7],['sis',1.6],['bro',2.3]];for(const[k,dx]of fam)drawFaun(X(x+dx),hy,S,dx<0?1:-1,0,FAUNS[k],{pose:st.mode==='home'||dusk>.6?'wave':null})}
+}
+function drawShield(){
+  if(!(st.shield>0))return;
+  const u=S,cx=X(HOUSEX),cy=Y(GY-1.6),r=3.9*u,now=performance.now()/1000,a=st.shield*(.55+.25*(st.shieldHit||0));
+  ctx.save();ctx.globalAlpha=a;
+  const g=ctx.createRadialGradient(cx,cy,r*.6,cx,cy,r);g.addColorStop(0,'rgba(180,230,255,0)');g.addColorStop(.85,'rgba(170,215,255,.22)');g.addColorStop(1,'rgba(200,170,255,.55)');
+  ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,0);ctx.lineTo(cx+r,Y(GY-.5));ctx.lineTo(cx-r,Y(GY-.5));ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  ctx.lineWidth=Math.max(1.5,u*.05);ctx.strokeStyle=`rgba(220,200,255,${.6+.3*Math.sin(now*3)})`;ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,0);ctx.stroke();
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,0);ctx.clip();ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=1;
+  for(let i=-6;i<=6;i++){ctx.beginPath();ctx.moveTo(cx+i*r*.18+Math.sin(now+i)*4,cy-r);ctx.lineTo(cx+i*r*.18-r*.3,cy+r);ctx.stroke()}ctx.restore();
+  ctx.restore();
+}
+function drawFly(){
+  const u=S,now=performance.now()/1000,dusk=st.dusk||0;
+  // sky from day to a soft pink-violet evening
+  let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#CDE9FF');g.addColorStop(.7,'#FFE6F2');g.addColorStop(1,'#FFF3DE');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  if(dusk>0){ctx.save();ctx.globalAlpha=dusk;g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#5E5A9E');g.addColorStop(.6,'#E58AB0');g.addColorStop(1,'#FFC48A');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore()}
+  // sun going down, first stars
+  const sx=W*.78,sy=lerp(H*.12,H*.55,dusk);ctx.beginPath();ctx.arc(sx,sy,Math.min(W,H)*.05,0,7);ctx.fillStyle=dusk>.2?'#FFD08A':'#FFF6D0';ctx.fill();
+  if(dusk>.4){ctx.fillStyle=`rgba(255,255,255,${dusk-.4})`;for(let i=0;i<30;i++){const x=(i*97%100)/100*W,y=(i*53%40)/100*H;ctx.fillRect(x,y,2,2)}}
+  // far hills (slow) and cotton candy clouds (middle distance)
+  ctx.beginPath();ctx.moveTo(0,H);for(let sx2=0;sx2<=W+10;sx2+=10){const wx=sx2/S+camX*.25;ctx.lineTo(sx2,(GY-3.2+Math.sin(wx*.45)*.7+Math.sin(wx*1.3)*.25-camY*.55)*S)}ctx.lineTo(W,H);ctx.closePath();ctx.fillStyle=dusk>.5?'#9A90C4':'#B8D8C8';ctx.fill();
+  for(let i=0;i<40;i++){const wx=i*3.1+((i*37)%7)*.3,px=(wx-camX*.5)*S;if(px<-3*S||px>W+3*S)continue;const wy=.6+((i*29)%6)*.75,py=(wy-camY*.5)*S,c2=i%3===0?['#FFD6E8','#F7A8CC']:i%3===1?['#D6E8FF','#A8C8F7']:['#F3DDFF','#C9A8F0'];
+    candyPx(px,py,(1.1+(i%4)*.45)*S,c2[0],c2[1],.8)}
+  // the ground below: forest canopy, beach, the sea, meadows with blue flowers
+  ctx.beginPath();ctx.moveTo(X(-2),H*2);for(let x=-2;x<=FW+2;x+=.25)ctx.lineTo(X(x),Y(x>=32&&x<=60?GY-.15:groundY(x)));ctx.lineTo(X(FW+2),H*2);ctx.closePath();ctx.fillStyle='#5E9E62';ctx.fill();
+  for(let x=-2;x<31;x+=.55){const y=groundY(x);ctx.beginPath();ctx.arc(X(x),Y(y+.25),(.45+Math.sin(x*7)*.12)*u,0,7);ctx.fillStyle=x*7%2<1?'#3F8A58':'#4E9A62';ctx.fill();ctx.beginPath();ctx.arc(X(x-.1),Y(y+.1),(.25)*u,0,7);ctx.fillStyle='#68AE6E';ctx.fill()}
+  ctx.beginPath();ctx.moveTo(X(30.5),Y(GY-.3));ctx.lineTo(X(33),Y(GY-.1));ctx.lineTo(X(33),H*2);ctx.lineTo(X(30.5),H*2);ctx.closePath();ctx.fillStyle='#F2DFB0';ctx.fill();
+  ctx.beginPath();ctx.moveTo(X(59.5),Y(GY-.1));ctx.lineTo(X(62),Y(GY-.45));ctx.lineTo(X(62),H*2);ctx.lineTo(X(59.5),H*2);ctx.closePath();ctx.fillStyle='#F2DFB0';ctx.fill();
+  g=ctx.createLinearGradient(0,Y(GY-.15),0,Y(GY+3));g.addColorStop(0,dusk>.5?'#7FA8D8':'#7FD3E8');g.addColorStop(1,'#3E7FB8');
+  ctx.beginPath();ctx.moveTo(X(33),Y(GY-.15));for(let x=33;x<=59.5;x+=.2)ctx.lineTo(X(x),Y(GY-.15+Math.sin(x*3+now*2)*.05));ctx.lineTo(X(59.5),H*2);ctx.lineTo(X(33),H*2);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=Math.max(1,u*.025);for(let i=0;i<40;i++){const x=33.5+((i*7.3)%26),y=GY+.1+((i*3.7)%2.2),o=Math.sin(now*1.5+i)*.15;ctx.beginPath();ctx.moveTo(X(x+o),Y(y));ctx.quadraticCurveTo(X(x+o+.15),Y(y-.06),X(x+o+.3),Y(y));ctx.stroke()}
+  for(let x=62;x<FW+2;x+=.18){const y=groundY(x);if((x*13)%1<.45)drawFlowerW(x,y,.22,(x*7)%1<.8?'#6FA8F0':'#F7A8D0')}
+  drawHouse();
+  drawShield();
+  // Ria and Lilly on their clouds
+  const r=st.ria,L=st.lilly;
+  drawCandy(r.x,r.y,1.7,'#FFD6E8','#F7A8CC');drawFaun(X(r.x),Y(r.y-.38),S,r.f,0,FAUNS.ria,{pose:'surf',talk:st.speaker==='ria',noShadow:true});
+  drawCandy(L.x,L.y,1.9,'#D6E8FF','#A8C8F7');drawLilly(X(L.x),Y(L.y-.4),S,L.f,0,{armsOut:true,talk:st.speaker==='lilly'});
+  drawParts();
+  // where is Ria? an arrow at the screen edge when she's out of sight
+  const rx=X(r.x),ry=Y(r.y);if(rx<0||rx>W||ry<0||ry>H){const ax=clamp(rx,30,W-30),ay=clamp(ry,safe.t+70,groundPx-30),a=Math.atan2(ry-ay,rx-ax);
+    ctx.save();ctx.translate(ax,ay);ctx.rotate(a);ctx.beginPath();ctx.moveTo(16,0);ctx.lineTo(-8,-11);ctx.lineTo(-8,11);ctx.closePath();ctx.fillStyle='#FFD54A';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#8A5A00';ctx.stroke();ctx.restore()}
+  if(st.banner)drawBanner();
+}
+function drawFlowerW(x,y,s,c){drawFlower(x,y,s,c)}
+
 // ---------- state ----------
 let st=null,last=performance.now();
 function fresh(mode){return{mode,t:0,night:1,parts:[],banner:null,camp:true,eggs:3,egg:null,awake:false,eyes:0,gate:0,
@@ -959,19 +1435,20 @@ function joyMove(e){const r=JR();let dx=(e.clientX-joy.bx)/r,dy=(e.clientY-joy.b
 const KMAP={ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r',ArrowUp:'u',w:'u',ArrowDown:'d',s:'d'};
 addEventListener('keydown',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(!st)return;
-  if(KMAP[k]&&st.mode==='play'){keys[KMAP[k]]=1;e.preventDefault()}
+  if(KMAP[k]&&isPlay()){keys[KMAP[k]]=1;e.preventDefault()}
   if((k===' '||k==='Enter')&&$('howOv').hidden&&$('sheetOv').hidden){
     if(st.mode==='egg'){e.preventDefault();giveBack()}
     else if(st.mode==='play'&&nearGate()){e.preventDefault();openGate()}
   }
-  if((k==='Escape'||k==='p')){if(st.paused)resume();else if(st.mode==='play')pause()}
+  if((k==='Escape'||k==='p')){if(st.paused)resume();else if(isPlay())pause()}
 });
 addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(KMAP[k])keys[KMAP[k]]=0});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=0;joyReset()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&st&&st.mode==='play')pause();last=performance.now()});
+const isPlay=()=>st&&(st.mode==='play'||st.mode==='w2'||st.mode==='fly');
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&isPlay())pause();last=performance.now()});
 // tap the gate itself to open it
 cv.addEventListener('pointerdown',e=>{
-  if(!st||st.mode!=='play'||st.paused)return;
+  if(!st||st.ch===2||st.mode!=='play'||st.paused)return;
   const r=cv.getBoundingClientRect(),wx=camX+(e.clientX-r.left)/S,wy=camY+(e.clientY-r.top)/S,g=gateRect();
   if(wx<g.x0||wx>g.x1||wy<g.y0||wy>g.y1)return;
   if(nearGate())openGate();else popText(GX,GY-3,T.closer,'#FFFFFF','#5E7FB0');
@@ -1059,6 +1536,7 @@ function updGate(dt){
 function update(dt){
   st.t+=dt;st.blue.flap+=dt*14;
   if(st.banner){st.banner.t-=dt;if(st.banner.t<=0)st.banner=null}
+  if(st.ch===2){update2(dt);updParts(dt);return}
   if(st.mode==='menu'||st.mode==='intro')updIntro(dt);
   else if(st.mode==='egg'){const e=st.egg;e.t+=dt}
   else if(st.mode==='give')updGive(dt);
@@ -1072,6 +1550,7 @@ function hint(txt,hot){const h=$('hint');if(!txt){h.hidden=true;hintTxt=null;ret
 // ---------- draw ----------
 function draw(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(st.ch===2){draw2();return}
   drawSky();drawRays();drawLayers();
   // the nest and the parrots
   const egg=st.egg,wob=egg&&egg.state==='wobble'?1:0;
@@ -1112,6 +1591,7 @@ function loop(now){
 function captions(){
   const c=$('caption');
   let i=-1;
+  if(st.ch===2){const txt=st.cap||'';if(txt!==capIdx){capIdx=txt;c.style.opacity=0;setTimeout(()=>{c.textContent=txt;c.style.opacity=txt?1:0},txt?250:0)}return}
   if(st.mode==='intro')i=st.t<2.6?0:st.t<4.9?1:2;
   else if(st.mode==='egg')i=3;
   else if(st.mode==='give')i=st.t<4.6?-1:st.t<6.3?4:5;
@@ -1119,7 +1599,7 @@ function captions(){
 }
 function setUI(mode){
   $('menu').hidden=mode!=='menu';
-  const cine=mode==='intro';$('cine').hidden=!cine;if(cine){$('handBtn').hidden=true;$('cine').classList.remove('ask')}
+  const cine=mode==='intro'||mode==='cine2';$('cine').hidden=!cine;$('skipBtn').hidden=mode==='cine2';if(cine){$('handBtn').hidden=true;$('cine').classList.remove('ask')}
   $('ctrl').classList.toggle('off',mode!=='play');$('pauseBtn').hidden=mode!=='play';
   if(mode!=='play')hint(null);
   if(mode!=='sheet'){$('sheetOv').hidden=true;card=null;cv.classList.remove('dim')}
@@ -1130,14 +1610,21 @@ function fadeTo(cb,hold){
   const f=$('fade');f.classList.add('on');
   setTimeout(()=>{cb();requestAnimationFrame(()=>requestAnimationFrame(()=>f.classList.remove('on')))},hold||360);
 }
-function begin(){
+function setChapter(c){if(CH===c)return;CH=c;buildLayers();setupFg()}
+function begin(ch){
+  ch=ch===2?2:1;unlockSpeech();stopSpeech();
   try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(_){}
-  fadeTo(()=>{st=fresh('intro');capIdx=-1;setUI('intro');moveCam(0,true)});
+  fadeTo(()=>{setChapter(ch);$('say').hidden=true;
+    if(ch===2){st=fresh2();capIdx=-1;setUI('play');moveCam(0,true);c2Hint();return}
+    st=fresh('intro');capIdx=-1;setUI('intro');moveCam(0,true)});
 }
-function showMenu(){st=fresh('menu');setUI('menu');moveCam(0,true)}
+function showMenu(){stopSpeech();$('say').hidden=true;setChapter(1);st=fresh('menu');setUI('menu');moveCam(0,true);paintChapters()}
 function toMenu(){fadeTo(showMenu)}
-function pause(){if(!st||st.paused)return;st.paused=true;showCard('pause')}
-function resume(){if(!st)return;st.paused=false;last=performance.now();setUI('play')}
+function pause(){if(!st||st.paused)return;st.paused=true;try{speechSynthesis.pause()}catch(_){}showCard('pause')}
+function resume(){if(!st)return;st.paused=false;try{speechSynthesis.resume()}catch(_){}last=performance.now();setUI('play');if(st.ch===2&&st.mode==='w2')c2Hint()}
+let pickCh=1;
+function paintChapters(){const box=$('chs');if(!box.children.length)[1,2].forEach(c=>{const b=document.createElement('button');b.type='button';b.className='medal glass';b.textContent=c;b.addEventListener('click',()=>{pickCh=c;paintChapters()});box.append(b)});
+  [...box.children].forEach((b,i)=>b.setAttribute('aria-pressed',i+1===pickCh));$('lvlLbl').textContent=T.chName[pickCh-1]}
 function act(icon,label,fn,main){
   const b=document.createElement('button');b.type='button';b.className='act'+(main?' main':'');
   b.innerHTML='<span class="glass round">'+ICON[icon]+'</span>';const s=document.createElement('span');s.textContent=label;b.append(s);
@@ -1145,16 +1632,18 @@ function act(icon,label,fn,main){
 }
 function showCard(kind){
   setUI('sheet');card={kind};cv.classList.toggle('dim',kind!=='win');
-  $('sTitle').textContent=kind==='win'?T.winT:T.pause;
-  const text=kind==='win'?T.winP:'';$('sText').textContent=text;$('sText').hidden=!text;
+  $('sTitle').textContent=kind==='win'?T.winT:kind==='win2'?T.win2T:T.pause;
+  const text=kind==='win'?T.winP:kind==='win2'?T.win2P:'';$('sText').textContent=text;$('sText').hidden=!text;
+  cv.classList.toggle('dim',kind==='pause');
   const acts=[act('home',T.menu,toMenu)];
-  if(kind==='win')acts.push(act('retry',T.retry,begin,true));
-  if(kind==='pause'){acts.push(act('retry',T.restartL,()=>{st.paused=false;begin()}));acts.push(act('play',T.resume,resume,true))}
+  if(kind==='win'){acts.push(act('retry',T.retry,()=>begin(1)));acts.push(act('play',T.next,()=>begin(2),true))}
+  if(kind==='win2')acts.push(act('retry',T.retry,()=>begin(2),true));
+  if(kind==='pause'){const c=st.ch||1;acts.push(act('retry',T.restartL,()=>{st.paused=false;begin(c)}));acts.push(act('play',T.resume,resume,true))}
   $('sActs').replaceChildren(...acts);
   $('sheetOv').hidden=false;
   setTimeout(()=>{const m=$('sActs').querySelector('.main');m&&m.focus({preventScroll:true})},60);
 }
-$('playBtn').addEventListener('click',begin);
+$('playBtn').addEventListener('click',()=>begin(pickCh));
 $('pauseBtn').addEventListener('click',e=>{e.currentTarget.blur();pause()});
 $('howBtn').addEventListener('click',()=>{$('howOv').hidden=false;$('howClose').focus()});
 $('howClose').addEventListener('click',()=>{$('howOv').hidden=true});
@@ -1166,7 +1655,7 @@ resize();showMenu();
 document.fonts&&document.fonts.ready.then(()=>{});
 requestAnimationFrame(loop);
 // test hook
-window.__kobolde={get st(){return st},begin,giveBack,openGate,morning,keys,joy,get cam(){return{x:camX,y:camY,S,VW}}};
+window.__kobolde={get st(){return st},begin,startFly,giveBack,openGate,morning,keys,joy,get cam(){return{x:camX,y:camY,S,VW}}};
 })();
 </script>
 </body>
