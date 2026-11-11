@@ -1013,6 +1013,9 @@ function drawFaun(x,y,u0,f,ph,P,o={}){
   ctx.save();ctx.translate(x,y);ctx.lineJoin='round';ctx.lineCap='round';
   if(!o.noShadow){ctx.beginPath();ctx.ellipse(0,0,.28*u,.05*u,0,0,7);ctx.fillStyle='rgba(60,70,50,.2)';ctx.fill()}
   const crouch=o.pose==='surf'?.06*u:0;ctx.translate(0,crouch);
+  // long hair falls behind the shoulders (drawn first, so the top and the arms stay visible)
+  if(P.long){const hy0=-1.36*u;ctx.beginPath();ctx.moveTo(-.33*u,hy0);ctx.quadraticCurveTo(-.4*u,hy0+.3*u,-.3*u,hy0+.44*u);ctx.quadraticCurveTo(-.15*u,hy0+.5*u,0,hy0+.44*u);ctx.quadraticCurveTo(.15*u,hy0+.5*u,.3*u,hy0+.44*u);ctx.quadraticCurveTo(.4*u,hy0+.3*u,.33*u,hy0);ctx.closePath();
+    radFill(-.08*u,hy0,.5*u,P.hair2,P.hair);ctx.strokeStyle=shade(P.hair,.82);ctx.lineWidth=Math.max(1,.012*u);for(const k of[-.22,-.1,.1,.22]){ctx.beginPath();ctx.moveTo(k*u,hy0+.1*u);ctx.quadraticCurveTo(k*1.1*u,hy0+.3*u,k*.95*u,hy0+.42*u);ctx.stroke()}}
   // tail
   ctx.beginPath();ctx.ellipse(-dir*.2*u,-.62*u,.07*u,.05*u,-dir*.6,0,7);ctx.fillStyle=P.fur;ctx.fill();
   // goat legs: thigh forward, the backward-bending hock, a little black shoe
@@ -1049,11 +1052,10 @@ function drawFaun(x,y,u0,f,ph,P,o={}){
   const hy=-1.36*u,fx=dir*.025*u;
   ctx.fillStyle=shade(P.skin,.93);ctx.fillRect(-.045*u,-1.16*u,.09*u,.1*u);
   // hair behind
-  ctx.beginPath();ctx.ellipse(0,hy,.32*u,.32*u,0,0,7);
-  if(P.long){ctx.moveTo(-.3*u,hy);ctx.quadraticCurveTo(-.36*u,hy+.4*u,-.26*u,hy+.52*u);ctx.lineTo(.26*u,hy+.52*u);ctx.quadraticCurveTo(.36*u,hy+.4*u,.3*u,hy)}
+  ctx.beginPath();ctx.ellipse(0,hy,.33*u,.32*u,0,0,7);
   radFill(-.08*u,hy-.12*u,.5*u,P.hair2,P.hair);
   // goat ears and little horns
-  for(const s of[-1,1]){ctx.save();ctx.translate(s*.3*u,hy-.02*u);ctx.rotate(s*.5);ctx.beginPath();ctx.ellipse(s*.06*u,0,.11*u,.045*u,0,0,7);ctx.fillStyle=shade(P.skin,.95);ctx.fill();ctx.beginPath();ctx.ellipse(s*.07*u,0,.07*u,.022*u,0,0,7);ctx.fillStyle='#E9A99B';ctx.fill();ctx.restore()}
+  for(const s of[-1,1]){ctx.save();ctx.translate(s*.28*u,hy-.03*u);ctx.rotate(-s*.35);ctx.beginPath();ctx.ellipse(s*.1*u,0,.15*u,.05*u,0,0,7);ctx.fillStyle=shade(P.skin,.95);ctx.fill();ctx.beginPath();ctx.ellipse(s*.11*u,0,.1*u,.024*u,0,0,7);ctx.fillStyle='#E9A99B';ctx.fill();ctx.restore()}
   const hl=P.bigHorns?1.5:1;
   for(const s of[-1,1]){ctx.beginPath();ctx.moveTo((s*.12-.03)*u,hy-.27*u);ctx.quadraticCurveTo(s*.2*u,hy-(.4*hl+.05)*u,s*(.1+.06*hl)*u,hy-(.48*hl)*u);ctx.quadraticCurveTo(s*.16*u,hy-.36*u,(s*.12+.04)*u,hy-.25*u);ctx.closePath();gradFill(hy-.5*hl*u,hy-.25*u,'#FFF6E6','#D9C8A8')}
   // face
@@ -1062,7 +1064,7 @@ function drawFaun(x,y,u0,f,ph,P,o={}){
   const blink=((now+P.sc*3)%3.7)<.13,ex=fx+dir*.03*u;
   cEye(ex-.1*u,hy+.03*u,.065*u,.08*u,P.iris,o.lookX!=null?o.lookX:dir*.4,o.lookY||0,blink);
   cEye(ex+.1*u,hy+.03*u,.065*u,.08*u,P.iris,o.lookX!=null?o.lookX:dir*.4,o.lookY||0,blink);
-  if(P.glasses){ctx.strokeStyle=P.glasses;ctx.lineWidth=.028*u;for(const s of[-1,1]){ctx.beginPath();ctx.arc(ex+s*.1*u,hy+.03*u,.095*u,0,7);ctx.stroke()}ctx.beginPath();ctx.moveTo(ex-.01*u,hy+.01*u);ctx.quadraticCurveTo(ex,hy-.01*u,ex+.01*u,hy+.01*u);ctx.stroke()}
+  if(P.glasses){ctx.strokeStyle=P.glasses;ctx.lineWidth=.02*u;for(const s of[-1,1]){ctx.beginPath();ctx.arc(ex+s*.1*u,hy+.03*u,.09*u,0,7);ctx.fillStyle='rgba(255,255,255,.18)';ctx.fill();ctx.stroke()}ctx.beginPath();ctx.moveTo(ex-.01*u,hy+.01*u);ctx.quadraticCurveTo(ex,hy-.01*u,ex+.01*u,hy+.01*u);ctx.stroke()}
   brow(ex-.15*u,hy-.1*u,ex-.1*u,hy-.13*u,ex-.04*u,hy-.1*u,.018*u,shade(P.hair,.8));brow(ex+.04*u,hy-.1*u,ex+.1*u,hy-.13*u,ex+.15*u,hy-.1*u,.018*u,shade(P.hair,.8));
   ctx.beginPath();ctx.arc(ex,hy+.1*u,.02*u,.2,Math.PI-.2);ctx.lineWidth=Math.max(1,.012*u);ctx.strokeStyle=shade(P.skin,.8);ctx.stroke();
   ctx.fillStyle='rgba(239,150,150,.4)';for(const s of[-1,1]){ctx.beginPath();ctx.ellipse(ex+s*.17*u,hy+.12*u,.04*u,.028*u,0,0,7);ctx.fill()}
@@ -1172,11 +1174,13 @@ function drawBigTree(){
   snake.head();
 }
 // ---------- dialogue with real voices (the browser's speech synthesis) and subtitles ----------
-const VOICE={lilly:{pitch:1.35,rate:1},ria:{pitch:1.75,rate:1.06}};
+const VOICE={lilly:{pitch:1.18,rate:.98},ria:{pitch:1.32,rate:1.04}};
 let voices=[];function loadVoices(){try{voices=speechSynthesis.getVoices()||[]}catch(_){voices=[]}}
 try{loadVoices();speechSynthesis.onvoiceschanged=loadVoices}catch(_){}
+// the most natural voice the device has for the language (premium / enhanced / neural voices sound much more alive)
 function pickVoice(){const want=lang==='de'?'de':'en';const vs=voices.filter(v=>(v.lang||'').toLowerCase().startsWith(want));
-  return vs.find(v=>/female|frau|anna|petra|helena|katja|marlene|vicki|samantha|karen|google/i.test(v.name))||vs[0]||null}
+  const score=v=>(/premium|enhanced|neural|natural|verbessert|erweitert/i.test(v.name)?6:0)+(/google/i.test(v.name)?3:0)+(/anna|petra|helena|marlene|katja|vicki|sara|samantha|karen|ava|zoe/i.test(v.name)?2:0)+(v.localService?0:1);
+  return vs.sort((a,b)=>score(b)-score(a))[0]||null}
 function unlockSpeech(){try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}catch(_){}}
 function stopSpeech(){try{speechSynthesis.cancel()}catch(_){}}
 let sayTok=0;
@@ -1186,9 +1190,13 @@ function say(who,text,cb){
   const fin=()=>{if(done||tok!==sayTok)return;done=true;st.speaker=null;setTimeout(()=>{if(tok===sayTok){el.hidden=true;cb&&cb()}},280)};
   const est=1200+text.length*62;
   try{
-    if(window.speechSynthesis&&!muted()){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text.replace(/[„“"]/g,''));u.lang=lang==='de'?'de-DE':'en-US';
-      const v=pickVoice();if(v)u.voice=v;const V2=VOICE[who]||VOICE.lilly;u.pitch=V2.pitch;u.rate=V2.rate;
-      u.onend=fin;u.onerror=fin;speechSynthesis.speak(u);setTimeout(fin,est+4000);return}
+    if(window.speechSynthesis&&!muted()){speechSynthesis.cancel();
+      // speak sentence by sentence and give each its own melody: questions go up, exclamations are livelier, the last part settles
+      const parts=text.replace(/[„“"]/g,'').match(/[^.!?…]+[.!?…]*/g)||[text],v=pickVoice(),V2=VOICE[who]||VOICE.lilly;let left=parts.length;
+      parts.forEach((p,i)=>{const t=p.trim();if(!t){if(--left===0)fin();return}const u=new SpeechSynthesisUtterance(t);u.lang=lang==='de'?'de-DE':'en-US';if(v)u.voice=v;
+        const q=/\?$/.test(t),ex=/!$/.test(t);u.pitch=clamp(V2.pitch+(q?.14:ex?.1:i===parts.length-1?-.04:.04)+(i%2?-.05:.03),.5,2);u.rate=V2.rate*(ex?1.06:q?.97:1);
+        u.onend=u.onerror=()=>{if(--left===0)fin()};speechSynthesis.speak(u)});
+      setTimeout(fin,est+4000);return}
   }catch(_){}
   setTimeout(fin,est);
 }
@@ -1278,7 +1286,7 @@ function groundY(x){if(x<GAP1)return GY-.1;if(x<EDGE)return CANOPY+Math.sin(x*1.
 // solid things a cloud can't fly through
 function solid(x,y){
   if(x<GAP0&&y>2.15&&y<5.05)return true;            // the roof of crowns inside the forest
-  if(x>=GAP1-.15&&x<EDGE&&y>CANOPY-.45)return true;   // the canopy (and the forest below it)
+  if(x>=GAP1-.15&&x<EDGE&&y>CANOPY-.75)return true;   // the canopy (and the forest below it)
   return y>groundY(x)-.55;
 }
 const RIAPATH=[[3.6,GY-1.5],[6.6,GY-2.6],[9,6.4],[9,1.5],[13,1.3],[19,2.2],[25,1.4],[30,2.4],[33,6.6],[37,GY-.75],[44,GY-.75],[48,6.4],[53,4.6],[60,5.4],[67,4.4],[74,5.2],[80,6.2],[HOUSEX-5.6,GY-2.6],[HOUSEX-1.4,GY-1.25]];
@@ -1402,6 +1410,34 @@ function draw2(){
   if(st.banner)drawBanner();
 }
 function star(x,y,R2,r,n){ctx.beginPath();for(let i=0;i<n*2;i++){const a=i/(n*2)*Math.PI*2-Math.PI/2,rr2=i%2?r:R2;ctx.lineTo(x+Math.cos(a)*rr2,y+Math.sin(a)*rr2)}ctx.closePath()}
+// the forest seen from above while flying: the same jungle trees in three rows (hazy at the back), mist between them,
+// lianas, painted once into its own canvas
+let canopyImg=null;
+function buildCanopy(){
+  const x0=GAP1-2,x1=EDGE+2,y0=CANOPY-4.5,y1=GY+1.5,c=(canopyImg&&canopyImg.c)||document.createElement('canvas');
+  c.width=Math.ceil((x1-x0)*S*dpr);c.height=Math.ceil((y1-y0)*S*dpr);
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,-x0*S*dpr,-y0*S*dpr);g.clearRect(x0*S,y0*S,(x1-x0)*S,(y1-y0)*S);
+  swapCtx(g,()=>{
+    const u=S,R=mulberry(808);
+    // misty depth below the crowns
+    let gr=ctx.createLinearGradient(0,(CANOPY-.5)*u,0,GY*u);gr.addColorStop(0,'#A9CDB6');gr.addColorStop(1,'#7FAE85');ctx.fillStyle=gr;ctx.fillRect(GAP1*u,(CANOPY-.5)*u,(EDGE-GAP1)*u,(y1-CANOPY+.5)*u);
+    for(let x=GAP1;x<EDGE;x+=.4+R()*.6){ctx.fillStyle=R()<.5?'#B4D4C0':'#A3C9B2';ctx.fillRect(x*u,(CANOPY)*u,(.12+R()*.15)*u,(GY-CANOPY+1)*u)}
+    // back row: smaller, paler, some poke out higher
+    for(let x=GAP1+.2;x<EDGE-.2;x+=.6+expo(R,.9))drawJTree(x,.25+R()*.15,CANOPY-.7-R()*.8,1.1+R()*.7,R,PAL_MID);
+    ctx.globalCompositeOperation='source-atop';ctx.fillStyle='rgba(205,232,214,.45)';ctx.fillRect(x0*u,y0*u,(x1-x0)*u,(y1-y0)*u);ctx.globalCompositeOperation='source-over';
+    gr=ctx.createLinearGradient(0,(CANOPY-1)*u,0,(CANOPY+2)*u);gr.addColorStop(0,'rgba(220,240,226,0)');gr.addColorStop(1,'rgba(220,240,226,.6)');ctx.fillStyle=gr;ctx.fillRect(GAP1*u,(CANOPY-1)*u,(EDGE-GAP1)*u,(y1-CANOPY+1)*u);
+    // middle row
+    for(let x=GAP1;x<EDGE;x+=.7+expo(R,1))drawJTree(x,.3+R()*.2,CANOPY-.15+R()*.4,1.3+R()*.6,R,{...PAL_NEAR,detail:false,g:['#3E7E58','#55996A','#7DBB82']});
+    // front row with lianas between the crowns
+    const front=[];for(let x=GAP1-.3;x<EDGE+.3;x+=.9+expo(R,1.1))front.push({x,c:CANOPY+.35+R()*.45,r:1.4+R()*.7});
+    for(const t of front)drawJTree(t.x,.4+R()*.2,t.c,t.r,R,PAL_NEAR);
+    for(let i=0;i<front.length-1;i++)if(R()<.6){const a=front[i],b=front[i+1];drawLiana(a.x+.3,a.c+.4,b.x-.3,b.c+.5,.8+R()*1.2,'#5E6E45','#4F9560',R)}
+    for(const t of front)if(R()<.5)drawHang(t.x+(R()-.5)*1.6,t.c+.5,1+R()*2,'#5E6E45','#4F9560',R);
+    // mist over the lower part
+    gr=ctx.createLinearGradient(0,(CANOPY+1.6)*u,0,(GY)*u);gr.addColorStop(0,'rgba(200,228,210,0)');gr.addColorStop(1,'rgba(200,228,210,.85)');ctx.fillStyle=gr;ctx.fillRect(x0*u,(CANOPY+1.6)*u,(x1-x0)*u,(y1-CANOPY)*u);
+  });
+  canopyImg={c,x0,y0,S};
+}
 function drawFlyGround(now,dusk){
   const u=S,W2=v=>v*u;
   ctx.save();ctx.translate(-camX*u,-camY*u);       // draw in world px below (x*u, y*u)
@@ -1422,19 +1458,7 @@ function drawFlyGround(now,dusk){
   for(let i=0;i<60;i++){const x=-6+R()*(GAP0+6),y=2.6+R()*2.3;drawLeaf(W2(x),W2(y),W2(.2+R()*.1),R()*6.3,R()<.5?'#4F9560':'#7CC07E',false)}
   for(let i=0;i<6;i++)drawHang(-5+i*2.1+R(),4.6,1.2+R()*2.2,'#5E6E45','#4F9560',R);
   }
-  R=mulberry(314);
-  if(vx1>GAP1-1&&vx0<EDGE+2){
-  // --- the canopy from above, the forest wall at the gap and at the beach
-  ctx.beginPath();ctx.moveTo(W2(GAP1-.2),W2(GY+3));ctx.lineTo(W2(GAP1-.2),W2(CANOPY+.2));for(let x=GAP1;x<=EDGE;x+=.3)ctx.lineTo(W2(x),W2(CANOPY-.1+Math.sin(x*1.3)*.12));ctx.lineTo(W2(EDGE+.3),W2(GY+3));ctx.closePath();
-  gradFill(W2(CANOPY),W2(GY),'#4E9462','#8DBF98');
-  // the same misty forest below the crowns: pale trunks and hanging lianas
-  for(let x=GAP1;x<EDGE;x+=.5+R()*.7){ctx.fillStyle=R()<.5?'#A3C9AE':'#93BB9F';ctx.fillRect(W2(x),W2(CANOPY+.6),W2(.14+R()*.18),W2(GY-CANOPY))}
-  for(let x=GAP1;x<EDGE;x+=1.6+R()*2)drawHang(x,CANOPY+.3,1.5+R()*2.5,'#6E8E72','#7FAE85',R);
-  for(let x=GAP1-.1;x<EDGE+.2;x+=.42){const y=CANOPY+Math.sin(x*1.3)*.12;for(const[dy,r,c]of[[.35,.5,'#2E6A48'],[.12,.42,'#3F8A58'],[-.05,.28,'#68AE6E']]){ctx.beginPath();ctx.arc(W2(x+Math.sin(x*4)*.12),W2(y+dy),W2(r+Math.sin(x*6)*.08),0,7);ctx.fillStyle=c;ctx.fill()}}
-  for(let i=0;i<70;i++){const x=GAP1+R()*(EDGE-GAP1),y=CANOPY-.15+R()*.5;drawLeaf(W2(x),W2(y),W2(.18+R()*.08),-1.6+R()*3,R()<.5?'#7CC07E':'#4F9560',false)}
-  // trunks of the forest edge at the beach
-  drawJTree(EDGE-.4,.55,CANOPY+.4,1.2,R,PAL_NEAR);
-  }
+  if(vx1>GAP1-1&&vx0<EDGE+2){if(!canopyImg||canopyImg.S!==S)buildCanopy();ctx.drawImage(canopyImg.c,W2(canopyImg.x0),W2(canopyImg.y0),canopyImg.c.width/dpr,canopyImg.c.height/dpr)}
   R=mulberry(315);
   // --- the beach: soft sand, dune grass, shells, a starfish, a little sandcastle, wet sand and foam
   const beach=(x0,x1,dir)=>{
